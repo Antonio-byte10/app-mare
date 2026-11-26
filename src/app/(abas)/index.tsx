@@ -105,7 +105,7 @@ export default function Inicio() {
             itens={[
               { valor: String(resumo.totalLivres), rotulo: 'dias no total' },
               { valor: String(resumo.recorde), rotulo: 'seu recorde' },
-              { valor: textoEconomia(ativo, resumo.totalLivres), rotulo: 'economizados', cor: cores.sand },
+              { valor: textoEconomia(ativo, relatos, hoje), rotulo: 'economizados', cor: cores.sand },
             ]}
           />
         </>

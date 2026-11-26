@@ -8,7 +8,7 @@ import {
   textoFaltam,
   textoPendente,
 } from './inicio';
-import type { Habito } from './tipos';
+import type { Habito, Relato } from './tipos';
 
 const HOJE = '2026-11-26';
 
@@ -87,12 +87,36 @@ describe('economia e moeda', () => {
   it('moeda em reais do Brasil', () => {
     expect(moeda(18600).replace(/\s/g, ' ')).toBe('R$ 186,00');
   });
+  const livres = (n: number): Relato[] =>
+    Array.from({ length: n }, (_, i) => ({
+      dia: new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10),
+      habitos: [{ habitoId: 'h1', vontade: 0, usou: false }],
+      gatilhos: [],
+      salvoEm: 0,
+    }));
   it('sem custo mostra o traço', () => {
-    expect(textoEconomia(habito(), 10)).toBe('—');
-    expect(textoEconomia(habito({ custoPorDiaCentavos: 0 }), 10)).toBe('—');
+    expect(textoEconomia(habito(), livres(10), HOJE)).toBe('—');
+    expect(textoEconomia(habito({ custoPorDiaCentavos: 0 }), livres(10), HOJE)).toBe('—');
   });
-  it('com custo multiplica pelo total de dias livres', () => {
-    expect(textoEconomia(habito({ custoPorDiaCentavos: 450 }), 41).replace(/\s/g, ' ')).toBe('R$ 184,50');
+  it('com custo multiplica pelos dias livres dos relatos', () => {
+    const h = habito({ id: 'h1', inicio: '2026-01-01', custoPorDiaCentavos: 450 });
+    expect(textoEconomia(h, livres(41), HOJE).replace(/\s/g, ' ')).toBe('R$ 184,50');
+  });
+  it('reduzir: dia dentro da meta economiza só a diferença', () => {
+    const h = habito({
+      id: 'h1',
+      inicio: '2026-01-01',
+      meta: { tipo: 'reduzir', maxPorDia: 5, unidade: 'cigarros' },
+      custoPorDiaCentavos: 1000,
+      unidadesPorDia: 10,
+    });
+    const relatos: Relato[] = livres(4).map((r) => ({ ...r, habitos: [{ habitoId: 'h1', vontade: 0, usou: true, quantidade: 5 }] }));
+    // 4 dias x 5 cigarros a menos = metade do custo por dia
+    expect(textoEconomia(h, relatos, HOJE).replace(/\s/g, ' ')).toBe('R$ 20,00');
+  });
+  it('reduzir sem unidades por dia mostra o traço', () => {
+    const h = habito({ id: 'h1', inicio: '2026-01-01', meta: { tipo: 'reduzir', maxPorDia: 5, unidade: 'cigarros' }, custoPorDiaCentavos: 1000 });
+    expect(textoEconomia(h, livres(4), HOJE)).toBe('—');
   });
 });
 

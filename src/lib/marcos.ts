@@ -1,4 +1,5 @@
-import type { Habito } from './tipos';
+import { estadoDoDia, normalizarRelatoHabito } from './contador';
+import type { Habito, Relato } from './tipos';
 
 export const MARCOS: readonly number[] = [1, 3, 7, 14, 30, 90, 180, 365];
 
@@ -31,9 +32,39 @@ export function nomeMarco(dias: number): string {
   return NOMES[dias] ?? `${dias} dias`;
 }
 
-export function economia(h: Habito, totalLivres: number): { centavos: number; unidades: number } {
-  return {
-    centavos: (h.custoPorDiaCentavos ?? 0) * totalLivres,
-    unidades: (h.unidadesPorDia ?? 0) * totalLivres,
-  };
+export type Economia = { centavos: number; unidades: number };
+
+/**
+ * Quanto a pessoa deixou de gastar, contado a partir dos relatos (mesmo recorte do `resumoHabito`:
+ * do início até hoje, só os dias com relato do hábito).
+ * - parar: cada dia livre economiza o consumo habitual (`unidadesPorDia`) e o custo do dia.
+ * - reduzir: dia livre economiza o consumo habitual; dia dentro da meta, só a diferença entre o
+ *   habitual e o que foi usado (nunca negativa); deslize não economiza. Sem `unidadesPorDia` não
+ *   há base para a conta e o resultado é `null` ("sem dado").
+ * O dinheiro é proporcional às unidades economizadas, arredondado ao centavo.
+ */
+export function economia(h: Habito, relatos: Relato[], hoje: string): Economia | null {
+  const porDia = h.unidadesPorDia;
+  const reduzir = h.meta.tipo === 'reduzir';
+  if (reduzir && !porDia) return null;
+
+  let livres = 0;
+  let unidadesReduzir = 0;
+  for (const relato of relatos) {
+    if (relato.dia < h.inicio || relato.dia > hoje) continue;
+    const entrada = relato.habitos.find((x) => x.habitoId === h.id);
+    if (!entrada) continue;
+    const normalizada = normalizarRelatoHabito(entrada);
+    const estado = estadoDoDia(h.meta, normalizada);
+    if (estado === 'livre') {
+      livres += 1;
+      unidadesReduzir += porDia ?? 0;
+    } else if (estado === 'dentroDaMeta') {
+      unidadesReduzir += Math.max(0, (porDia ?? 0) - (normalizada.quantidade ?? 0));
+    }
+  }
+
+  const custo = h.custoPorDiaCentavos ?? 0;
+  if (!reduzir) return { centavos: custo * livres, unidades: (porDia ?? 0) * livres };
+  return { centavos: Math.round((custo * unidadesReduzir) / (porDia as number)), unidades: unidadesReduzir };
 }

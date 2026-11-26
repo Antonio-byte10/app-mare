@@ -47,13 +47,14 @@ export default function Marcos() {
     );
   }
 
-  const resumo = resumoHabito(ativo, relatos, dataLocal(agora));
+  const hoje = dataLocal(agora);
+  const resumo = resumoHabito(ativo, relatos, hoje);
   const itens = MARCOS.map((dias) => {
     const estado = estadoMarco(dias, resumo.sequenciaAtual, resumo.recorde);
     return {
       id: String(dias),
       titulo: tituloMarco(dias, estado, resumo.sequenciaAtual, oculto),
-      descricao: textoMarco(ativo.tipo, dias),
+      descricao: textoMarco(ativo.tipo, dias, ativo.meta),
       estado,
       progresso: estado === 'atual' && !oculto ? progressoMarco(dias, resumo.sequenciaAtual) : undefined,
     };
@@ -88,7 +89,7 @@ export default function Marcos() {
         {oculto ? null : (
           <Trio
             style={styles.trio}
-            itens={colunasMarcos(ativo, resumo.totalLivres).map((c) => ({
+            itens={colunasMarcos(ativo, relatos, hoje).map((c) => ({
               valor: c.valor,
               rotulo: c.rotulo,
               cor: c.cor ? cores[c.cor] : undefined,

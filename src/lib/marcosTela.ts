@@ -1,6 +1,6 @@
 import { economia, nomeMarco, type EstadoMarco } from './marcos';
 import { textoEconomia } from './inicio';
-import type { Habito, TipoHabito } from './tipos';
+import type { Habito, Relato, TipoHabito } from './tipos';
 
 /** Legenda da coluna de unidades do Trio; `null` esconde a coluna (sexual). */
 export function rotuloUnidades(tipo: TipoHabito): string | null {
@@ -15,14 +15,14 @@ export type ColunaTrio = { valor: string; rotulo: string; cor?: 'sand' };
  * Colunas do Trio dos Marcos. "Fissuras vencidas" fica em 0 até o Plano 2.
  * Sem custo ou sem unidades por dia, a coluna mostra "—".
  */
-export function colunasMarcos(h: Habito, totalLivres: number): ColunaTrio[] {
+export function colunasMarcos(h: Habito, relatos: Relato[], hoje: string): ColunaTrio[] {
   const colunas: ColunaTrio[] = [{ valor: '0', rotulo: 'fissuras vencidas' }];
   const rotulo = rotuloUnidades(h.tipo);
   if (rotulo) {
-    const { unidades } = economia(h, totalLivres);
-    colunas.push({ valor: h.unidadesPorDia ? String(unidades) : '—', rotulo });
+    const e = economia(h, relatos, hoje);
+    colunas.push({ valor: e && h.unidadesPorDia ? String(e.unidades) : '—', rotulo });
   }
-  colunas.push({ valor: textoEconomia(h, totalLivres), rotulo: 'no bolso', cor: 'sand' });
+  colunas.push({ valor: textoEconomia(h, relatos, hoje), rotulo: 'no bolso', cor: 'sand' });
   return colunas;
 }
 

@@ -1,4 +1,4 @@
-import type { TipoHabito } from '../lib/tipos';
+import type { Meta, TipoHabito } from '../lib/tipos';
 
 /**
  * Textos dos marcos. Tabaco segue a linha do tempo da OMS:
@@ -39,6 +39,22 @@ const TEXTOS: Record<TipoHabito, Record<number, string>> = {
   },
 };
 
-export function textoMarco(tipo: TipoHabito, dias: number): string {
+/**
+ * Quem só reduz não parou: os textos de saúde de quem para (monóxido, circulação...) não valem.
+ * Para a meta "reduzir" os marcos falam de constância, sem afirmação médica, para qualquer tipo.
+ */
+const TEXTOS_REDUZIR: Record<number, string> = {
+  1: 'Um dia dentro da sua meta. Cada dia assim conta.',
+  3: 'Três dias seguidos dentro da sua meta. Você está criando um ritmo.',
+  7: 'Uma semana dentro da sua meta. Olhe o que você já construiu.',
+  14: 'Duas semanas dentro da sua meta. Seu plano está funcionando, do seu jeito.',
+  30: 'Um mês dentro da sua meta. Uma rotina que é sua.',
+  90: 'Três meses dentro da sua meta, dia após dia.',
+  180: 'Seis meses mantendo o seu limite. É a constância que sustenta o caminho.',
+  365: 'Um ano dentro da sua meta. Foi você quem fez isso, um dia de cada vez.',
+};
+
+export function textoMarco(tipo: TipoHabito, dias: number, meta?: Meta): string {
+  if (meta?.tipo === 'reduzir') return TEXTOS_REDUZIR[dias] ?? '';
   return TEXTOS[tipo][dias] ?? '';
 }

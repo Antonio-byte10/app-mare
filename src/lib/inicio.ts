@@ -1,7 +1,7 @@
 import type { ResumoHabito } from './contador';
 import { dataCurta, deslocarDia, formatarData } from './datas';
 import { economia, nomeMarco } from './marcos';
-import type { Habito } from './tipos';
+import type { Habito, Relato } from './tipos';
 
 /** "Bom dia" até 11h59, "Boa tarde" até 17h59, depois "Boa noite". */
 export function saudacao(hora: number): string {
@@ -77,10 +77,11 @@ export function moeda(centavos: number): string {
   return (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-/** Economia em reais, ou "—" se o hábito não tem custo por dia. */
-export function textoEconomia(h: Habito, totalLivres: number): string {
+/** Economia em reais, ou "—" se o hábito não tem custo por dia (ou, em "reduzir", unidades por dia). */
+export function textoEconomia(h: Habito, relatos: Relato[], hoje: string): string {
   if (!h.custoPorDiaCentavos) return '—';
-  return moeda(economia(h, totalLivres).centavos);
+  const e = economia(h, relatos, hoje);
+  return e ? moeda(e.centavos) : '—';
 }
 
 /** Singular/plural de "dia seguido(s)". */
