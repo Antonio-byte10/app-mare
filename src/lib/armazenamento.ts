@@ -3,7 +3,8 @@ import { File } from 'expo-file-system';
 import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 import type { StateStorage } from 'zustand/middleware';
-import { obterChave, type Cofre } from './chave';
+import { NOME_CHAVE, obterChave, type Cofre } from './chave';
+import { protegerArmazenamento } from './protegido';
 
 const NOME_BANCO = 'mare.db';
 
@@ -28,6 +29,8 @@ function arquivoDoBanco(): File {
   return new File(`file://${SQLite.defaultDatabaseDirectory}/${NOME_BANCO}`);
 }
 
+let conexao: SQLite.SQLiteDatabase | undefined;
+
 async function abrir(): Promise<SQLite.SQLiteDatabase> {
   const resultado = await obterChave(cofre, arquivoDoBanco().exists, gerarChave);
   recomecou = resultado.recomecou;
@@ -45,28 +48,58 @@ async function abrir(): Promise<SQLite.SQLiteDatabase> {
     await db.closeAsync();
     throw new Error('SQLCipher indisponível: o banco não seria criptografado.');
   }
-  await db.execAsync('CREATE TABLE IF NOT EXISTS kv (chave TEXT PRIMARY KEY NOT NULL, valor TEXT)');
+  try {
+    // Com a chave errada é aqui que aparece "file is not a database".
+    await db.execAsync('CREATE TABLE IF NOT EXISTS kv (chave TEXT PRIMARY KEY NOT NULL, valor TEXT)');
+  } catch (erro) {
+    await db.closeAsync().catch(() => undefined);
+    throw erro;
+  }
+  conexao = db;
   return db;
 }
 
-/** Armazenamento do zustand sobre um banco SQLCipher; a chave fica no cofre do aparelho. */
-export function criarArmazenamento(): StateStorage {
-  let banco: Promise<SQLite.SQLiteDatabase> | undefined;
-  const db = () => (banco ??= abrir());
-
+async function abrirArmazenamento(): Promise<StateStorage> {
+  const db = await abrir();
   return {
     getItem: async (nome) => {
-      const linha = await (await db()).getFirstAsync<{ valor: string }>(
-        'SELECT valor FROM kv WHERE chave = ?',
-        nome,
-      );
+      const linha = await db.getFirstAsync<{ valor: string }>('SELECT valor FROM kv WHERE chave = ?', nome);
       return linha?.valor ?? null;
     },
     setItem: async (nome, valor) => {
-      await (await db()).runAsync('INSERT OR REPLACE INTO kv (chave, valor) VALUES (?, ?)', nome, valor);
+      await db.runAsync('INSERT OR REPLACE INTO kv (chave, valor) VALUES (?, ?)', nome, valor);
     },
     removeItem: async (nome) => {
-      await (await db()).runAsync('DELETE FROM kv WHERE chave = ?', nome);
+      await db.runAsync('DELETE FROM kv WHERE chave = ?', nome);
     },
   };
+}
+
+const protegido = protegerArmazenamento(abrirArmazenamento);
+
+/**
+ * Armazenamento do zustand sobre um banco SQLCipher; a chave fica no cofre do aparelho.
+ * Se o banco não abrir, a leitura devolve `null` e as escritas são ignoradas (ver `falhaAoAbrir`).
+ */
+export function criarArmazenamento(): StateStorage {
+  return protegido.storage;
+}
+
+/** `true` se o banco existe mas não abriu com a chave atual. Os dados antigos não foram tocados. */
+export function falhaAoAbrir(): boolean {
+  return protegido.falhou();
+}
+
+/**
+ * Apaga o banco e a chave. Só deve ser chamada por uma ação explícita da pessoa.
+ * Depois, `useMare.persist.rehydrate()` abre um banco novo.
+ */
+export async function recomecarDoZero(): Promise<void> {
+  const aberta = conexao;
+  conexao = undefined;
+  await aberta?.closeAsync().catch(() => undefined);
+  if (arquivoDoBanco().exists) await SQLite.deleteDatabaseAsync(NOME_BANCO);
+  await SecureStore.deleteItemAsync(NOME_CHAVE);
+  recomecou = false;
+  protegido.reiniciar();
 }

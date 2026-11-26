@@ -13,3 +13,12 @@ export function criarArmazenamento(): StateStorage {
 export function recomecouDoZero(): boolean {
   return false;
 }
+
+export function falhaAoAbrir(): boolean {
+  return false;
+}
+
+/** Mesmo `name` do persist em store.ts. */
+export async function recomecarDoZero(): Promise<void> {
+  localStorage.removeItem('mare');
+}

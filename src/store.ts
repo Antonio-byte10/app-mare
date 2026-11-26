@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { criarArmazenamento, recomecouDoZero } from './lib/armazenamento';
+import { criarArmazenamento, falhaAoAbrir, recomecouDoZero } from './lib/armazenamento';
 import {
   aplicarHabito,
   aplicarRelato,
@@ -20,6 +20,8 @@ export type { Ajustes, EstadoPersistido } from './lib/estado';
 type Mare = EstadoPersistido & {
   /** Não é persistido: vem de `recomecouDoZero()` ao carregar. */
   avisoRecomeco: boolean;
+  /** Não é persistido: `true` se o banco não abriu; nada é lido nem gravado até recomeçar. */
+  erroArmazenamento: boolean;
   salvarHabito: (h: Habito) => void;
   removerHabito: (id: string) => void;
   salvarRelato: (r: Relato) => void;
@@ -32,6 +34,7 @@ export const useMare = create<Mare>()(
     (set) => ({
       ...estadoInicial(),
       avisoRecomeco: false,
+      erroArmazenamento: false,
       salvarHabito: (h) => set((e) => aplicarHabito(e, h)),
       removerHabito: (id) => set((e) => aplicarRemocaoHabito(e, id)),
       salvarRelato: (r) => set((e) => aplicarRelato(e, r)),
@@ -54,6 +57,7 @@ export const useMare = create<Mare>()(
         ...atual,
         ...migrar(persistido, VERSAO_ESTADO),
         avisoRecomeco: recomecouDoZero(),
+        erroArmazenamento: falhaAoAbrir(),
       }),
     },
   ),
