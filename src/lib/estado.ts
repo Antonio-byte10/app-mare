@@ -1,20 +1,67 @@
 import { normalizarRelatoHabito } from './contador';
-import type { Habito, Relato } from './tipos';
+import type {
+  AjustesIa,
+  Avaliacao,
+  Fissura,
+  Habito,
+  MensagemConversa,
+  PlanoSeEntao,
+  Porque,
+  Recomeco,
+  Relato,
+} from './tipos';
 
-export type Ajustes = { habitoAtivo?: string; ocultarNumeros: boolean };
+export type Ajustes = {
+  habitoAtivo?: string;
+  ocultarNumeros: boolean;
+  /** Primeiro uso (abertura + avaliação) concluído. */
+  onboardingConcluido: boolean;
+  /** Mostra CVV 188 / SAMU 192 na Fissura e o cartão de crise. Padrão: ligado. */
+  contatosEmergencia: boolean;
+  /** IA configurada. Sem isso, a aba Conversa não aparece. */
+  ia?: AjustesIa;
+};
 
 export type EstadoPersistido = {
-  versao: 1;
+  versao: 2;
   habitos: Habito[];
   relatos: Relato[];
   ajustes: Ajustes;
+  avaliacoes: Avaliacao[];
+  porques: Porque[];
+  planos: PlanoSeEntao[];
+  fissuras: Fissura[];
+  recomecos: Recomeco[];
+  conversa: MensagemConversa[];
 };
 
-export const VERSAO_ESTADO = 1;
+export const VERSAO_ESTADO = 2;
+
+/** Listas novas da versão 2; todas começam vazias. */
+const LISTAS = ['avaliacoes', 'porques', 'planos', 'fissuras', 'recomecos', 'conversa'] as const;
 
 export function estadoInicial(): EstadoPersistido {
-  return { versao: 1, habitos: [], relatos: [], ajustes: { ocultarNumeros: false } };
+  return {
+    versao: 2,
+    habitos: [],
+    relatos: [],
+    ajustes: { ocultarNumeros: false, onboardingConcluido: false, contatosEmergencia: true },
+    avaliacoes: [],
+    porques: [],
+    planos: [],
+    fissuras: [],
+    recomecos: [],
+    conversa: [],
+  };
 }
+
+/** Insere ou substitui pelo `id`, sem alterar a lista recebida. */
+export function inserirOuTrocar<T extends { id: string }>(lista: T[], item: T): T[] {
+  return lista.some((x) => x.id === item.id) ? lista.map((x) => (x.id === item.id ? item : x)) : [...lista, item];
+}
+
+/** Máximo de mensagens guardadas na Conversa (as mais antigas saem). */
+export const MAX_CONVERSA = 200;
 
 /** Um relato por dia: salvar de novo no mesmo dia substitui o anterior. */
 export function aplicarRelato(e: EstadoPersistido, r: Relato): EstadoPersistido {
@@ -45,9 +92,25 @@ export function aplicarRemocaoHabito(e: EstadoPersistido, id: string): EstadoPer
 
 const ehObjeto = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 
+const iaValida = (v: unknown): v is AjustesIa =>
+  ehObjeto(v) &&
+  (v.provedor === 'gemini' || v.provedor === 'openai' || v.provedor === 'claude') &&
+  (v.modo === 'direto' || v.modo === 'servidor') &&
+  typeof v.modelo === 'string';
+
 /** Leva o estado da versão `n` para a `n + 1`. Acrescentar aqui ao subir `VERSAO_ESTADO`. */
 export type Migracao = (estado: Record<string, unknown>) => Record<string, unknown>;
-const MIGRACOES: Record<number, Migracao> = {};
+const MIGRACOES: Record<number, Migracao> = {
+  // 1 -> 2: listas novas vazias. Quem já tinha hábitos não passa de novo pelo primeiro uso.
+  1: (e) => ({
+    ...e,
+    ajustes: {
+      ...(ehObjeto(e.ajustes) ? e.ajustes : {}),
+      onboardingConcluido: Array.isArray(e.habitos) && e.habitos.length > 0,
+      contatosEmergencia: true,
+    },
+  }),
+};
 
 /** Aplica, em ordem, as migrações de `de` até `para` (`tabela[n]` leva da versão n à n + 1). */
 export function aplicarMigracoes(
@@ -77,16 +140,23 @@ export function migrar(estado: unknown, versao: number): EstadoPersistido | null
   const migrado = aplicarMigracoes(estado, versao, VERSAO_ESTADO);
   if (!Array.isArray(migrado.habitos) || !Array.isArray(migrado.relatos)) return estadoInicial();
   const ajustes = ehObjeto(migrado.ajustes) ? migrado.ajustes : {};
-  const { habitoAtivo, ...ajustesExtras } = ajustes;
+  const { habitoAtivo, ia, ...ajustesExtras } = ajustes;
+  const listas = Object.fromEntries(
+    LISTAS.map((nome) => [nome, Array.isArray(migrado[nome]) ? migrado[nome] : []]),
+  ) as Pick<EstadoPersistido, (typeof LISTAS)[number]>;
   return {
     ...migrado,
-    versao: 1,
+    ...listas,
+    versao: 2,
     habitos: migrado.habitos as Habito[],
     relatos: migrado.relatos as Relato[],
     ajustes: {
       ...ajustesExtras,
       ...(typeof habitoAtivo === 'string' ? { habitoAtivo } : {}),
+      ...(iaValida(ia) ? { ia } : {}),
       ocultarNumeros: ajustes.ocultarNumeros === true,
+      onboardingConcluido: ajustes.onboardingConcluido === true,
+      contatosEmergencia: ajustes.contatosEmergencia !== false,
     },
   };
 }

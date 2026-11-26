@@ -76,7 +76,7 @@ describe('aplicarRemocaoHabito', () => {
 
 describe('migrar', () => {
   it('versão futura devolve null (nunca o estado vazio) e não lança erro', () => {
-    expect(migrar({ versao: 2, habitos: [habito('a')], relatos: [] }, VERSAO_ESTADO + 1)).toBeNull();
+    expect(migrar({ versao: 3, habitos: [habito('a')], relatos: [] }, VERSAO_ESTADO + 1)).toBeNull();
     expect(migrar({ versao: 1, habitos: [habito('a')] }, 99)).toBeNull();
   });
 
@@ -90,19 +90,47 @@ describe('migrar', () => {
     expect(migrar({ habitos: 'x' }, 1)).toEqual(estadoInicial());
   });
 
-  it('estado válido da versão 1 é mantido', () => {
+  it('estado válido da versão atual é mantido', () => {
     const e = aplicarRelato(aplicarHabito(estadoInicial(), habito('a')), relato('2026-02-01', 'a'));
-    expect(migrar(e, 1)).toEqual(e);
+    expect(migrar(e, VERSAO_ESTADO)).toEqual(e);
+  });
+
+  it('versão 1 com hábitos vira versão 2 sem repetir o primeiro uso', () => {
+    const v1 = { versao: 1, habitos: [habito('a')], relatos: [], ajustes: { ocultarNumeros: true } };
+    const m = migrar(v1, 1);
+    expect(m?.versao).toBe(2);
+    expect(m?.ajustes).toEqual({ ocultarNumeros: true, onboardingConcluido: true, contatosEmergencia: true });
+    expect(m?.porques).toEqual([]);
+    expect(m?.conversa).toEqual([]);
+  });
+
+  it('versão 1 sem hábitos passa pelo primeiro uso', () => {
+    const m = migrar({ versao: 1, habitos: [], relatos: [], ajustes: { ocultarNumeros: false } }, 1);
+    expect(m?.ajustes.onboardingConcluido).toBe(false);
   });
 
   it('campo extra na raiz sobrevive', () => {
     const e = { ...estadoInicial(), futuroCampo: { x: 1 } };
-    expect(migrar(e, 1)).toEqual(e);
+    expect(migrar(e, VERSAO_ESTADO)).toEqual(e);
   });
 
   it('campo extra em ajustes sobrevive; os conhecidos são validados', () => {
-    const e = { ...estadoInicial(), ajustes: { ocultarNumeros: 'sim', habitoAtivo: 7, tema: 'escuro' } };
-    expect(migrar(e, 1)?.ajustes).toEqual({ ocultarNumeros: false, tema: 'escuro' });
+    const e = {
+      ...estadoInicial(),
+      ajustes: { ocultarNumeros: 'sim', habitoAtivo: 7, tema: 'escuro', ia: { provedor: 'x' } },
+    };
+    expect(migrar(e, VERSAO_ESTADO)?.ajustes).toEqual({
+      ocultarNumeros: false,
+      onboardingConcluido: false,
+      contatosEmergencia: true,
+      tema: 'escuro',
+    });
+  });
+
+  it('IA válida é mantida', () => {
+    const ia = { provedor: 'gemini', modo: 'direto', modelo: 'm', avisoVisto: true } as const;
+    const e = { ...estadoInicial(), ajustes: { ...estadoInicial().ajustes, ia } };
+    expect(migrar(e, VERSAO_ESTADO)?.ajustes.ia).toEqual(ia);
   });
 });
 
@@ -147,7 +175,19 @@ describe('paraPersistir (partialize do store)', () => {
       futuroCampo: 'fica',
     };
     const p = paraPersistir(e, ['avisoRecomeco', 'erroArmazenamento']);
-    expect(Object.keys(p).sort()).toEqual(['ajustes', 'futuroCampo', 'habitos', 'relatos', 'versao']);
+    expect(Object.keys(p).sort()).toEqual([
+      'ajustes',
+      'avaliacoes',
+      'conversa',
+      'fissuras',
+      'futuroCampo',
+      'habitos',
+      'planos',
+      'porques',
+      'recomecos',
+      'relatos',
+      'versao',
+    ]);
     expect(p.habitos).toHaveLength(1);
   });
 });

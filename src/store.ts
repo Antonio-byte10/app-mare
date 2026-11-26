@@ -8,6 +8,8 @@ import {
   aplicarRelato,
   aplicarRemocaoHabito,
   estadoInicial,
+  inserirOuTrocar,
+  MAX_CONVERSA,
   mesclar,
   migrar,
   paraPersistir,
@@ -15,7 +17,16 @@ import {
   type Ajustes,
   type EstadoPersistido,
 } from './lib/estado';
-import type { Habito, Relato } from './lib/tipos';
+import type {
+  Avaliacao,
+  Fissura,
+  Habito,
+  MensagemConversa,
+  PlanoSeEntao,
+  Porque,
+  Recomeco,
+  Relato,
+} from './lib/tipos';
 
 export { migrar } from './lib/estado';
 export type { Ajustes, EstadoPersistido } from './lib/estado';
@@ -30,6 +41,17 @@ type Mare = EstadoPersistido & {
   salvarRelato: (r: Relato) => void;
   setAjustes: (p: Partial<Ajustes>) => void;
   dispensarAvisoRecomeco: () => void;
+  salvarAvaliacao: (a: Avaliacao) => void;
+  salvarPorque: (p: Porque) => void;
+  removerPorque: (id: string) => void;
+  salvarPlano: (p: PlanoSeEntao) => void;
+  removerPlano: (id: string) => void;
+  /** Registra (ou atualiza pelo id) uma passagem pela Fissura. */
+  salvarFissura: (f: Fissura) => void;
+  salvarRecomeco: (r: Recomeco) => void;
+  /** Acrescenta uma mensagem à Conversa (guarda só as últimas `MAX_CONVERSA`). */
+  adicionarMensagem: (m: MensagemConversa) => void;
+  limparConversa: () => void;
 };
 
 /** Dados de uma versão futura do app: nada é lido nem gravado até a pessoa recomeçar. */
@@ -49,6 +71,15 @@ export const useMare = create<Mare>()(
       salvarRelato: (r) => set((e) => aplicarRelato(e, r)),
       setAjustes: (p) => set((e) => ({ ajustes: { ...e.ajustes, ...p } })),
       dispensarAvisoRecomeco: () => set({ avisoRecomeco: false }),
+      salvarAvaliacao: (a) => set((e) => ({ avaliacoes: inserirOuTrocar(e.avaliacoes, a) })),
+      salvarPorque: (p) => set((e) => ({ porques: inserirOuTrocar(e.porques, p) })),
+      removerPorque: (id) => set((e) => ({ porques: e.porques.filter((x) => x.id !== id) })),
+      salvarPlano: (p) => set((e) => ({ planos: inserirOuTrocar(e.planos, p) })),
+      removerPlano: (id) => set((e) => ({ planos: e.planos.filter((x) => x.id !== id) })),
+      salvarFissura: (f) => set((e) => ({ fissuras: inserirOuTrocar(e.fissuras, f) })),
+      salvarRecomeco: (r) => set((e) => ({ recomecos: inserirOuTrocar(e.recomecos, r) })),
+      adicionarMensagem: (m) => set((e) => ({ conversa: [...e.conversa, m].slice(-MAX_CONVERSA) })),
+      limparConversa: () => set({ conversa: [] }),
     }),
     {
       name: 'mare',
