@@ -6,8 +6,8 @@ Roteiro para rodar no celular quando ele estiver conectado. O APK de teste já f
 
 1. No celular: ativar "Opções do desenvolvedor" e "Depuração USB". Conectar o cabo e aceitar a chave RSA.
 2. No computador: `D:/android/sdk/platform-tools/adb.exe devices` deve listar o aparelho.
-3. Gerar o APK de teste, se ainda não existir: `npm run apk:teste`. Sai em `dist/mare-<versão>-teste.apk`, assinado com a chave de debug do modelo do Expo (nenhuma chave real).
-4. Instalar: `adb install -r dist/mare-0.1.0-teste.apk`.
+3. Gerar o APK de teste, se ainda não existir: `npm run apk:teste`. Sai em `dist/mare-<versão>-teste.apk`, assinado com a chave de debug do modelo do Expo (nenhuma chave real). Esse APK só traz `arm64-v8a` e `armeabi-v7a`: **não roda em emulador x86/x86_64**, só em celular de verdade (ou emulador ARM).
+4. Instalar: `adb install -r dist/mare-*-teste.apk` (rodar no Git Bash, ou trocar o `*` pelo nome do arquivo gerado).
 
 ## Conferências no aparelho
 
@@ -22,20 +22,35 @@ Roteiro para rodar no celular quando ele estiver conectado. O APK de teste já f
 - [ ] **Texto.** Nenhuma tela mostra "fracasso", "limpo", "sujo" ou "recaída"; o deslize aparece com contorno areia, nunca vermelho.
 - [ ] **Voltar do Android.** O botão/gesto de voltar sai das telas internas sem fechar o app por engano.
 
+## Conferir backup e permissões
+
+O Maré não manda nada para fora do aparelho. No `app.json`: `android.allowBackup: false` (nenhum backup automático do Android) e `android.blockedPermissions` com `SYSTEM_ALERT_WINDOW`, `READ_EXTERNAL_STORAGE` e `WRITE_EXTERNAL_STORAGE`. O manifesto gerado (`npx expo prebuild --platform android --no-install`, em `android/app/src/main/AndroidManifest.xml`) deve mostrar `android:allowBackup="false"` e esses três com `tools:node="remove"`.
+
+No APK instalado, conferir o manifesto final já mesclado (`aapt2` ou `apkanalyzer` do SDK):
+
+```
+D:/android/sdk/build-tools/<versão>/aapt2 dump permissions dist/mare-*-teste.apk
+D:/android/sdk/build-tools/<versão>/aapt2 dump xmltree --file AndroidManifest.xml dist/mare-*-teste.apk | grep -i allowBackup
+```
+
+- [ ] **Backup desligado:** `allowBackup` aparece como `0x0` (falso).
+- [ ] **Permissões:** só `android.permission.INTERNET` e `android.permission.VIBRATE` (esta é permissão comum, sem pedido ao usuário). Nada de `SYSTEM_ALERT_WINDOW`, `READ_EXTERNAL_STORAGE` ou `WRITE_EXTERNAL_STORAGE`.
+- [ ] No celular: Configurações, Apps, Maré, Permissões: nenhuma permissão pedida.
+
 ## Conferir a criptografia do banco
 
 O banco fica em `files/SQLite/mare.db` dentro da pasta privada do app (valor de `defaultDatabaseDirectory` do expo-sqlite no Android: `<filesDir>/SQLite`). O caminho `databases/mare.db` do plano **não** é o do expo-sqlite.
 
 O `adb run-as` só funciona em app **depurável**. O APK de teste é de release e **não** é depurável (`run-as: package not debuggable`). Duas formas de conferir:
 
-**A. Build de desenvolvimento (recomendado).** Com o celular conectado: `npm run android`. Esse build é depurável. Depois de criar os hábitos:
+**A. Build de desenvolvimento (recomendado).** Com o celular conectado: `npm run android`. Os comandos abaixo com `grep`, `od` e `head` rodam no Git Bash (ou WSL), não no PowerShell. Esse build é depurável. Depois de criar os hábitos:
 
 ```
-adb shell run-as com.mare.app head -c 64 files/SQLite/mare.db | xxd
+adb shell run-as com.mare.app head -c 64 files/SQLite/mare.db | od -c | head
 adb shell run-as com.mare.app grep -c "SQLite format 3" files/SQLite/mare.db
 ```
 
-**B. Emulador ou aparelho com root.** `adb root`, depois `adb shell head -c 64 /data/data/com.mare.app/files/SQLite/mare.db | xxd`.
+**B. Emulador ou aparelho com root.** `adb root`, depois `adb shell head -c 64 /data/data/com.mare.app/files/SQLite/mare.db | od -c | head`.
 
 Resultado esperado:
 
