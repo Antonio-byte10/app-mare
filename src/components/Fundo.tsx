@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { cores } from '@/theme';
@@ -22,7 +23,7 @@ export function Fundo({ variante = 'padrao', style, children }: Props) {
   const paradas: [number, string][] = mar
     ? [[0, '#164373'], [0.46, '#0A2442'], [1, '#040E1B']]
     : [[0, '#113257'], [0.55, cores.bg], [1, cores.bg]];
-  const id = `fundo-${variante}`;
+  const id = `fundo${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
     <View style={[styles.raiz, style]}>
       <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">

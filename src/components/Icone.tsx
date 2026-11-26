@@ -7,6 +7,8 @@ type Elemento =
   | { r: [x: number, y: number, w: number, h: number, rx: number] };
 
 /** Ícones do mockup v2 (viewBox 24, traço arredondado). */
+const livro: Elemento[] = [{ p: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z' }, { p: 'M9 8h6M9 12h6' }];
+
 const desenhos = {
   inicio: [{ p: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z' }],
   diario: [{ r: [4, 5, 16, 16, 3] }, { p: 'M16 3v4M8 3v4M4 11h16' }],
@@ -15,8 +17,9 @@ const desenhos = {
     { p: 'M2 18c2.5-2.5 5-2.5 7.5 0s5 2.5 7.5 0' },
   ],
   ondaSimples: [{ p: 'M2 13c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2.5 5-1' }],
-  aprender: [{ p: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z' }, { p: 'M9 8h6M9 12h6' }],
-  livro: [{ p: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z' }, { p: 'M9 8h6M9 12h6' }],
+  livro,
+  // Alias: mesma figura do livro.
+  aprender: livro,
   notas: [{ p: 'M6 4h12v16H6z' }, { p: 'M9 9h6M9 13h6M9 17h3' }],
   conversa: [{ p: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z' }],
   mais: [{ c: [12, 7, 1.2] }, { c: [12, 12, 1.2] }, { c: [12, 17, 1.2] }],
