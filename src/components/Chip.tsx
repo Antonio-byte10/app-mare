@@ -22,6 +22,8 @@ export function Chip({ children, ativo = false, cor = cores.aqua, ponto = false,
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected: ativo }}
       disabled={!onPress}
+      // 32 de altura no visual; a área de toque chega a 48dp.
+      hitSlop={{ top: 8, bottom: 8 }}
       onPress={onPress}
       style={[
         styles.base,

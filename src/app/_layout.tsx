@@ -7,11 +7,15 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
-import { useHydrated } from '@/store';
+import { AvisoDados } from '@/components/AvisoDados';
+import { Fundo } from '@/components/Fundo';
+import { Tela } from '@/components/Tela';
+import { useHydrated, useMare } from '@/store';
 import { cores } from '@/theme';
 
 export default function RootLayout() {
   const hidratado = useHydrated();
+  const erroArmazenamento = useMare((e) => e.erroArmazenamento);
   const [fontesProntas, erroFonte] = useFonts({
     Fraunces_300Light,
     Fraunces_400Regular,
@@ -22,6 +26,21 @@ export default function RootLayout() {
   // Se a fonte falhar, segue com a do sistema em vez de travar numa tela vazia.
   if (!hidratado || (!fontesProntas && !erroFonte)) {
     return <View style={{ flex: 1, backgroundColor: cores.bg }} />;
+  }
+
+  // Banco ilegível: nenhuma tela abre, para que ninguém registre o que não seria guardado.
+  // Depois de "Começar do zero" o store reidrata, a flag cai e o Stack volta sozinho.
+  if (erroArmazenamento) {
+    return (
+      <>
+        <StatusBar style="light" />
+        <Fundo>
+          <Tela>
+            <AvisoDados />
+          </Tela>
+        </Fundo>
+      </>
+    );
   }
 
   return (

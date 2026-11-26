@@ -15,6 +15,7 @@ export default function Fissura() {
           accessibilityRole="button"
           accessibilityLabel="Fechar"
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          hitSlop={4}
           style={{
             width: 40,
             height: 40,
@@ -30,7 +31,7 @@ export default function Fissura() {
         </Pressable>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <Texto tipo="titulo">A onda</Texto>
-          <Texto tipo="legenda">Chega no Plano 2</Texto>
+          <Texto tipo="legenda">Em breve neste app.</Texto>
         </View>
       </Tela>
     </Fundo>

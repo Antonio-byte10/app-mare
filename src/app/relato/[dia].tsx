@@ -132,7 +132,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
     <Fundo>
       <View style={[styles.tela, { paddingTop: top + 14 }]}>
         <View style={styles.cabecalho}>
-          <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar" style={styles.voltar}>
+          <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar" hitSlop={4} style={styles.voltar}>
             <Icone nome="voltar" />
           </Pressable>
           <View style={styles.titulos}>

@@ -15,7 +15,8 @@ export function Interruptor({ ligado, aoMudar, accessibilityLabel }: Props) {
       accessibilityState={{ checked: ligado }}
       accessibilityLabel={accessibilityLabel}
       onPress={() => aoMudar(!ligado)}
-      hitSlop={8}
+      // Trilho de 44x26; a área de toque chega a 60x48dp.
+      hitSlop={{ top: 11, bottom: 11, left: 8, right: 8 }}
       style={[
         styles.trilho,
         ligado

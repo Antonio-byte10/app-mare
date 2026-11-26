@@ -28,6 +28,8 @@ export function Botao({
       accessibilityState={{ disabled: !!desabilitado }}
       disabled={desabilitado}
       onPress={onPress}
+      // O botão de texto tem 40 de altura; a área de toque chega a 48dp.
+      hitSlop={variante === 'texto' ? { top: 4, bottom: 4 } : undefined}
       style={({ pressed }) => [
         styles.base,
         variante === 'secundario' && styles.secundario,

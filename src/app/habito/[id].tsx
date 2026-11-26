@@ -181,7 +181,7 @@ export default function EditarHabito() {
     <Fundo>
       <Tela rolavel>
         <View style={styles.topo}>
-          <Pressable onPress={() => voltar()} accessibilityRole="button" accessibilityLabel="Voltar" hitSlop={12}>
+          <Pressable onPress={() => voltar()} accessibilityRole="button" accessibilityLabel="Voltar" hitSlop={14}>
             <Icone nome="voltar" />
           </Pressable>
           <Texto tipo="titulo">{edicao ? 'Editar hábito' : 'Novo hábito'}</Texto>

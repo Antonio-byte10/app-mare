@@ -6,7 +6,7 @@ export default function Aprender() {
     <Tela>
       <Texto tipo="titulo">Aprender</Texto>
       <Texto tipo="legenda" style={{ marginTop: 8 }}>
-        Chega no Plano 2
+        Em breve neste app.
       </Texto>
     </Tela>
   );

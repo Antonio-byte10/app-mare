@@ -74,7 +74,8 @@ export default function Mais() {
         subtitulo="github.com/Antonio-byte10/app-mare"
         direita={<Icone nome="setaDireita" tamanho={18} cor={cores.faint} />}
         onPress={() => {
-          void Linking.openURL(REPOSITORIO);
+          // Sem navegador instalado o link não abre; não há o que fazer além de não quebrar.
+          Linking.openURL(REPOSITORIO).catch(() => undefined);
         }}
         accessibilityLabel="Código aberto, abre o repositório no navegador"
       />

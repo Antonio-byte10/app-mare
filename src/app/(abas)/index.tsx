@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AnelAgua } from '@/components/AnelAgua';
-import { AvisoDados } from '@/components/AvisoDados';
 import { Chip } from '@/components/Chip';
 import { Icone } from '@/components/Icone';
 import { LinhaPendente } from '@/components/LinhaPendente';
@@ -31,17 +30,8 @@ export default function Inicio() {
   const setAjustes = useMare((e) => e.setAjustes);
   const avisoRecomeco = useMare((e) => e.avisoRecomeco);
   const dispensarAviso = useMare((e) => e.dispensarAvisoRecomeco);
-  const erroArmazenamento = useMare((e) => e.erroArmazenamento);
   const router = useRouter();
   const agora = useAgora();
-
-  if (erroArmazenamento) {
-    return (
-      <Tela>
-        <AvisoDados />
-      </Tela>
-    );
-  }
 
   const ativo = habitoAtivoDe(habitos, ajustes.habitoAtivo);
   if (!ativo) {
@@ -135,7 +125,7 @@ function FaixaRecomeco({ aoDispensar }: { aoDispensar: () => void }) {
         onPress={aoDispensar}
         accessibilityRole="button"
         accessibilityLabel="Dispensar aviso"
-        hitSlop={10}
+        hitSlop={12}
         style={styles.faixaFechar}
       >
         <Icone nome="fechar" tamanho={18} cor={cores.muted} />

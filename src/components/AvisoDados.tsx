@@ -9,8 +9,8 @@ import { Simbolo } from './Simbolo';
 import { Texto } from './Texto';
 
 /**
- * Início quando o banco existe mas não abriu. Nada foi apagado: só a pessoa decide recomeçar,
- * e só depois de confirmar.
+ * Tela cheia no lugar do app (ver `_layout.tsx`) quando o banco existe mas não abriu. Nada foi
+ * apagado: só a pessoa decide recomeçar, e só depois de confirmar.
  */
 export function AvisoDados() {
   const [apagando, setApagando] = useState(false);

@@ -31,6 +31,7 @@ export function Segmento<T extends string | number | boolean>({
             accessibilityRole="radio"
             accessibilityState={{ selected: ativo, checked: ativo }}
             onPress={() => onChange(o.valor)}
+            hitSlop={{ top: 4, bottom: 4 }}
             style={[styles.item, ativo && { backgroundColor: comAlfa(cor, 0.13), borderColor: comAlfa(cor, 0.35) }]}
           >
             <Texto style={styles.texto} cor={ativo ? cor : cores.muted}>

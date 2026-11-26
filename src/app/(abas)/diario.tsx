@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { AvisoDados } from '@/components/AvisoDados';
 import { BarrasSemana } from '@/components/BarrasSemana';
 import { Calendario } from '@/components/Calendario';
 import { Chip } from '@/components/Chip';
@@ -24,19 +23,10 @@ export default function Diario() {
   const relatos = useMare((e) => e.relatos);
   const ajustes = useMare((e) => e.ajustes);
   const setAjustes = useMare((e) => e.setAjustes);
-  const erroArmazenamento = useMare((e) => e.erroArmazenamento);
   const router = useRouter();
   const agora = useAgora();
   // Mês que a pessoa escolheu com as setas; sem escolha, o mês de hoje.
   const [escolhido, setEscolhido] = useState<Mes | null>(null);
-
-  if (erroArmazenamento) {
-    return (
-      <Tela>
-        <AvisoDados />
-      </Tela>
-    );
-  }
 
   const ativo = habitoAtivoDe(habitos, ajustes.habitoAtivo);
   if (!ativo) {

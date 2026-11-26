@@ -128,6 +128,8 @@ function SetaMes({
       accessibilityState={{ disabled: !ativa }}
       disabled={!ativa}
       onPress={onPress}
+      // 34 de lado no visual; a área de toque chega a 48dp.
+      hitSlop={7}
       style={({ pressed }) => [styles.seta, !ativa && styles.setaInativa, pressed && styles.pressionado]}
     >
       <Icone nome={nome} tamanho={18} cor={cores.muted} />
@@ -156,7 +158,8 @@ function Dia({
         accessibilityState={{ disabled: !tocavel }}
         disabled={!tocavel}
         onPress={() => onDia(dia)}
-        hitSlop={2}
+        // Círculo de 32; a área de toque chega a 48dp.
+        hitSlop={8}
         style={({ pressed }) => [styles.circulo, estilosEstado[estado], pressed && styles.pressionado]}
       >
         <Texto style={[styles.numero, { color: corNumero[estado] }]}>{Number(dia.slice(8))}</Texto>
