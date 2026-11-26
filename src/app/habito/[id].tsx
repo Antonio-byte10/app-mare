@@ -6,6 +6,7 @@ import { Botao } from '@/components/Botao';
 import { Chip } from '@/components/Chip';
 import { Fundo } from '@/components/Fundo';
 import { Icone } from '@/components/Icone';
+import { Segmento } from '@/components/Segmento';
 import { Tela } from '@/components/Tela';
 import { Texto } from '@/components/Texto';
 import { confirmar } from '@/lib/confirmar';
@@ -13,7 +14,7 @@ import { dataLocal } from '@/lib/datas';
 import { centavosParaTexto, inteiroPositivo, isoParaBr, paraCentavos, validarInicio } from '@/lib/formulario';
 import type { Habito, TipoHabito } from '@/lib/tipos';
 import { useMare } from '@/store';
-import { comAlfa, cores, fontes } from '@/theme';
+import { cores, fontes } from '@/theme';
 
 const TIPOS: { id: TipoHabito; rotulo: string }[] = [
   { id: 'tabaco', rotulo: 'Cigarro / nicotina' },
@@ -197,27 +198,18 @@ export default function EditarHabito() {
 
         <View style={styles.campo}>
           <Texto style={styles.rotulo}>Meta</Texto>
-          <View style={styles.seg}>
-            {[
-              { v: false, r: 'Parar' },
-              { v: true, r: 'Reduzir' },
-            ].map((o) => (
-              <Pressable
-                key={o.r}
-                accessibilityRole="button"
-                accessibilityState={{ selected: reduzir === o.v }}
-                onPress={() => {
-                  setReduzir(o.v);
-                  if (o.v && unidade.trim() === '') setUnidade(UNIDADE_PADRAO[tipo]);
-                }}
-                style={[styles.segItem, reduzir === o.v && styles.segOn]}
-              >
-                <Texto style={styles.segTexto} cor={reduzir === o.v ? cores.foam : cores.muted}>
-                  {o.r}
-                </Texto>
-              </Pressable>
-            ))}
-          </View>
+          <Segmento
+            opcoes={[
+              { valor: false, rotulo: 'Parar' },
+              { valor: true, rotulo: 'Reduzir' },
+            ]}
+            valor={reduzir}
+            onChange={(v) => {
+              setReduzir(v);
+              if (v && unidade.trim() === '') setUnidade(UNIDADE_PADRAO[tipo]);
+            }}
+            accessibilityLabel="Meta"
+          />
         </View>
 
         {reduzir ? (
@@ -293,25 +285,5 @@ const styles = StyleSheet.create({
     fontFamily: fontes.ui,
     fontSize: 14.5,
   },
-  seg: {
-    flexDirection: 'row',
-    gap: 4,
-    padding: 4,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: cores.line,
-    backgroundColor: 'rgba(255,255,255,.02)',
-  },
-  segItem: {
-    flex: 1,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  segOn: { backgroundColor: comAlfa(cores.foam, 0.13), borderColor: comAlfa(cores.foam, 0.35) },
-  segTexto: { fontFamily: fontes.uiForte, fontSize: 14, lineHeight: 18 },
   acoes: { gap: 8, marginTop: 8 },
 });
