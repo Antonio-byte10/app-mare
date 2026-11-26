@@ -19,7 +19,7 @@ O **Maré** ajuda quem quer **parar ou diminuir** três hábitos:
 
 Muitos apps de acompanhamento cobram para funcionar de verdade. Aqui tudo é livre, porque as pessoas merecem isso.
 
-> **Status:** em desenvolvimento. O [Plano 1](docs/superpowers/plans/2026-11-26-mare-plano-1-nucleo.md) (núcleo diário) está pronto: hábitos, relato diário, contador, início, calendário e marcos, com dados criptografados. Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e entregar os próximos planos.
+> **Status:** em desenvolvimento (versão 0.2.0). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e entregar os lembretes, o bloqueio e o disfarce.
 
 ## Por que "Maré"
 
@@ -91,9 +91,9 @@ O app **informa e incentiva a procurar ajuda**, mas **não diagnostica, não pre
 | | Etapa | O que entrega |
 |---|---|---|
 | ✓ | [1 · Núcleo diário](docs/superpowers/plans/2026-11-26-mare-plano-1-nucleo.md) | Hábitos, relato diário, contador, início, calendário, marcos, dados criptografados |
-| ○ | 2 · Primeiro uso e cuidado | Avaliação "Como você está", fissura em 3 passos, porquês, biblioteca |
+| ✓ | 2 · Primeiro uso e cuidado | Avaliação "Como você está", fissura em 3 passos, porquês, biblioteca |
 | ○ | 3 · Lembretes e privacidade | Notificações discretas, "antes da onda", bloqueio, disfarce, backup cifrado |
-| ○ | 4 · IA de cada um | Conversa com Gemini, ChatGPT ou Claude, servidor opcional no Render |
+| ✓ | 4 · IA de cada um | Conversa com Gemini, ChatGPT ou Claude, servidor opcional no Render |
 | ○ | 5 · Lançamento | APK no GitHub, primeira versão beta |
 
 Detalhes em [docs/superpowers/plans/2026-11-26-mare-roteiro.md](docs/superpowers/plans/2026-11-26-mare-roteiro.md).
@@ -108,6 +108,14 @@ npm run web        # abre no navegador (modo celular do DevTools)
 npm test           # testes da lógica
 npm run apk:teste  # gera um APK de teste em dist/ (precisa do Android SDK)
 ```
+
+## Servidor de IA no Render (opcional)
+
+Quem não quer a chave da IA no celular pode usar um servidor próprio no plano gratuito do [Render](https://render.com). O servidor fica em [`servidor/servidor-ia.mjs`](servidor/servidor-ia.mjs): é Node puro, sem dependências, e não guarda nem registra as conversas.
+
+1. No Render, crie um *Blueprint* a partir deste repositório (usa o [`render.yaml`](render.yaml)) ou um *Web Service* com `node servidor/servidor-ia.mjs`.
+2. Em **Environment**, preencha `IA_CHAVE` com a sua chave e `APP_TOKEN` com um código longo (24 caracteres ou mais). `IA_PROVEDOR` (`gemini`, `openai` ou `claude`) e `IA_MODELO` são opcionais.
+3. No app: **Mais → Inteligência artificial → Meu servidor**, cole o endereço `https://…onrender.com` e o código, e toque em **Testar conexão**. No plano gratuito, o servidor leva até 1 minuto para acordar.
 
 ## Contribuir
 
