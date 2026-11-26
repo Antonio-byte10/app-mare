@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maré — design das telas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..650,0..100;1,9..144,300..650,0..100&family=Geist:wght@400..700&family=Outfit:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --abyss:#030D19; --bg:#071526; --deep:#0A1E36; --s1:#0E2540; --s2:#143253;
+  --line:rgba(150,190,240,.11); --line2:rgba(150,190,240,.18);
+  --text:#EAF2FB; --muted:#9DB3CC; --faint:#7F97B3;
+  --aqua:#6FD3E0; --peri:#A9B6F5; --sand:#F2C98A; --coral:#F0A08A; --foam:#7FE0B5;
+  --display:'Fraunces',Georgia,serif; --ui:'Geist',system-ui,sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--abyss);color:var(--text);font-family:var(--ui);-webkit-font-smoothing:antialiased;padding:56px 32px 120px}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 500px at 20% -10%,rgba(30,80,130,.35),transparent 70%),radial-gradient(700px 500px at 100% 10%,rgba(120,130,230,.10),transparent 70%)}
+.disp{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72;font-weight:420;letter-spacing:-.015em}
+.wrap{position:relative;max-width:1560px;margin:0 auto}
+
+/* ---------- page sections ---------- */
+.sec{margin-top:88px}
+.sec-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:48px;align-items:end;margin-bottom:34px}
+.sec-head .k{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua);font-weight:600}
+.sec-head h2{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 96;font-weight:400;font-size:40px;line-height:1.05;letter-spacing:-.02em;margin-top:10px}
+.sec-head p{color:var(--muted);font-size:15.5px;line-height:1.65;max-width:62ch}
+.phones{display:flex;flex-wrap:wrap;gap:40px 36px}
+.pcol{display:flex;flex-direction:column;gap:14px}
+.pcap{font-size:13px;color:var(--muted);padding-left:6px}
+.pcap b{color:var(--text);font-weight:600;margin-right:6px}
+
+/* ---------- branding ---------- */
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:center}
+.hero h1{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 144;font-weight:380;font-size:112px;line-height:.9;letter-spacing:-.045em}
+.hero h1 em{font-style:normal;color:var(--aqua)}
+.hero .tag{font-family:var(--display);font-style:italic;font-variation-settings:"SOFT" 100,"opsz" 36;font-size:24px;color:var(--muted);margin-top:18px;font-weight:350}
+.hero p{color:var(--muted);line-height:1.7;max-width:56ch;margin-top:22px;font-size:15.5px}
+.brandboard{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:16px}
+.tile{border:1px solid var(--line);border-radius:28px;padding:24px;background:linear-gradient(180deg,rgba(14,37,64,.55),rgba(7,21,38,.55));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.tile .lab{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:16px}
+.tile.big{grid-row:span 2;display:flex;flex-direction:column;justify-content:space-between}
+.appicon{width:96px;height:96px;border-radius:28px;display:grid;place-items:center;background:radial-gradient(120% 100% at 30% 10%,#173F68,#071526 70%);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 18px 40px -18px rgba(0,0,0,.8)}
+.iconrow{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
+.ic{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.ic .sq{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.swatches div{height:46px;border-radius:14px;position:relative;border:1px solid rgba(255,255,255,.06)}
+.swatches span{position:absolute;left:8px;bottom:6px;font-size:10px;font-weight:600;color:rgba(3,13,25,.75)}
+.swatches .dk span{color:rgba(234,242,251,.7)}
+.type{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.spec{cursor:pointer;border:1px solid var(--line);border-radius:24px;padding:22px;transition:border-color .3s var(--ease),background .3s var(--ease)}
+.spec:hover{border-color:var(--line2)}
+.spec.selected{border-color:rgba(111,211,224,.6);background:rgba(111,211,224,.05)}
+.spec .n{font-size:92px;line-height:.9;letter-spacing:-.04em}
+.spec .t{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6}
+
+/* ---------- phone shell ---------- */
+.phone{width:340px;height:730px;border-radius:46px;padding:9px;background:linear-gradient(155deg,#1D3A5E 0%,#0A1A2E 40%,#06121F 100%);box-shadow:0 50px 90px -40px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.08)}
+.scr{position:relative;width:100%;height:100%;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;background:radial-gradient(140% 70% at 50% -8%,#113257 0%,var(--bg) 55%)}
+.sb{display:flex;justify-content:space-between;align-items:center;padding:13px 26px 4px;font-size:12px;font-weight:600;letter-spacing:.02em;flex:none}
+.sb .bt{display:flex;gap:5px;align-items:center;opacity:.85}
+.sb .bt i{display:block;width:16px;height:8px;border-radius:3px;border:1.4px solid var(--text);position:relative}
+.sb .bt i::after{content:"";position:absolute;inset:1.4px 4px 1.4px 1.4px;background:var(--text);border-radius:1px}
+.body{flex:1;min-height:0;overflow:hidden;padding:10px 22px 0;display:flex;flex-direction:column}
+.foot{flex:none;padding:14px 22px 22px;display:flex;flex-direction:column;gap:10px}
+.k2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua);font-weight:600}
+.h{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 40;font-weight:420;font-size:26px;line-height:1.18;letter-spacing:-.02em}
+.p{color:var(--muted);font-size:14px;line-height:1.55}
+.ico{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ib{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;color:var(--muted);background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px var(--line)}
+.btn{height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15.5px;letter-spacing:-.005em;background:linear-gradient(180deg,#8BE1EA,#62C7D6);color:#052033;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 10px 24px -14px rgba(2,10,20,.9)}
+.btn.sec2{background:rgba(255,255,255,.04);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn.txt{background:none;box-shadow:none;color:var(--muted);height:40px;font-size:14px}
+.row{display:flex;align-items:center;gap:12px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px;border-radius:999px;font-size:13px;font-weight:500;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.chip.on{color:var(--text);background:rgba(111,211,224,.10);box-shadow:inset 0 0 0 1px rgba(111,211,224,.42)}
+.chip.onp{color:var(--text);background:rgba(169,182,245,.12);box-shadow:inset 0 0 0 1px rgba(169,182,245,.45)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.hr{height:1px;background:var(--line);margin:0}
+.fade{-webkit-mask-image:linear-gradient(180deg,#000 85%,transparent);mask-image:linear-gradient(180deg,#000 85%,transparent)}
+
+/* assessment */
+.prog{display:flex;align-items:center;gap:14px}
+.prog .bar{flex:1;height:4px;border-radius:9px;background:rgba(255,255,255,.07);overflow:hidden}
+.prog .bar i{display:block;height:100%;width:38%;border-radius:9px;background:linear-gradient(90deg,var(--peri),var(--aqua))}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 16px;border-radius:16px;font-size:15px;font-weight:500;box-shadow:inset 0 0 0 1px var(--line);background:rgba(255,255,255,.02)}
+.opt .r{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1.5px #3B5878}
+.opt.sel{background:rgba(111,211,224,.08);box-shadow:inset 0 0 0 1.5px rgba(111,211,224,.6)}
+.opt.sel .r{box-shadow:inset 0 0 0 6px var(--aqua)}
+
+/* result */
+.res{display:flex;flex-direction:column}
+.resi{padding:16px 0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center}
+.resi + .resi{border-top:1px solid var(--line)}
+.badge{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;grid-row:span 2}
+.resi .nm{font-weight:600;font-size:15px}
+.lv{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+.lv .m{display:flex;gap:4px}
+.lv .m i{width:22px;height:4px;border-radius:4px;background:rgba(255,255,255,.08)}
+
+/* home */
+.ring{position:relative;width:236px;height:236px;margin:14px auto 0;flex:none}
+.ring svg.arc{position:absolute;inset:0;transform:rotate(-90deg)}
+.water{position:absolute;inset:20px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 28%,#16406A,#091C33 75%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.water svg{position:absolute;left:0;bottom:0;width:200%;animation:drift 10s linear infinite}
+.water svg.w1{height:52%;opacity:.5;animation-duration:15s}
+.water svg.w2{height:47%}
+@keyframes drift{to{transform:translateX(-50%)}}
+.ringtxt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.num{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 144;font-weight:380;font-size:84px;line-height:.85;letter-spacing:-.05em}
+.ringtxt small{font-size:13px;font-weight:500;color:var(--text);opacity:.85;margin-top:8px}
+.trio{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;align-items:center;margin-top:14px;padding:12px 0}
+.trio .v{text-align:center}
+.trio .v b{display:block;font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 36;font-weight:450;font-size:22px;letter-spacing:-.02em}
+.trio .v span{display:block;font-size:11px;line-height:1.3;margin-top:3px;color:var(--muted)}
+.trio .sep{height:30px;background:var(--line)}
+.rowcard{display:flex;align-items:center;gap:14px;padding:14px;border-radius:20px;background:rgba(169,182,245,.07);box-shadow:inset 0 0 0 1px rgba(169,182,245,.18)}
+.tabbar{flex:none;margin:0 12px 12px;height:68px;border-radius:24px;background:rgba(8,24,44,.92);box-shadow:inset 0 0 0 1px var(--line),inset 0 1px 0 rgba(255,255,255,.04);display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;font-weight:500;color:var(--faint)}
+.tab.on{color:var(--text)}
+.tab.on .ico{color:var(--aqua)}
+.tab .ico{width:21px;height:21px}
+.fab{justify-self:center;width:54px;height:54px;border-radius:19px;display:grid;place-items:center;color:#052033;background:linear-gradient(180deg,#8BE1EA,#5BBFD0);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+
+/* relato */
+.lab2{font-size:13.5px;font-weight:600;margin-bottom:12px}
+.sl{position:relative;height:28px}
+.sl .tr{position:absolute;top:12px;left:0;right:0;height:4px;border-radius:9px;background:rgba(255,255,255,.08)}
+.sl .tr i{position:absolute;inset:0 40% 0 0;border-radius:9px;background:linear-gradient(90deg,var(--aqua),var(--peri))}
+.sl .kn{position:absolute;left:calc(60% - 14px);top:0;width:28px;height:28px;border-radius:50%;background:var(--text);display:grid;place-items:center;font-size:12px;font-weight:700;color:#0A2039;box-shadow:0 4px 12px rgba(0,0,0,.45)}
+.ticks{display:flex;justify-content:space-between;font-size:11.5px;color:var(--faint);margin-top:6px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:15px;box-shadow:inset 0 0 0 1px var(--line);background:rgba(255,255,255,.02)}
+.seg div{height:40px;display:grid;place-items:center;border-radius:11px;font-size:14px;font-weight:600;color:var(--muted)}
+.seg .on{background:rgba(127,224,181,.13);color:var(--foam);box-shadow:inset 0 0 0 1px rgba(127,224,181,.35)}
+.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.mood{height:48px;border-radius:15px;display:grid;place-items:center;color:var(--faint);box-shadow:inset 0 0 0 1px var(--line)}
+.mood.on{color:var(--peri);background:rgba(169,182,245,.12);box-shadow:inset 0 0 0 1px rgba(169,182,245,.5)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.mini{display:flex;align-items:center;justify-content:space-between;padding:13px 0;font-size:14px}
+.mini span{font-size:12.5px;color:var(--muted)}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);row-gap:6px;text-align:center}
+.cal .w{font-size:11px;color:var(--faint);font-weight:600;padding-bottom:6px}
+.d{height:36px;display:grid;place-items:center;position:relative;font-size:13px;font-weight:500}
+.d span{width:32px;height:32px;border-radius:50%;display:grid;place-items:center}
+.d.f span{background:rgba(127,224,181,.13);color:var(--foam)}
+.d.x span{box-shadow:inset 0 0 0 1.5px rgba(242,201,138,.7);color:var(--sand)}
+.d.t span{box-shadow:inset 0 0 0 1.5px var(--aqua);border:0;color:var(--text);background:rgba(111,211,224,.08)}
+.d.t span::after{content:"";position:absolute;bottom:0;width:4px;height:4px;border-radius:50%;background:var(--aqua)}
+.d.p span{box-shadow:inset 0 0 0 1.5px rgba(157,179,204,.45);color:var(--muted);background-image:none;outline:1.5px dashed rgba(157,179,204,.0)}
+.d.fu{color:rgba(127,151,179,.45)}
+.d.o{color:transparent}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;align-items:end;height:86px}
+.bars div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10.5px;color:var(--faint);height:100%;justify-content:flex-end}
+.bars i{width:100%;border-radius:7px 7px 3px 3px;background:rgba(169,182,245,.28)}
+.bars .hi i{background:linear-gradient(180deg,var(--sand),rgba(242,201,138,.35))}
+.bars .hi{color:var(--sand)}
+
+/* fissura */
+.sea{background:radial-gradient(120% 65% at 50% 30%,#164373 0%,#0A2442 46%,#040E1B 100%)}
+.steps{display:flex;gap:6px}
+.steps i{width:22px;height:4px;border-radius:4px;background:rgba(255,255,255,.14)}
+.steps i.on{background:var(--text)}
+.orb{position:relative;width:260px;height:260px;margin:34px auto 0;flex:none}
+.orb i{position:absolute;border-radius:50%}
+.orb .r1{inset:0;box-shadow:inset 0 0 0 1px rgba(111,211,224,.16);animation:br 10s var(--ease) infinite}
+.orb .r2{inset:28px;box-shadow:inset 0 0 0 1px rgba(169,182,245,.22);animation:br 10s var(--ease) infinite .2s}
+.orb .r3{inset:62px;background:radial-gradient(circle at 38% 32%,#C8F4F8 0%,#76D3E0 30%,#2F78A8 72%,#1B4E80 100%);box-shadow:inset 0 -12px 30px rgba(10,30,60,.45),inset 0 8px 18px rgba(255,255,255,.25);animation:br 10s var(--ease) infinite .1s}
+@keyframes br{0%,100%{transform:scale(.74)}40%,48%{transform:scale(1)}}
+.phase{position:relative;height:46px;text-align:center;margin-top:26px}
+.phase div{position:absolute;inset:0;font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 72;font-size:34px;font-weight:380;letter-spacing:-.02em}
+.pa{animation:pa 10s infinite}.pb{animation:pb 10s infinite;opacity:0}
+@keyframes pa{0%,40%{opacity:1}46%,96%{opacity:0}100%{opacity:1}}
+@keyframes pb{0%,44%{opacity:0}50%,92%{opacity:1}98%,100%{opacity:0}}
+.ocean{position:relative;height:150px;margin:0;flex:none;overflow:hidden}
+.ocean svg{position:absolute;left:0;bottom:0;width:200%;animation:drift 12s linear infinite}
+.ocean .o1{height:100%;opacity:.35;animation-duration:18s}
+.ocean .o2{height:80%;opacity:.6}
+.ocean .o3{height:58%;animation-duration:9s}
+.timer{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 144;font-weight:330;font-size:76px;letter-spacing:-.04em;line-height:1;text-align:center}
+.quote{padding-left:16px;border-left:2px solid var(--sand)}
+.quote .q{font-family:var(--display);font-style:italic;font-variation-settings:"SOFT" 100,"opsz" 24;font-size:17px;line-height:1.45;font-weight:380}
+.quote .w{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sand);font-weight:600;margin-bottom:8px}
+.ripple{position:relative;width:200px;height:200px;margin:40px auto 0;flex:none;display:grid;place-items:center}
+.ripple i{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(127,224,181,.35);animation:rip 4s var(--ease) infinite}
+.ripple i:nth-child(2){animation-delay:1.3s}.ripple i:nth-child(3){animation-delay:2.6s}
+@keyframes rip{0%{transform:scale(.35);opacity:1}100%{transform:scale(1);opacity:0}}
+.ripple .c{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 40% 35%,#B8F2D6,#5CC79A 70%);color:#06301F;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.pill{display:inline-flex;gap:8px;align-items:center;height:34px;padding:0 14px;border-radius:999px;font-size:13px;color:var(--text);box-shadow:inset 0 0 0 1px var(--line2);background:rgba(255,255,255,.03)}
+
+/* lock screen */
+.lock{background:radial-gradient(120% 80% at 70% 0%,#1E3E72 0%,#0B1F3B 45%,#050E1C 100%)}
+.clock{font-family:var(--ui);font-weight:300;font-size:84px;letter-spacing:-.04em;text-align:center;line-height:1;margin-top:28px}
+.date{text-align:center;color:var(--muted);font-size:15px;margin-top:8px}
+.notif{border-radius:22px;padding:13px 14px;background:rgba(220,235,255,.09);backdrop-filter:blur(18px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 1px 0 rgba(255,255,255,.08);display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.notif .ni{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;grid-row:span 2}
+.notif .hd{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.notif .hd b{color:var(--text);font-weight:600}
+.notif .tx{font-size:14px;line-height:1.4}
+
+/* settings */
+.set{display:flex;flex-direction:column}
+.si{display:grid;grid-template-columns:auto 1fr auto;gap:2px 14px;align-items:center;padding:14px 0}
+.si + .si{border-top:1px solid var(--line)}
+.si .ico{grid-row:span 2;color:var(--muted)}
+.si .t{font-size:14.5px;font-weight:500}
+.si .s{font-size:12.5px;color:var(--muted)}
+.tg{grid-row:span 2;width:44px;height:26px;border-radius:999px;background:rgba(255,255,255,.1);position:relative;box-shadow:inset 0 0 0 1px var(--line)}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#7F97B3;transition:transform .3s var(--ease)}
+.tg.on{background:rgba(111,211,224,.35);box-shadow:inset 0 0 0 1px rgba(111,211,224,.5)}
+.tg.on::after{transform:translateX(18px);background:var(--text)}
+.grp{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:18px 0 2px}
+
+/* chat */
+.msgs{display:flex;flex-direction:column;gap:12px}
+.me{align-self:flex-end;max-width:82%;padding:11px 14px;border-radius:18px 18px 6px 18px;background:rgba(111,211,224,.14);box-shadow:inset 0 0 0 1px rgba(111,211,224,.25);font-size:14.5px;line-height:1.45}
+.ai{align-self:flex-start;max-width:88%;font-size:14.5px;line-height:1.55;color:var(--text)}
+.ai .who{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.typing{display:inline-flex;gap:4px}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:ty 1.4s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes ty{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.input{display:flex;align-items:center;gap:10px;height:52px;border-radius:18px;padding:0 8px 0 16px;box-shadow:inset 0 0 0 1px var(--line2);background:rgba(255,255,255,.03);color:var(--faint);font-size:14.5px}
+.send{margin-left:auto;width:38px;height:38px;border-radius:13px;display:grid;place-items:center;background:var(--aqua);color:#052033}
+
+/* milestones */
+.tl{display:flex;flex-direction:column}
+.tli{display:grid;grid-template-columns:30px 1fr;gap:0 14px;position:relative;padding-bottom:18px}
+.tli::before{content:"";position:absolute;left:14px;top:30px;bottom:0;width:2px;background:var(--line)}
+.tli:last-child::before{display:none}
+.tli .mk{width:30px;height:30px;border-radius:50%;display:grid;place-items:center}
+.tli.done .mk{background:rgba(242,201,138,.16);color:var(--sand);box-shadow:inset 0 0 0 1px rgba(242,201,138,.5)}
+.tli.done::before{background:rgba(242,201,138,.35)}
+.tli.now .mk{box-shadow:inset 0 0 0 1.5px var(--aqua);color:var(--aqua)}
+.tli.locked .mk{box-shadow:inset 0 0 0 1px var(--line2);color:var(--faint)}
+.tli .tt{font-size:14.5px;font-weight:600;padding-top:5px}
+.tli .ds{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:3px}
+.tli.locked .tt{color:var(--faint)}
+.pbar{height:4px;border-radius:9px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}
+.pbar i{display:block;height:100%;width:86%;background:var(--aqua);border-radius:9px}
+
+/* splash */
+.splash{background:radial-gradient(100% 60% at 50% 45%,#123A63 0%,#071526 60%,#040E1B 100%);align-items:center;justify-content:center}
+
+.ask{margin-top:96px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:48px}
+.ask h2{font-family:var(--display);font-variation-settings:"SOFT" 100,"opsz" 96;font-weight:400;font-size:34px;line-height:1.1;letter-spacing:-.02em}
+.ask ul{list-style:none;display:flex;flex-direction:column;gap:12px;color:var(--muted);font-size:15px;line-height:1.6}
+.ask li{padding-left:22px;position:relative}
+.ask li::before{content:"";position:absolute;left:0;top:10px;width:8px;height:8px;border-radius:50%;background:var(--aqua);opacity:.7}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- shared defs -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gMare" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9BE8F0"/><stop offset="1" stop-color="#8E9DF0"/></linearGradient>
+    <linearGradient id="gWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FD9E5"/><stop offset="1" stop-color="#5B6FD6"/></linearGradient>
+    <clipPath id="cMare"><circle cx="32" cy="32" r="24"/></clipPath>
+    <mask id="mMoon"><rect width="64" height="64" fill="#fff"/><circle cx="44" cy="17.5" r="6.2" fill="#000"/></mask>
+    <symbol id="mare" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="24" fill="none" stroke="url(#gMare)" stroke-width="2.4"/>
+      <g clip-path="url(#cMare)">
+        <path d="M2 41 C11 35 19 35 27 40 S43 46 51 40 S60 35 64 37 V64 H2Z" fill="url(#gWater)"/>
+        <path d="M2 48 C11 43 19 43 27 47 S43 52 51 47 S60 43 64 44" fill="none" stroke="#071526" stroke-opacity=".35" stroke-width="1.6"/>
+      </g>
+      <circle cx="40" cy="20.5" r="6.6" fill="#F2C98A" mask="url(#mMoon)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<!-- ========== BRANDING ========== -->
+<section class="hero">
+  <div>
+    <div class="k2">Identidade</div>
+    <h1 style="margin-top:22px">mar<em>é</em></h1>
+    <div class="tag">A lua puxa a maré. Você também pode.</div>
+    <p>A marca junta a <b style="color:var(--text);font-weight:600">lua</b> e a <b style="color:var(--text);font-weight:600">onda</b>. A maré sobe e desce todo dia, e ninguém chama isso de fracasso. A fissura funciona do mesmo jeito: vem como onda e passa. A lua em areia é a luz das conquistas, e a água em degradê é a calma.</p>
+  </div>
+  <div class="brandboard">
+    <div class="tile big">
+      <div class="lab">Símbolo</div>
+      <svg width="190" height="190" style="align-self:center"><use href="#mare"/></svg>
+      <div class="row" style="justify-content:center;gap:12px">
+        <svg width="34" height="34"><use href="#mare"/></svg>
+        <span class="disp" style="font-size:34px;font-weight:400;letter-spacing:-.03em">maré</span>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="lab">Ícone e disfarces</div>
+      <div class="iconrow">
+        <div class="ic"><div class="appicon" style="width:64px;height:64px;border-radius:20px"><svg width="44" height="44"><use href="#mare"/></svg></div>Maré</div>
+        <div class="ic"><div class="sq" style="background:#2A3B4F;color:#E7EDF3"><svg class="ico" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 8h6M9 12h6"/></svg></div>Diário</div>
+        <div class="ic"><div class="sq" style="background:#E9E3D6;color:#3B3426"><svg class="ico" viewBox="0 0 24 24"><path d="M6 4h12v16H6z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></div>Notas</div>
+        <div class="ic"><div class="sq" style="background:#2E4A3F;color:#CFE8DA"><svg class="ico" viewBox="0 0 24 24"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg></div>Calma</div>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="lab">Cores</div>
+      <div class="swatches">
+        <div class="dk" style="background:#071526"><span>fundo</span></div>
+        <div class="dk" style="background:#143253"><span>cartão</span></div>
+        <div style="background:#6FD3E0"><span>água</span></div>
+        <div style="background:#A9B6F5"><span>lavanda</span></div>
+        <div style="background:#F2C98A"><span>lua</span></div>
+        <div style="background:#7FE0B5"><span>espuma</span></div>
+        <div style="background:#F0A08A"><span>coral</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-head">
+    <div><div class="k">Tipografia</div><h2>Duas vozes:<br>uma para sentir, outra para usar.</h2></div>
+    <p><b style="color:var(--text)">Fraunces</b>, uma serifada macia e moderna, só para números grandes, títulos e frases de acolhimento. E <b style="color:var(--text)">Geist</b>, uma sans limpa e precisa, para toda a interface. A opção B (só Outfit) foi descartada.</p>
+  </div>
+  <div class="type">
+    <div class="spec selected" data-choice="fraunces-geist" onclick="toggleSelect(this)">
+      <div class="between"><div class="k2">A · Fraunces + Geist (recomendo)</div></div>
+      <div class="row" style="align-items:flex-end;gap:22px;margin-top:14px">
+        <div class="n disp" style="font-variation-settings:'SOFT' 100,'opsz' 144;font-weight:360">12</div>
+        <div style="padding-bottom:10px"><div class="disp" style="font-size:24px">Um dia de cada vez.</div><div class="t" style="font-family:var(--ui);margin-top:6px">Relato de ontem · leva 1 minuto. Sua vontade média caiu 31% desde outubro.</div></div>
+      </div>
+    </div>
+    <div class="spec" data-choice="outfit" onclick="toggleSelect(this)">
+      <div class="k2">B · Outfit (só sans)</div>
+      <div class="row" style="align-items:flex-end;gap:22px;margin-top:14px;font-family:'Outfit'">
+        <div class="n" style="font-weight:300">12</div>
+        <div style="padding-bottom:10px"><div style="font-size:24px;font-weight:500;letter-spacing:-.02em">Um dia de cada vez.</div><div class="t" style="margin-top:6px">Relato de ontem · leva 1 minuto. Sua vontade média caiu 31% desde outubro.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PRIMEIRO USO ========== -->
+<section class="sec">
+  <div class="sec-head">
+    <div><div class="k">Primeiro uso</div><h2>Entrar sem medo.</h2></div>
+    <p>A abertura mostra a marca e promete o essencial: tudo fica no seu celular. Depois vem a avaliação "Como você está", com uma pergunta por tela e um resultado sem diagnóstico.</p>
+  </div>
+  <div class="phones">
+
+    <div class="pcol"><div class="phone"><div class="scr splash">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 34px;text-align:center">
+        <svg width="112" height="112"><use href="#mare"/></svg>
+        <div class="disp" style="font-size:46px;letter-spacing:-.035em;font-weight:380">maré</div>
+        <div class="p" style="font-size:15px">Um lugar calmo para atravessar<br>as ondas, um dia de cada vez.</div>
+      </div>
+      <div style="position:absolute;left:22px;right:22px;bottom:22px;display:flex;flex-direction:column;gap:12px">
+        <div class="row" style="justify-content:center;gap:8px;font-size:12.5px;color:var(--muted)"><svg class="ico" viewBox="0 0 24 24" style="width:16px;height:16px"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Sem conta. Tudo fica só neste celular.</div>
+        <div class="btn">Começar</div>
+      </div>
+    </div></div><div class="pcap"><b>1</b>Abertura</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr">
+      <div class="sb"><span>21:42</span><span class="bt"><i></i></span></div>
+      <div class="body" style="gap:0">
+        <div class="prog"><div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div><div class="bar"><i></i></div><span style="font-size:12.5px;color:var(--muted);font-weight:600">3 de 8</span></div>
+        <div style="margin-top:26px"><span class="chip onp"><span class="dot" style="background:var(--peri)"></span>Sobre Calmaria</span></div>
+        <div class="h" style="margin-top:14px;font-size:24px">Com que frequência você toma 6 doses ou mais numa mesma ocasião?</div>
+        <div class="p" style="margin-top:10px">Não existe resposta certa. Isso só ajuda o Maré a entender o seu momento.</div>
+        <div class="opts" style="margin-top:16px">
+          <div class="opt">Nunca<span class="r"></span></div>
+          <div class="opt">Menos de uma vez por mês<span class="r"></span></div>
+          <div class="opt sel">Todo mês<span class="r"></span></div>
+          <div class="opt">Toda semana<span class="r"></span></div>
+          <div class="opt">Quase todos os dias<span class="r"></span></div>
+        </div>
+      </div>
+      <div class="foot"><div class="btn">Continuar</div></div>
+    </div></div><div class="pcap"><b>2</b>Avaliação</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr">
+      <div class="sb"><span>21:46</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="k2" style="margin-top:14px">Seu ponto de partida</div>
+        <div class="h" style="margin-top:10px;font-size:30px">Obrigado pela<br>honestidade.</div>
+        <div class="p" style="margin-top:10px">Isso não é um diagnóstico. É um retrato de hoje, e ele vai mudar com você.</div>
+        <div class="res" style="margin-top:18px">
+          <div class="resi"><span class="badge" style="background:rgba(111,211,224,.11);color:var(--aqua)"><svg class="ico" viewBox="0 0 24 24"><path d="M3 15c2.2-2 4.4-2 6.6 0s4.4 2 6.6 0 3.3-2 4.8-1"/><path d="M8 10c0-2 2-2.5 2-4.5M12.5 10c0-2 2-2.5 2-4.5"/></svg></span><div class="nm">Fôlego</div><div class="lv"><span class="m"><i style="background:var(--sand)"></i><i style="background:var(--sand)"></i><i></i></span>Atenção moderada</div></div>
+          <div class="resi"><span class="badge" style="background:rgba(169,182,245,.12);color:var(--peri)"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/></svg></span><div class="nm">Calmaria</div><div class="lv"><span class="m"><i style="background:var(--foam)"></i><i></i><i></i></span>Atenção leve</div></div>
+          <div class="resi"><span class="badge" style="background:rgba(240,160,138,.12);color:var(--coral)"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span><div class="nm">Foco</div><div class="lv"><span class="m"><i style="background:var(--coral)"></i><i style="background:var(--coral)"></i><i style="background:var(--coral)"></i></span>Atenção alta</div></div>
+        </div>
+        <div class="p" style="font-size:13px;padding:12px 14px;border-radius:16px;background:rgba(240,160,138,.07);box-shadow:inset 0 0 0 1px rgba(240,160,138,.2)">Para o Foco, conversar com um psicólogo costuma ajudar bastante. Em Aprender você vê como encontrar um, inclusive pelo SUS.</div>
+      </div>
+      <div class="foot"><div class="btn">Começar minha jornada</div></div>
+    </div></div><div class="pcap"><b>3</b>Como você está</div></div>
+
+  </div>
+</section>
+
+<!-- ========== DIA A DIA ========== -->
+<section class="sec">
+  <div class="sec-head">
+    <div><div class="k">Dia a dia</div><h2>Ver o progresso,<br>não só a falha.</h2></div>
+    <p>O início mostra a sequência como água enchendo o anel até o próximo marco. O total e o recorde nunca somem. O diário é um calendário: cada dia ganha cor pelo relato, e o deslize aparece em contorno de areia, nunca em vermelho. Embaixo, o padrão das suas vontades.</p>
+  </div>
+  <div class="phones">
+
+    <div class="pcol"><div class="phone"><div class="scr">
+      <div class="sb"><span>08:15</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="between">
+          <div><div style="font-size:13px;color:var(--muted)">Quarta, 25 de novembro</div><div class="h" style="font-size:24px;margin-top:4px">Bom dia.</div></div>
+          <div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+        </div>
+        <div class="row" style="gap:7px;margin-top:16px">
+          <span class="chip on"><span class="dot" style="background:var(--aqua)"></span>Fôlego</span>
+          <span class="chip"><span class="dot" style="background:var(--peri)"></span>Calmaria</span>
+          <span class="chip"><span class="dot" style="background:var(--coral)"></span>Foco</span>
+        </div>
+        <div class="ring">
+          <svg class="arc" viewBox="0 0 236 236"><circle cx="118" cy="118" r="112" stroke="rgba(255,255,255,.06)" stroke-width="3" fill="none"/><circle cx="118" cy="118" r="112" stroke="url(#gMare)" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="703.7" stroke-dashoffset="100"/></svg>
+          <div class="water">
+            <svg class="w1" viewBox="0 0 400 100" preserveAspectRatio="none"><path d="M0 28 Q50 10 100 28 T200 28 T300 28 T400 28 V100 H0Z" fill="#2B6A9C"/></svg>
+            <svg class="w2" viewBox="0 0 400 100" preserveAspectRatio="none"><path d="M0 32 Q50 16 100 32 T200 32 T300 32 T400 32 V100 H0Z" fill="#3B86B4"/></svg>
+          </div>
+          <div class="ringtxt"><div class="num">12</div><small>dias seguidos</small></div>
+        </div>
+        <div style="text-align:center;font-size:12.5px;color:var(--muted);margin-top:10px">faltam <b style="color:var(--aqua);font-weight:600">2 dias</b> para 2 semanas</div>
+        <div class="trio">
+          <div class="v"><b>41</b><span>dias no total</span></div><div class="sep"></div>
+          <div class="v"><b>19</b><span>seu recorde</span></div><div class="sep"></div>
+          <div class="v"><b style="color:var(--sand)">R$ 186</b><span>economizados</span></div>
+        </div>
+        <div class="rowcard">
+          <svg class="ico" viewBox="0 0 24 24" style="color:var(--peri)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          <div style="flex:1"><div style="font-weight:600;font-size:14.5px">Relato de ontem</div><div style="font-size:12.5px;color:var(--muted);margin-top:2px">Só falta ele · leva 1 minuto</div></div>
+          <svg class="ico" viewBox="0 0 24 24" style="color:var(--muted);width:18px"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab on"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</div>
+        <div class="tab"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M16 3v4M8 3v4M4 11h16"/></svg>Diário</div>
+        <div class="fab"><svg class="ico" viewBox="0 0 24 24" style="width:25px;height:25px;stroke-width:2"><path d="M2 13c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2.5 5-1"/><path d="M2 18c2.5-2.5 5-2.5 7.5 0s5 2.5 7.5 0"/></svg></div>
+        <div class="tab"><svg class="ico" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Conversa</div>
+        <div class="tab"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="17" r="1.2"/></svg>Mais</div>
+      </div>
+    </div></div><div class="pcap"><b>4</b>Início</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr">
+      <div class="sb"><span>22:30</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="between">
+          <div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+          <div style="text-align:center"><div class="disp" style="font-size:19px">Relato de hoje</div><div style="font-size:12px;color:var(--muted);margin-top:2px">quarta, 25 de novembro</div></div>
+          <div style="width:40px"></div>
+        </div>
+        <div class="fade" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:22px;margin-top:22px">
+          <div>
+            <div class="row" style="gap:8px;margin-bottom:14px"><span class="dot" style="background:var(--aqua)"></span><span style="font-weight:600">Fôlego</span></div>
+            <div class="lab2">Quanta vontade você sentiu hoje?</div>
+            <div class="sl"><div class="tr"><i></i></div><div class="kn">6</div></div>
+            <div class="ticks"><span>nenhuma</span><span>muita</span></div>
+            <div class="lab2" style="margin-top:18px">Você fumou hoje?</div>
+            <div class="seg"><div class="on">Não</div><div>Sim</div></div>
+          </div>
+          <div>
+            <div class="hr"></div>
+            <div class="mini"><span class="row" style="gap:8px;color:var(--text);font-size:14px"><span class="dot" style="background:var(--peri)"></span>Calmaria</span><span>vontade 2 · não usou</span></div>
+            <div class="hr"></div>
+            <div class="mini"><span class="row" style="gap:8px;color:var(--text);font-size:14px"><span class="dot" style="background:var(--coral)"></span>Foco</span><span style="color:var(--aqua)">responder</span></div>
+            <div class="hr"></div>
+          </div>
+          <div>
+            <div class="lab2">Como você se sentiu?</div>
+            <div class="moods">
+              <div class="mood"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 16.5c1.5-2 6.5-2 8 0M9 10h.01M15 10h.01"/></svg></div>
+              <div class="mood"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 15.5c1.5-.8 5.5-.8 7 0M9 10h.01M15 10h.01"/></svg></div>
+              <div class="mood on"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 15h7M9 10h.01M15 10h.01"/></svg></div>
+              <div class="mood"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.5.8 5.5.8 7 0M9 10h.01M15 10h.01"/></svg></div>
+              <div class="mood"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14c1.5 2.5 6.5 2.5 8 0M9 10h.01M15 10h.01"/></svg></div>
+            </div>
+          </div>
+          <div>
+            <div class="lab2">O que mexeu com você?</div>
+            <div class="chips"><span class="chip onp">Ansiedade</span><span class="chip">Tédio</span><span class="chip">Solidão</span><span class="chip onp">Cansaço</span><span class="chip">Estresse</span><span class="chip">Celular à noite</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="foot"><div class="btn">Salvar relato</div></div>
+    </div></div><div class="pcap"><b>5</b>Relato do dia</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr">
+      <div class="sb"><span>12:04</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="between">
+          <div class="disp" style="font-size:26px">Diário</div>
+          <span class="chip on"><span class="dot" style="background:var(--aqua)"></span>Fôlego</span>
+        </div>
+        <div class="between" style="margin-top:18px">
+          <div class="ib" style="width:34px;height:34px;border-radius:12px"><svg class="ico" viewBox="0 0 24 24" style="width:18px"><path d="M15 18l-6-6 6-6"/></svg></div>
+          <div style="font-weight:600;font-size:15px">Novembro 2026</div>
+          <div class="ib" style="width:34px;height:34px;border-radius:12px"><svg class="ico" viewBox="0 0 24 24" style="width:18px"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+        <div class="cal" style="margin-top:14px">
+          <div class="w">D</div><div class="w">S</div><div class="w">T</div><div class="w">Q</div><div class="w">Q</div><div class="w">S</div><div class="w">S</div>
+          <div class="d f"><span>1</span></div><div class="d f"><span>2</span></div><div class="d f"><span>3</span></div><div class="d f"><span>4</span></div><div class="d f"><span>5</span></div><div class="d x"><span>6</span></div><div class="d f"><span>7</span></div>
+          <div class="d f"><span>8</span></div><div class="d f"><span>9</span></div><div class="d p"><span>10</span></div><div class="d f"><span>11</span></div><div class="d x"><span>12</span></div><div class="d f"><span>13</span></div><div class="d f"><span>14</span></div>
+          <div class="d f"><span>15</span></div><div class="d f"><span>16</span></div><div class="d f"><span>17</span></div><div class="d f"><span>18</span></div><div class="d f"><span>19</span></div><div class="d f"><span>20</span></div><div class="d f"><span>21</span></div>
+          <div class="d f"><span>22</span></div><div class="d f"><span>23</span></div><div class="d f"><span>24</span></div><div class="d t"><span>25</span></div><div class="d fu"><span>26</span></div><div class="d fu"><span>27</span></div><div class="d fu"><span>28</span></div>
+          <div class="d fu"><span>29</span></div><div class="d fu"><span>30</span></div>
+        </div>
+        <div class="legend" style="margin-top:12px"><span><i style="background:var(--foam)"></i>livre</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--sand)"></i>deslize</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--muted)"></i>sem relato</span><span><i style="background:var(--aqua)"></i>hoje</span></div>
+        <div class="hr" style="margin-top:18px"></div>
+        <div style="margin-top:16px">
+          <div class="between"><div style="font-weight:600;font-size:14.5px">Vontade média por dia</div><span style="font-size:12px;color:var(--muted)">últimas 8 semanas</span></div>
+          <div class="bars" style="margin-top:14px">
+            <div><i style="height:38%"></i>D</div><div><i style="height:30%"></i>S</div><div><i style="height:34%"></i>T</div><div><i style="height:41%"></i>Q</div><div><i style="height:52%"></i>Q</div><div class="hi"><i style="height:88%"></i>S</div><div><i style="height:63%"></i>S</div>
+          </div>
+          <div class="p" style="font-size:13px;margin-top:12px">Suas vontades sobem às <b style="color:var(--sand);font-weight:600">sextas, perto das 21h</b>. Que tal um plano para esse horário?</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</div>
+        <div class="tab on"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M16 3v4M8 3v4M4 11h16"/></svg>Diário</div>
+        <div class="fab"><svg class="ico" viewBox="0 0 24 24" style="width:25px;height:25px;stroke-width:2"><path d="M2 13c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2.5 5-1"/><path d="M2 18c2.5-2.5 5-2.5 7.5 0s5 2.5 7.5 0"/></svg></div>
+        <div class="tab"><svg class="ico" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Conversa</div>
+        <div class="tab"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="17" r="1.2"/></svg>Mais</div>
+      </div>
+    </div></div><div class="pcap"><b>6</b>Diário e calendário</div></div>
+
+  </div>
+</section>
+
+<!-- ========== FISSURA ========== -->
+<section class="sec">
+  <div class="sec-head">
+    <div><div class="k">Fissura agora</div><h2>Três passos,<br>uma onda de cada vez.</h2></div>
+    <p>Três telas calmas, com uma ação por vez: <b style="color:var(--text)">respirar</b>, <b style="color:var(--text)">surfar a onda</b> e <b style="color:var(--text)">perceber que passou</b>. O fundo vira mar profundo, o texto nunca fica sobre a esfera, e cada fissura vencida conta como conquista.</p>
+  </div>
+  <div class="phones">
+
+    <div class="pcol"><div class="phone"><div class="scr sea">
+      <div class="sb"><span>23:08</span><span class="bt"><i></i></span></div>
+      <div class="body" style="align-items:stretch">
+        <div class="between"><div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div><div class="steps"><i class="on"></i><i></i><i></i></div><div style="width:40px;text-align:right;font-size:13px;color:var(--muted)">pular</div></div>
+        <div class="orb"><i class="r1"></i><i class="r2"></i><i class="r3"></i></div>
+        <div class="phase"><div class="pa">Inspire</div><div class="pb">Solte devagar</div></div>
+        <div style="text-align:center;font-size:13.5px;color:var(--muted);margin-top:6px">4 segundos para dentro, 6 para fora · ciclo 3 de 6</div>
+      </div>
+      <div class="foot"><div class="btn sec2">Já estou um pouco melhor</div></div>
+    </div></div><div class="pcap"><b>7</b>Passo 1 · Respire</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr sea">
+      <div class="sb"><span>23:10</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="between"><div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div><div class="steps"><i class="on"></i><i class="on"></i><i></i></div><div style="width:40px"></div></div>
+        <div class="k2" style="text-align:center;margin-top:30px">A onda está descendo</div>
+        <div class="timer" style="margin-top:12px">2:41</div>
+        <div class="disp" style="text-align:center;font-size:18px;color:var(--muted);margin-top:14px;line-height:1.4">A vontade sobe, chega ao pico<br>e passa. Você só precisa ficar.</div>
+        <div class="quote" style="margin-top:28px">
+          <div class="w">Seu porquê</div>
+          <div class="q">“Quero subir a escada com meu filho sem perder o fôlego.”</div>
+        </div>
+      </div>
+      <div class="ocean">
+        <svg class="o1" viewBox="0 0 400 100" preserveAspectRatio="none"><path d="M0 22 Q50 2 100 22 T200 22 T300 22 T400 22 V100 H0Z" fill="#2B5F96"/></svg>
+        <svg class="o2" viewBox="0 0 400 100" preserveAspectRatio="none"><path d="M0 26 Q50 8 100 26 T200 26 T300 26 T400 26 V100 H0Z" fill="#2E73A8"/></svg>
+        <svg class="o3" viewBox="0 0 400 100" preserveAspectRatio="none"><path d="M0 30 Q50 14 100 30 T200 30 T300 30 T400 30 V100 H0Z" fill="#3A8DBE"/></svg>
+        <div style="position:absolute;left:22px;right:22px;bottom:22px;display:grid;grid-template-columns:1fr 1.25fr;gap:10px">
+          <div class="btn sec2" style="background:rgba(4,16,30,.55);backdrop-filter:blur(8px)">Ainda difícil</div>
+          <div class="btn">Passou</div>
+        </div>
+      </div>
+    </div></div><div class="pcap"><b>8</b>Passo 2 · Surfe a onda</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr sea">
+      <div class="sb"><span>23:14</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="between"><div style="width:40px"></div><div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></div><div style="width:40px"></div></div>
+        <div class="ripple"><i></i><i></i><i></i><div class="c"><svg class="ico" viewBox="0 0 24 24" style="width:34px;height:34px;stroke-width:2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div></div>
+        <div class="h" style="text-align:center;font-size:30px;margin-top:26px">Você atravessou<br>a onda.</div>
+        <div class="p" style="text-align:center;margin-top:10px">Fissura vencida nº 23. Isso também conta.</div>
+        <div class="row" style="justify-content:center;gap:8px;margin-top:22px;flex-wrap:wrap">
+          <span class="pill"><svg class="ico" viewBox="0 0 24 24" style="width:16px"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M10 2h4"/></svg>6 min</span>
+          <span class="pill">vontade <b style="color:var(--sand);font-weight:600">8</b><svg class="ico" viewBox="0 0 24 24" style="width:14px"><path d="M5 12h14M13 6l6 6-6 6"/></svg><b style="color:var(--foam);font-weight:600">3</b></span>
+        </div>
+      </div>
+      <div class="foot"><div class="btn">Voltar ao início</div><div class="btn txt">Anotar o que ajudou</div></div>
+    </div></div><div class="pcap"><b>9</b>Passo 3 · Passou</div></div>
+
+  </div>
+</section>
+
+<!-- ========== AO REDOR ========== -->
+<section class="sec">
+  <div class="sec-head">
+    <div><div class="k">Ao redor</div><h2>Presente sem<br>expor você.</h2></div>
+    <p>As notificações aparecem com o nome disfarçado e nunca citam o hábito. Os lembretes chegam <b style="color:var(--text)">antes</b> dos seus horários de risco, que o diário descobre sozinho. A conversa usa a sua própria IA (Gemini por padrão). Os marcos contam o que muda no corpo.</p>
+  </div>
+  <div class="phones">
+
+    <div class="pcol"><div class="phone"><div class="scr lock">
+      <div class="sb"><span></span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="clock">21:30</div>
+        <div class="date">sexta-feira, 27 de novembro</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:auto;margin-bottom:26px">
+          <div class="notif"><div class="ni" style="background:#2A3B4F;color:#E7EDF3"><svg class="ico" viewBox="0 0 24 24" style="width:18px"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 8h6M9 12h6"/></svg></div><div class="hd"><b>Diário</b><span>agora</span></div><div class="tx">Sexta à noite costuma pesar um pouco. Se precisar, a onda está a um toque.</div></div>
+          <div class="notif"><div class="ni" style="background:#2A3B4F;color:#E7EDF3"><svg class="ico" viewBox="0 0 24 24" style="width:18px"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 8h6M9 12h6"/></svg></div><div class="hd"><b>Diário</b><span>08:00</span></div><div class="tx">2 semanas hoje. Vale um momento só pra notar isso.</div></div>
+          <div class="notif" style="opacity:.75"><div class="ni" style="background:#2A3B4F;color:#E7EDF3"><svg class="ico" viewBox="0 0 24 24" style="width:18px"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 8h6M9 12h6"/></svg></div><div class="hd"><b>Diário</b><span>ontem</span></div><div class="tx">Como foi seu dia? Leva um minuto.</div></div>
+        </div>
+      </div>
+    </div></div><div class="pcap"><b>10</b>Notificações discretas</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr">
+      <div class="sb"><span>12:20</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="row"><div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div><div class="disp" style="font-size:22px">Lembretes</div></div>
+        <div class="fade" style="flex:1;min-height:0;overflow:hidden">
+          <div class="grp">Rotina</div>
+          <div class="set">
+            <div class="si"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><div class="t">Relato do dia</div><div class="tg on"></div><div class="s">todo dia às 22:00</div></div>
+            <div class="si"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2"/></svg><div class="t">Bom dia</div><div class="tg on"></div><div class="s">uma frase calma às 08:00</div></div>
+          </div>
+          <div class="grp">Inteligentes</div>
+          <div class="set">
+            <div class="si"><svg class="ico" viewBox="0 0 24 24"><path d="M2 13c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2.5 5-1"/></svg><div class="t">Antes da onda</div><div class="tg on"></div><div class="s">sexta 21:30 · aprendido do seu diário</div></div>
+            <div class="si"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg><div class="t">Marcos e conquistas</div><div class="tg on"></div><div class="s">quando um marco chegar</div></div>
+          </div>
+          <div class="grp">Privacidade</div>
+          <div class="set">
+            <div class="si"><svg class="ico" viewBox="0 0 24 24"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><path d="M4 4l16 16"/></svg><div class="t">Texto discreto</div><div class="tg on"></div><div class="s">nunca cita o hábito</div></div>
+            <div class="si"><svg class="ico" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg><div class="t">Contatos de emergência</div><div class="tg"></div><div class="s">CVV e SAMU · desligado</div></div>
+          </div>
+        </div>
+      </div>
+    </div></div><div class="pcap"><b>11</b>Lembretes</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr">
+      <div class="sb"><span>23:02</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="between">
+          <div class="row"><div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div><div><div class="disp" style="font-size:20px">Conversa</div><div class="row" style="gap:6px;font-size:12px;color:var(--muted);margin-top:2px"><span class="dot" style="background:var(--foam)"></span>Gemini · sua chave</div></div></div>
+          <div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></div>
+        </div>
+        <div class="msgs" style="margin-top:22px;flex:1;min-height:0;overflow:hidden">
+          <div class="me">Dia muito difícil no trabalho. Tô com muita vontade de fumar agora.</div>
+          <div class="ai"><div class="who"><svg width="18" height="18"><use href="#mare"/></svg>Maré</div>Faz sentido sentir isso depois de um dia pesado. E você me contou em vez de agir no automático, o que já é muito.<br><br>Você está há 12 dias. Essa vontade costuma baixar em poucos minutos. Quer respirar comigo agora, ou prefere me contar o que pesou hoje?</div>
+          <div class="row" style="gap:8px;flex-wrap:wrap"><span class="chip on">Respirar 1 minuto</span><span class="chip">Contar o que pesou</span></div>
+          <div class="ai"><div class="who"><svg width="18" height="18"><use href="#mare"/></svg>Maré</div><span class="typing"><i></i><i></i><i></i></span></div>
+        </div>
+      </div>
+      <div class="foot" style="gap:8px">
+        <div class="input">Escreva aqui<div class="send"><svg class="ico" viewBox="0 0 24 24" style="width:18px;stroke-width:2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>
+        <div style="text-align:center;font-size:11px;color:var(--faint)">A IA apoia, mas não substitui um profissional.</div>
+      </div>
+    </div></div><div class="pcap"><b>12</b>Conversa com IA</div></div>
+
+    <div class="pcol"><div class="phone"><div class="scr">
+      <div class="sb"><span>18:40</span><span class="bt"><i></i></span></div>
+      <div class="body">
+        <div class="row"><div class="ib"><svg class="ico" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div><div class="disp" style="font-size:22px">Marcos · Fôlego</div></div>
+        <div class="trio" style="margin-top:8px">
+          <div class="v"><b>23</b><span>fissuras<br>vencidas</span></div><div class="sep"></div>
+          <div class="v"><b>328</b><span>cigarros<br>a menos</span></div><div class="sep"></div>
+          <div class="v"><b style="color:var(--sand)">R$ 186</b><span>no bolso</span></div>
+        </div>
+        <div class="hr" style="margin:6px 0 20px"></div>
+        <div class="tl fade" style="flex:1;min-height:0;overflow:hidden">
+          <div class="tli done"><div class="mk"><svg class="ico" viewBox="0 0 24 24" style="width:16px;stroke-width:2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div><div class="tt">24 horas</div><div class="ds">O monóxido de carbono no sangue já voltou ao normal.</div></div></div>
+          <div class="tli done"><div class="mk"><svg class="ico" viewBox="0 0 24 24" style="width:16px;stroke-width:2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div><div class="tt">3 dias</div><div class="ds">O pico da abstinência ficou para trás.</div></div></div>
+          <div class="tli done"><div class="mk"><svg class="ico" viewBox="0 0 24 24" style="width:16px;stroke-width:2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div><div class="tt">1 semana</div><div class="ds">Paladar e olfato começam a voltar.</div></div></div>
+          <div class="tli now"><div class="mk"><svg class="ico" viewBox="0 0 24 24" style="width:15px"><path d="M2 13c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2.5 5-1"/></svg></div><div><div class="tt">2 semanas · faltam 2 dias</div><div class="ds">Circulação e fôlego começam a melhorar.</div><div class="pbar"><i></i></div></div></div>
+          <div class="tli locked"><div class="mk"><svg class="ico" viewBox="0 0 24 24" style="width:15px"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div><div class="tt">1 mês</div><div class="ds">Tosse e falta de ar diminuem.</div></div></div>
+          <div class="tli locked"><div class="mk"><svg class="ico" viewBox="0 0 24 24" style="width:15px"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div><div class="tt">1 ano</div><div class="ds">O risco de doença do coração cai para cerca da metade.</div></div></div>
+        </div>
+      </div>
+    </div></div><div class="pcap"><b>13</b>Marcos e conquistas</div></div>
+
+  </div>
+</section>
+
+</div>
+<script>window.toggleSelect=function(el){el.classList.toggle("selected")}</script>
+</body>
+</html>
