@@ -10,13 +10,16 @@ type Props = {
   /** Mostra o ponto colorido antes do texto (como nos eixos Fôlego, Calmaria, Foco). */
   ponto?: boolean;
   onPress?: () => void;
+  /** Nome para leitores de tela, quando o texto sozinho não basta (ex.: "+ Novo"). */
+  accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 };
 
-export function Chip({ children, ativo = false, cor = cores.aqua, ponto = false, onPress, style }: Props) {
+export function Chip({ children, ativo = false, cor = cores.aqua, ponto = false, onPress, accessibilityLabel, style }: Props) {
   return (
     <Pressable
       accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected: ativo }}
       disabled={!onPress}
       onPress={onPress}
