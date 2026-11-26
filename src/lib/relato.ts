@@ -16,12 +16,15 @@ export type Rascunhos = Record<string, Rascunho>;
 /** Hábitos que já tinham começado no dia, na ordem em que foram criados. */
 export const habitosDoDia = (habitos: Habito[], dia: string) => habitos.filter((h) => h.inicio <= dia);
 
-const PERGUNTAS: Record<TipoHabito, string> = {
-  tabaco: 'Você fumou hoje?',
-  alcool: 'Você bebeu hoje?',
-  sexual: 'Você usou hoje?',
+const VERBOS: Record<TipoHabito, string> = {
+  tabaco: 'fumou',
+  alcool: 'bebeu',
+  sexual: 'usou',
 };
-export const perguntaUso = (tipo: TipoHabito) => PERGUNTAS[tipo];
+/** "hoje" no relato do dia; ao editar um dia passado, "nesse dia". */
+const quando = (ehHoje: boolean) => (ehHoje ? 'hoje' : 'nesse dia');
+export const perguntaUso = (tipo: TipoHabito, ehHoje: boolean) => `Você ${VERBOS[tipo]} ${quando(ehHoje)}?`;
+export const perguntaVontade = (ehHoje: boolean) => `Quanta vontade você sentiu ${quando(ehHoje)}?`;
 
 /** Um rascunho por hábito ativo; carrega os valores do relato salvo, se houver. */
 export function rascunhoInicial(ativos: Habito[], existente?: Relato): Rascunhos {

@@ -23,6 +23,7 @@ import {
   habitosDoDia,
   montarRelato,
   perguntaUso,
+  perguntaVontade,
   rascunhoInicial,
   resumoLinha,
   type Rascunho,
@@ -53,6 +54,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const habitos = useMare((e) => e.habitos);
   const existente = useMare((e) => e.relatos.find((r) => r.dia === dia));
   const salvarRelato = useMare((e) => e.salvarRelato);
+  const ocultarNumeros = useMare((e) => e.ajustes.ocultarNumeros);
   const voltar = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   const ativos = habitosDoDia(habitos, dia);
@@ -110,13 +112,15 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
             <Texto tipo="titulo" style={styles.centro}>
               Obrigado por registrar. Seus dias continuam contando.
             </Texto>
-            <View style={styles.totais}>
-              {deslizes.map((d) => (
-                <Texto key={d.apelido} cor={cores.muted} style={styles.centro}>
-                  {`${d.apelido}: ${d.totalLivres} ${d.totalLivres === 1 ? 'dia livre' : 'dias livres'} no total`}
-                </Texto>
-              ))}
-            </View>
+            {ocultarNumeros ? null : (
+              <View style={styles.totais}>
+                {deslizes.map((d) => (
+                  <Texto key={d.apelido} cor={cores.muted} style={styles.centro}>
+                    {`${d.apelido}: ${d.totalLivres} ${d.totalLivres === 1 ? 'dia livre' : 'dias livres'} no total`}
+                  </Texto>
+                ))}
+              </View>
+            )}
           </View>
           <Botao onPress={voltar}>Continuar</Botao>
         </View>
@@ -168,6 +172,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
                         <BlocoHabito
                           key={h.id}
                           habito={h}
+                          ehHoje={ehHoje}
                           separado={i > 0}
                           rascunho={r}
                           erro={tocados[h.id] ? erroQuantidade(h, r) : undefined}
@@ -270,6 +275,8 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
 
 type BlocoProps = {
   habito: Habito;
+  /** Relato de hoje: as perguntas dizem "hoje"; num dia passado, "nesse dia". */
+  ehHoje: boolean;
   /** Há outro hábito antes dele: abre um respiro depois da linha recolhida. */
   separado: boolean;
   rascunho: Rascunho;
@@ -279,7 +286,7 @@ type BlocoProps = {
 };
 
 /** Hábito expandido: vontade, uso e, na meta reduzir, a quantidade. */
-function BlocoHabito({ habito, separado, rascunho, erro, aoMudar, aoTocarQuantidade }: BlocoProps) {
+function BlocoHabito({ habito, ehHoje, separado, rascunho, erro, aoMudar, aoTocarQuantidade }: BlocoProps) {
   return (
     <View style={[styles.bloco, separado && styles.blocoSeparado]}>
       <View style={[styles.linhaNome, styles.blocoTitulo]}>
@@ -287,7 +294,7 @@ function BlocoHabito({ habito, separado, rascunho, erro, aoMudar, aoTocarQuantid
         <Texto style={styles.blocoNome}>{habito.apelido}</Texto>
       </View>
 
-      <Texto style={styles.rotulo}>Quanta vontade você sentiu hoje?</Texto>
+      <Texto style={styles.rotulo}>{perguntaVontade(ehHoje)}</Texto>
       <Deslizador
         valor={rascunho.vontade}
         onChange={(vontade) => aoMudar({ vontade })}
@@ -295,12 +302,12 @@ function BlocoHabito({ habito, separado, rascunho, erro, aoMudar, aoTocarQuantid
         accessibilityLabel={`Vontade de ${habito.apelido}, de 0 a 10`}
       />
 
-      <Texto style={[styles.rotulo, styles.rotuloSeguinte]}>{perguntaUso(habito.tipo)}</Texto>
+      <Texto style={[styles.rotulo, styles.rotuloSeguinte]}>{perguntaUso(habito.tipo, ehHoje)}</Texto>
       <Segmento
         opcoes={SIM_NAO}
         valor={rascunho.usou}
         onChange={(usou) => aoMudar({ usou })}
-        accessibilityLabel={perguntaUso(habito.tipo)}
+        accessibilityLabel={perguntaUso(habito.tipo, ehHoje)}
       />
 
       {habito.meta.tipo === 'reduzir' && rascunho.usou ? (

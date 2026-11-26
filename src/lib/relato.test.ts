@@ -8,6 +8,7 @@ import {
   habitosDoDia,
   montarRelato,
   perguntaUso,
+  perguntaVontade,
   rascunhoInicial,
   resumoLinha,
   type Rascunho,
@@ -38,10 +39,22 @@ describe('habitosDoDia', () => {
 });
 
 describe('perguntaUso', () => {
-  it('muda por tipo', () => {
-    expect(perguntaUso('tabaco')).toBe('Você fumou hoje?');
-    expect(perguntaUso('alcool')).toBe('Você bebeu hoje?');
-    expect(perguntaUso('sexual')).toBe('Você usou hoje?');
+  it('muda por tipo e diz "hoje" só no relato de hoje', () => {
+    expect(perguntaUso('tabaco', true)).toBe('Você fumou hoje?');
+    expect(perguntaUso('alcool', true)).toBe('Você bebeu hoje?');
+    expect(perguntaUso('sexual', true)).toBe('Você usou hoje?');
+  });
+  it('em dia passado diz "nesse dia"', () => {
+    expect(perguntaUso('tabaco', false)).toBe('Você fumou nesse dia?');
+    expect(perguntaUso('alcool', false)).toBe('Você bebeu nesse dia?');
+    expect(perguntaUso('sexual', false)).toBe('Você usou nesse dia?');
+  });
+});
+
+describe('perguntaVontade', () => {
+  it('hoje ou nesse dia', () => {
+    expect(perguntaVontade(true)).toBe('Quanta vontade você sentiu hoje?');
+    expect(perguntaVontade(false)).toBe('Quanta vontade você sentiu nesse dia?');
   });
 });
 
