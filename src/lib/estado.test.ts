@@ -104,6 +104,28 @@ describe('migrar', () => {
     expect(m?.conversa).toEqual([]);
   });
 
+  it('versão 1 ganha a lista de contatos de confiança vazia', () => {
+    const m = migrar({ versao: 1, habitos: [], relatos: [], ajustes: {} }, 1);
+    expect(m?.contatos).toEqual([]);
+  });
+
+  it('estado da versão 2 salvo antes de existirem os contatos ganha a lista vazia, sem perder o resto', () => {
+    const { contatos: _semContatos, ...semContatos } = aplicarHabito(estadoInicial(), habito('a'));
+    void _semContatos;
+    const m = migrar(semContatos, VERSAO_ESTADO);
+    expect(m?.contatos).toEqual([]);
+    expect(m?.habitos.map((h) => h.id)).toEqual(['a']);
+  });
+
+  it('contatos salvos são mantidos', () => {
+    const contatos = [{ id: 'c1', nome: 'Ana', telefone: '(11) 99999-0000', criadoEm: 1 }];
+    expect(migrar({ ...estadoInicial(), contatos }, VERSAO_ESTADO)?.contatos).toEqual(contatos);
+  });
+
+  it('contatos fora do formato (não é lista) viram lista vazia', () => {
+    expect(migrar({ ...estadoInicial(), contatos: 'x' }, VERSAO_ESTADO)?.contatos).toEqual([]);
+  });
+
   it('versão 1 sem hábitos passa pelo primeiro uso', () => {
     const m = migrar({ versao: 1, habitos: [], relatos: [], ajustes: { ocultarNumeros: false } }, 1);
     expect(m?.ajustes.onboardingConcluido).toBe(false);
@@ -178,6 +200,7 @@ describe('paraPersistir (partialize do store)', () => {
     expect(Object.keys(p).sort()).toEqual([
       'ajustes',
       'avaliacoes',
+      'contatos',
       'conversa',
       'fissuras',
       'futuroCampo',

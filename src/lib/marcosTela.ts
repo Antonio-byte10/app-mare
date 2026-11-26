@@ -12,11 +12,11 @@ export function rotuloUnidades(tipo: TipoHabito): string | null {
 export type ColunaTrio = { valor: string; rotulo: string; cor?: 'sand' };
 
 /**
- * Colunas do Trio dos Marcos. "Fissuras vencidas" fica em 0 até o Plano 2.
+ * Colunas do Trio dos Marcos. "Fissuras vencidas" vem de `contarFissurasVencidas`.
  * Sem custo ou sem unidades por dia, a coluna mostra "—".
  */
-export function colunasMarcos(h: Habito, relatos: Relato[], hoje: string): ColunaTrio[] {
-  const colunas: ColunaTrio[] = [{ valor: '0', rotulo: 'fissuras vencidas' }];
+export function colunasMarcos(h: Habito, relatos: Relato[], hoje: string, fissurasVencidas = 0): ColunaTrio[] {
+  const colunas: ColunaTrio[] = [{ valor: String(fissurasVencidas), rotulo: 'fissuras vencidas' }];
   const rotulo = rotuloUnidades(h.tipo);
   if (rotulo) {
     const e = economia(h, relatos, hoje);

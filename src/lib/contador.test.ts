@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { estadoDoDia, normalizarRelatoHabito, resumoHabito } from './contador';
+import { diasAntesValidos, estadoDoDia, normalizarRelatoHabito, resumoHabito } from './contador';
 import type { Habito, Relato, RelatoHabito } from './tipos';
 
 const HOJE = '2026-11-25';
@@ -167,5 +167,53 @@ describe('resumoHabito', () => {
     expect(r.totalLivres).toBe(2);
     expect(r.sequenciaAtual).toBe(1);
     expect(r.recorde).toBe(1);
+  });
+});
+
+describe('diasAntes ("Já estou há N dias")', () => {
+  it('sem relato nenhum, os dias de antes já formam a sequência, o total e o recorde', () => {
+    const r = resumoHabito(habito({ diasAntes: 12 }), [], HOJE);
+    expect(r.sequenciaAtual).toBe(12);
+    expect(r.totalLivres).toBe(12);
+    expect(r.recorde).toBe(12);
+  });
+
+  it('soma na sequência enquanto não houver deslize', () => {
+    const r = resumoHabito(habito({ diasAntes: 10 }), livres(1, 5), HOJE);
+    expect(r.sequenciaAtual).toBe(15);
+    expect(r.totalLivres).toBe(15);
+    expect(r.recorde).toBe(15);
+  });
+
+  it('um deslize zera a sequência, mas os dias de antes continuam no total e no recorde', () => {
+    const relatos = [...livres(1, 3), relato(dia(4), true), ...livres(5, 6)];
+    const r = resumoHabito(habito({ diasAntes: 10 }), relatos, HOJE);
+    expect(r.sequenciaAtual).toBe(2);
+    expect(r.totalLivres).toBe(10 + 3 + 2);
+    expect(r.recorde).toBe(13);
+  });
+
+  it('o recorde só passa dos dias de antes se uma sequência nova for maior', () => {
+    const relatos = [relato(dia(1), true), ...livres(2, 20)];
+    const r = resumoHabito(habito({ diasAntes: 5 }), relatos, HOJE);
+    expect(r.sequenciaAtual).toBe(19);
+    expect(r.recorde).toBe(19);
+    expect(r.totalLivres).toBe(24);
+  });
+
+  it('deslize no primeiro dia: o total mantém os dias de antes e a sequência recomeça', () => {
+    const r = resumoHabito(habito({ diasAntes: 7 }), [relato(dia(1), true)], HOJE);
+    expect(r.sequenciaAtual).toBe(0);
+    expect(r.totalLivres).toBe(7);
+    expect(r.recorde).toBe(7);
+  });
+
+  it('valor ausente, zero, negativo ou fracionado é tratado como número inteiro de 0 para cima', () => {
+    expect(diasAntesValidos(undefined)).toBe(0);
+    expect(diasAntesValidos(0)).toBe(0);
+    expect(diasAntesValidos(-3)).toBe(0);
+    expect(diasAntesValidos(Number.NaN)).toBe(0);
+    expect(diasAntesValidos(4.9)).toBe(4);
+    expect(resumoHabito(habito({ diasAntes: -3 }), livres(1, 2), HOJE).sequenciaAtual).toBe(2);
   });
 });

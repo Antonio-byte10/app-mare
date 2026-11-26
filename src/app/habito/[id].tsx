@@ -1,8 +1,9 @@
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type KeyboardTypeOptions } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
+import { Campo } from '@/components/Campo';
 import { Chip } from '@/components/Chip';
 import { Fundo } from '@/components/Fundo';
 import { Icone } from '@/components/Icone';
@@ -13,6 +14,7 @@ import { confirmar } from '@/lib/confirmar';
 import { dataLocal } from '@/lib/datas';
 import {
   centavosParaTexto,
+  diasAntesDeTexto,
   inteiroPositivo,
   isoParaBr,
   paraCentavos,
@@ -38,41 +40,6 @@ const NOMES_COR: Record<Habito['cor'], string> = {
 };
 const UNIDADE_PADRAO: Record<TipoHabito, string> = { tabaco: 'cigarros', alcool: 'doses', sexual: 'vezes' };
 
-type CampoProps = {
-  rotulo: string;
-  valor: string;
-  aoMudar: (t: string) => void;
-  aoSair: () => void;
-  erro?: string;
-  placeholder?: string;
-  teclado?: KeyboardTypeOptions;
-  maxLength?: number;
-};
-
-function Campo({ rotulo, valor, aoMudar, aoSair, erro, placeholder, teclado, maxLength }: CampoProps) {
-  return (
-    <View style={styles.campo}>
-      <Texto style={styles.rotulo}>{rotulo}</Texto>
-      <TextInput
-        accessibilityLabel={rotulo}
-        value={valor}
-        onChangeText={aoMudar}
-        onBlur={aoSair}
-        placeholder={placeholder}
-        placeholderTextColor={cores.faint}
-        keyboardType={teclado}
-        maxLength={maxLength}
-        style={[styles.input, erro ? { borderColor: cores.sand } : null]}
-      />
-      {erro ? (
-        <Texto tipo="legenda" cor={cores.sand} accessibilityLiveRegion="polite">
-          {erro}
-        </Texto>
-      ) : null}
-    </View>
-  );
-}
-
 export default function EditarHabito() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -97,6 +64,7 @@ export default function EditarHabito() {
   const [unidadesPorDia, setUnidadesPorDia] = useState(
     existente?.unidadesPorDia != null ? String(existente.unidadesPorDia) : '',
   );
+  const [diasAntes, setDiasAntes] = useState(existente?.diasAntes ? String(existente.diasAntes) : '');
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
   const tocar = (campo: string) => setTocados((t) => (t[campo] ? t : { ...t, [campo]: true }));
 
@@ -120,6 +88,7 @@ export default function EditarHabito() {
     inicio: validarInicio(inicio).erro,
     custo: paraCentavos(custo).erro,
     unidadesPorDia: inteiroPositivo(unidadesPorDia).erro,
+    diasAntes: diasAntesDeTexto(diasAntes).erro,
   };
   const temErro = Object.values(erros).some(Boolean);
   const mostrar = (c: keyof typeof erros) => (tocados[c] ? erros[c] : undefined);
@@ -145,6 +114,7 @@ export default function EditarHabito() {
       inicio: validarInicio(inicio).valor as string,
       custoPorDiaCentavos: paraCentavos(custo).valor,
       unidadesPorDia: inteiroPositivo(unidadesPorDia).valor,
+      diasAntes: diasAntesDeTexto(diasAntes).valor,
       criadoEm: existente?.criadoEm ?? Date.now(),
     };
     const gravar = () => {
@@ -261,6 +231,15 @@ export default function EditarHabito() {
           maxLength={10}
         />
         <Campo
+          rotulo="Já estou há N dias (opcional)"
+          valor={diasAntes}
+          {...campo('diasAntes', setDiasAntes)}
+          teclado="number-pad"
+          placeholder="Ex.: 12"
+          ajuda="Se você já estava sem usar antes de começar aqui, esses dias entram no seu total, na sua sequência e no seu recorde."
+          maxLength={4}
+        />
+        <Campo
           rotulo="Custo por dia em R$ (opcional)"
           valor={custo}
           {...campo('custo', setCusto)}
@@ -295,16 +274,5 @@ const styles = StyleSheet.create({
   campo: { marginBottom: 20, gap: 8 },
   rotulo: { fontFamily: fontes.uiForte, fontSize: 13.5, lineHeight: 18, color: cores.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
-  input: {
-    height: 52,
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: cores.line2,
-    backgroundColor: 'rgba(255,255,255,.03)',
-    color: cores.text,
-    fontFamily: fontes.ui,
-    fontSize: 14.5,
-  },
   acoes: { gap: 8, marginTop: 8 },
 });

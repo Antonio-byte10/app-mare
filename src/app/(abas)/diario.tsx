@@ -3,32 +3,29 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { BarrasSemana } from '@/components/BarrasSemana';
 import { Calendario } from '@/components/Calendario';
-import { Chip } from '@/components/Chip';
+import { SeletorHabito } from '@/components/SeletorHabito';
 import { Tela } from '@/components/Tela';
 import { Texto } from '@/components/Texto';
 import { Vazio } from '@/components/Vazio';
 import { limitarMes, mesDe, totalRelatosNaJanela, type Mes } from '@/lib/calendario';
 import { resumoHabito } from '@/lib/contador';
 import { dataLocal } from '@/lib/datas';
-import { habitoAtivoDe } from '@/lib/inicio';
 import { diaDePico, vontadePorDiaDaSemana } from '@/lib/insights';
 import { useAgora } from '@/lib/useAgora';
+import { useHabitoAtivo } from '@/lib/useHabitoAtivo';
 import { useMare } from '@/store';
 import { cores, linha } from '@/theme';
 
 const SEMANAS = 8;
 
 export default function Diario() {
-  const habitos = useMare((e) => e.habitos);
+  const { habitos, ativo, escolher } = useHabitoAtivo();
   const relatos = useMare((e) => e.relatos);
-  const ajustes = useMare((e) => e.ajustes);
-  const setAjustes = useMare((e) => e.setAjustes);
   const router = useRouter();
   const agora = useAgora();
   // Mês que a pessoa escolheu com as setas; sem escolha, o mês de hoje.
   const [escolhido, setEscolhido] = useState<Mes | null>(null);
 
-  const ativo = habitoAtivoDe(habitos, ajustes.habitoAtivo);
   if (!ativo) {
     return (
       <Tela>
@@ -50,22 +47,7 @@ export default function Diario() {
         Diário
       </Texto>
 
-      <View style={styles.chips}>
-        {habitos.map((h) => (
-          <Chip
-            key={h.id}
-            ponto
-            cor={cores[h.cor]}
-            ativo={h.id === ativo.id}
-            onPress={() => setAjustes({ habitoAtivo: h.id })}
-          >
-            {h.apelido}
-          </Chip>
-        ))}
-        <Chip onPress={() => router.push('/habito/novo')} accessibilityLabel="Adicionar hábito">
-          + Novo
-        </Chip>
-      </View>
+      <SeletorHabito habitos={habitos} ativoId={ativo.id} onEscolher={escolher} style={styles.chips} />
 
       <View style={styles.calendario}>
         <Calendario
@@ -89,7 +71,7 @@ export default function Diario() {
 
 const styles = StyleSheet.create({
   titulo: { fontSize: 26, lineHeight: 31 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 14 },
+  chips: { marginTop: 14 },
   calendario: { marginTop: 18 },
   divisor: { height: linha, backgroundColor: cores.line, marginTop: 18 },
   barras: { marginTop: 16 },

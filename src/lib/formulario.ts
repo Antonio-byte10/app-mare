@@ -55,3 +55,19 @@ export function recalculaHistorico(antigo: Habito, novo: Habito): boolean {
   if (antigo.meta.tipo !== novo.meta.tipo) return true;
   return antigo.meta.tipo === 'reduzir' && novo.meta.tipo === 'reduzir' && antigo.meta.maxPorDia !== novo.meta.maxPorDia;
 }
+
+/** Limite de "Já estou há N dias": dez anos bastam e evitam números absurdos. */
+export const MAX_DIAS_ANTES = 3650;
+
+/**
+ * "Já estou há N dias" (opcional). Vazio ou 0 -> undefined. Aceita só inteiros positivos até
+ * `MAX_DIAS_ANTES`.
+ */
+export function diasAntesDeTexto(texto: string): Resultado<number | undefined> {
+  const t = texto.trim();
+  if (t === '' || /^0+$/.test(t)) return { valor: undefined };
+  if (!/^\d+$/.test(t)) return { erro: 'Informe só o número de dias.' };
+  const n = Number(t);
+  if (n > MAX_DIAS_ANTES) return { erro: `Use até ${MAX_DIAS_ANTES} dias.` };
+  return { valor: n };
+}

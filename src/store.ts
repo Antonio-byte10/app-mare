@@ -19,6 +19,7 @@ import {
 } from './lib/estado';
 import type {
   Avaliacao,
+  Contato,
   Fissura,
   Habito,
   MensagemConversa,
@@ -52,6 +53,8 @@ type Mare = EstadoPersistido & {
   /** Acrescenta uma mensagem à Conversa (guarda só as últimas `MAX_CONVERSA`). */
   adicionarMensagem: (m: MensagemConversa) => void;
   limparConversa: () => void;
+  salvarContato: (c: Contato) => void;
+  removerContato: (id: string) => void;
 };
 
 /** Dados de uma versão futura do app: nada é lido nem gravado até a pessoa recomeçar. */
@@ -80,6 +83,8 @@ export const useMare = create<Mare>()(
       salvarRecomeco: (r) => set((e) => ({ recomecos: inserirOuTrocar(e.recomecos, r) })),
       adicionarMensagem: (m) => set((e) => ({ conversa: [...e.conversa, m].slice(-MAX_CONVERSA) })),
       limparConversa: () => set({ conversa: [] }),
+      salvarContato: (c) => set((e) => ({ contatos: inserirOuTrocar(e.contatos, c) })),
+      removerContato: (id) => set((e) => ({ contatos: e.contatos.filter((x) => x.id !== id) })),
     }),
     {
       name: 'mare',

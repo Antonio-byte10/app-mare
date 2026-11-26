@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Botao } from '@/components/Botao';
+import { CartaoCrise } from '@/components/CartaoCrise';
 import { Chip } from '@/components/Chip';
 import { Degrade } from '@/components/Degrade';
 import { Deslizador } from '@/components/Deslizador';
@@ -13,6 +14,7 @@ import { Segmento } from '@/components/Segmento';
 import { Texto } from '@/components/Texto';
 import { GATILHOS } from '@/conteudo/gatilhos';
 import { estadoDoDia, normalizarRelatoHabito, resumoHabito } from '@/lib/contador';
+import { detectarCrise } from '@/lib/crise';
 import { dataLocal, dataValida, formatarData } from '@/lib/datas';
 import {
   alternarGatilho,
@@ -46,7 +48,7 @@ export default function RelatoDoDia() {
   return <Formulario dia={dia} hoje={hoje} />;
 }
 
-type Deslize = { apelido: string; totalLivres: number };
+type Deslize = { id: string; apelido: string; totalLivres: number };
 
 function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const router = useRouter();
@@ -73,6 +75,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
   const [deslizes, setDeslizes] = useState<Deslize[] | null>(null);
 
+  const criseNota = detectarCrise(nota);
   const opcoesGatilho = [...GATILHOS, ...(existente?.gatilhos ?? []).filter((g) => !GATILHOS.includes(g))];
   const comErro = habitoComErro(ativos, rascunhos);
   const temErro = comErro !== undefined;
@@ -97,7 +100,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
       const entrada = salvo?.habitos.find((x) => x.habitoId === h.id);
       if (!entrada || !rascunhos[h.id]?.respondido) continue;
       if (estadoDoDia(h.meta, normalizarRelatoHabito(entrada)) === 'deslize') {
-        lista.push({ apelido: h.apelido, totalLivres: resumoHabito(h, relatos, hoje).totalLivres });
+        lista.push({ id: h.id, apelido: h.apelido, totalLivres: resumoHabito(h, relatos, hoje).totalLivres });
       }
     }
     if (lista.length > 0) setDeslizes(lista);
@@ -108,9 +111,12 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
     return (
       <Fundo>
         <View style={[styles.agradecimento, { paddingTop: top + 14, paddingBottom: Math.max(bottom, 12) + 22 }]}>
-          <View style={styles.agradecimentoCorpo}>
+          <ScrollView style={styles.flex} contentContainerStyle={styles.agradecimentoCorpo} showsVerticalScrollIndicator={false}>
             <Texto tipo="titulo" style={styles.centro}>
               Obrigado por registrar. Seus dias continuam contando.
+            </Texto>
+            <Texto tipo="legenda" style={styles.centro}>
+              Se quiser, vale olhar com calma o que estava acontecendo. Leva menos de um minuto.
             </Texto>
             {ocultarNumeros ? null : (
               <View style={styles.totais}>
@@ -121,8 +127,24 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
                 ))}
               </View>
             )}
+            {criseNota ? <CartaoCrise tipo={criseNota} /> : null}
+          </ScrollView>
+          <View style={styles.acoesAgradecimento}>
+            <Botao
+              onPress={() => {
+                const [primeiro, ...resto] = deslizes;
+                router.replace({
+                  pathname: '/recomecar/[dia]',
+                  params: { dia, habito: primeiro.id, restantes: resto.map((d) => d.id).join(',') },
+                });
+              }}
+            >
+              Olhar com calma o que aconteceu
+            </Botao>
+            <Botao variante="texto" onPress={voltar}>
+              Agora não
+            </Botao>
           </View>
-          <Botao onPress={voltar}>Continuar</Botao>
         </View>
       </Fundo>
     );
@@ -240,6 +262,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
                     style={styles.nota}
                   />
                 </View>
+                {criseNota ? <CartaoCrise tipo={criseNota} /> : null}
               </ScrollView>
               {/* `.fade` do mockup: a rolagem some devagar sob o botão. */}
               <View pointerEvents="none" style={styles.fade}>
@@ -340,6 +363,7 @@ function BlocoHabito({ habito, ehHoje, separado, rascunho, erro, aoMudar, aoToca
 
 const styles = StyleSheet.create({
   tela: { flex: 1 },
+  flex: { flex: 1 },
   cabecalho: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -414,6 +438,7 @@ const styles = StyleSheet.create({
   vazio: { flex: 1, justifyContent: 'center', gap: 22, paddingHorizontal: margemTela },
   centro: { textAlign: 'center' },
   agradecimento: { flex: 1, paddingHorizontal: margemTela },
-  agradecimentoCorpo: { flex: 1, justifyContent: 'center', gap: 22 },
+  agradecimentoCorpo: { flexGrow: 1, justifyContent: 'center', gap: 22 },
   totais: { gap: 6 },
+  acoesAgradecimento: { gap: 6 },
 });

@@ -102,6 +102,15 @@ export interface Recomeco {
   salvoEm: number;
 }
 
+/** Contato de confiança: fica só no celular e nunca vai para a IA. */
+export interface Contato {
+  id: string;
+  nome: string;
+  /** Como a pessoa digitou; para ligar, só os dígitos (e o "+") são usados. */
+  telefone: string;
+  criadoEm: number;
+}
+
 export type ProvedorIa = 'gemini' | 'openai' | 'claude';
 
 /** Mensagem da Conversa com IA. Fica só no celular. */

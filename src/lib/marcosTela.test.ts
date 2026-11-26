@@ -87,3 +87,9 @@ describe('progressoMarco', () => {
     expect(progressoMarco(14, 20)).toBe(1);
   });
 });
+
+describe('colunasMarcos com fissuras vencidas', () => {
+  it('mostra o número de fissuras vencidas recebido', () => {
+    expect(colunasMarcos(habito(), livres(3), HOJE, 23)[0]).toEqual({ valor: '23', rotulo: 'fissuras vencidas' });
+  });
+});

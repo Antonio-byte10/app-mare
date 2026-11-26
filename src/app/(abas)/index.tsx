@@ -1,39 +1,31 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AnelAgua } from '@/components/AnelAgua';
-import { Chip } from '@/components/Chip';
 import { Icone } from '@/components/Icone';
 import { LinhaPendente } from '@/components/LinhaPendente';
+import { SeletorHabito } from '@/components/SeletorHabito';
 import { Tela } from '@/components/Tela';
 import { Texto } from '@/components/Texto';
 import { Trio } from '@/components/Trio';
 import { Vazio } from '@/components/Vazio';
 import { resumoHabito } from '@/lib/contador';
 import { dataLocal } from '@/lib/datas';
-import {
-  dataPorExtenso,
-  habitoAtivoDe,
-  saudacao,
-  textoEconomia,
-  textoFaltam,
-  textoPendente,
-} from '@/lib/inicio';
+import { dataPorExtenso, saudacao, textoEconomia, textoFaltam, textoPendente } from '@/lib/inicio';
 import { proximoMarco } from '@/lib/marcos';
 import { useAgora } from '@/lib/useAgora';
+import { useHabitoAtivo } from '@/lib/useHabitoAtivo';
 import { useMare } from '@/store';
 import { comAlfa, cores, fontes, raio } from '@/theme';
 
 export default function Inicio() {
-  const habitos = useMare((e) => e.habitos);
+  const { habitos, ativo, escolher } = useHabitoAtivo();
   const relatos = useMare((e) => e.relatos);
   const ajustes = useMare((e) => e.ajustes);
-  const setAjustes = useMare((e) => e.setAjustes);
   const avisoRecomeco = useMare((e) => e.avisoRecomeco);
   const dispensarAviso = useMare((e) => e.dispensarAvisoRecomeco);
   const router = useRouter();
   const agora = useAgora();
 
-  const ativo = habitoAtivoDe(habitos, ajustes.habitoAtivo);
   if (!ativo) {
     return (
       <Tela>
@@ -63,22 +55,7 @@ export default function Inicio() {
         </Texto>
       </View>
 
-      <View style={styles.chips}>
-        {habitos.map((h) => (
-          <Chip
-            key={h.id}
-            ponto
-            cor={cores[h.cor]}
-            ativo={h.id === ativo.id}
-            onPress={() => setAjustes({ habitoAtivo: h.id })}
-          >
-            {h.apelido}
-          </Chip>
-        ))}
-        <Chip onPress={() => router.push('/habito/novo')} accessibilityLabel="Adicionar hábito">
-          + Novo
-        </Chip>
-      </View>
+      <SeletorHabito habitos={habitos} ativoId={ativo.id} onEscolher={escolher} style={styles.chips} />
 
       <AnelAgua sequencia={resumo.sequenciaAtual} proximo={proximo} oculto={oculto} />
 
@@ -137,7 +114,7 @@ function FaixaRecomeco({ aoDispensar }: { aoDispensar: () => void }) {
 const styles = StyleSheet.create({
   data: { fontSize: 13, lineHeight: 18 },
   saudacao: { fontSize: 24, lineHeight: 29, marginTop: 4 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 16 },
+  chips: { marginTop: 16 },
   faltam: { textAlign: 'center', marginTop: 10 },
   destaque: { fontFamily: fontes.uiForte },
   pendenteOculto: { marginTop: 22 },

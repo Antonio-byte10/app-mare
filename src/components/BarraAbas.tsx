@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Keyboard, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { cores, fontes } from '@/theme';
 import { Degrade } from './Degrade';
 import { Icone, type NomeIcone } from './Icone';
@@ -9,9 +10,31 @@ import { Texto } from './Texto';
 const icones: Record<string, NomeIcone> = {
   index: 'inicio',
   diario: 'diario',
+  conversa: 'conversa',
   aprender: 'livro',
   mais: 'mais',
 };
+
+/**
+ * Ordem das abas. A 4ª é Conversa (com IA configurada) ou Aprender (sem IA): o layout esconde a
+ * outra, e aqui só entram as visíveis. O botão da onda fica depois da segunda.
+ */
+const ORDEM = ['index', 'diario', 'conversa', 'aprender', 'mais'];
+
+/** `true` enquanto o teclado está aberto: a barra some para o campo de texto ficar logo acima dele. */
+function useTecladoAberto(): boolean {
+  const [aberto, setAberto] = useState(false);
+  useEffect(() => {
+    const ios = Platform.OS === 'ios';
+    const mostrar = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', () => setAberto(true));
+    const esconder = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setAberto(false));
+    return () => {
+      mostrar.remove();
+      esconder.remove();
+    };
+  }, []);
+  return aberto;
+}
 
 /**
  * Barra de abas do mockup v2: cinco colunas, com o botão da onda no centro.
@@ -19,11 +42,19 @@ const icones: Record<string, NomeIcone> = {
  */
 export function BarraAbas({ state, descriptors, emitter, navigateToTab, insets }: BottomTabBarProps) {
   const router = useRouter();
+  const tecladoAberto = useTecladoAberto();
+
+  // Só as abas visíveis, na ordem certa (as escondidas com `href: null` ficam de fora).
+  const visiveis = ORDEM.flatMap((nome) => {
+    const rota = state.routes.find((r) => r.name === nome);
+    return rota && descriptors[rota.key]?.options.hidden !== true ? [rota] : [];
+  });
+  if (tecladoAberto) return null;
 
   const aba = (indice: number) => {
-    const rota = state.routes[indice];
+    const rota = visiveis[indice];
     if (!rota) return null;
-    const focada = state.index === indice;
+    const focada = state.routes[state.index]?.key === rota.key;
     const titulo = descriptors[rota.key]?.options.title ?? rota.name;
     const aoPressionar = () => {
       const evento = emitter.emit({ type: 'tabPress', target: rota.key, canPreventDefault: true });

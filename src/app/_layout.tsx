@@ -16,6 +16,7 @@ import { cores } from '@/theme';
 export default function RootLayout() {
   const hidratado = useHydrated();
   const erroArmazenamento = useMare((e) => e.erroArmazenamento);
+  const onboardingConcluido = useMare((e) => e.ajustes.onboardingConcluido);
   const [fontesProntas, erroFonte] = useFonts({
     Fraunces_300Light,
     Fraunces_400Regular,
@@ -47,8 +48,24 @@ export default function RootLayout() {
     <>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cores.bg } }}>
-        <Stack.Screen name="(abas)" />
-        <Stack.Screen name="fissura" options={{ animation: 'fade' }} />
+        {/* Primeiro uso: quem ainda não concluiu só enxerga estas telas (e o resto só depois). */}
+        <Stack.Protected guard={!onboardingConcluido}>
+          <Stack.Screen name="boas-vindas" options={{ animation: 'fade' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={onboardingConcluido}>
+          <Stack.Screen name="(abas)" />
+          <Stack.Screen name="fissura" options={{ animation: 'fade' }} />
+          <Stack.Screen name="habito/[id]" />
+          <Stack.Screen name="relato/[dia]" />
+          <Stack.Screen name="recomecar/[dia]" options={{ animation: 'fade' }} />
+          <Stack.Screen name="marcos" />
+          <Stack.Screen name="plano" />
+          <Stack.Screen name="avaliacao" />
+          <Stack.Screen name="apoio" />
+          <Stack.Screen name="biblioteca" />
+          <Stack.Screen name="aprender/[id]" />
+          <Stack.Screen name="ia" />
+        </Stack.Protected>
       </Stack>
     </>
   );

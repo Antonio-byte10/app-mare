@@ -2,6 +2,7 @@ import { normalizarRelatoHabito } from './contador';
 import type {
   AjustesIa,
   Avaliacao,
+  Contato,
   Fissura,
   Habito,
   MensagemConversa,
@@ -33,12 +34,13 @@ export type EstadoPersistido = {
   fissuras: Fissura[];
   recomecos: Recomeco[];
   conversa: MensagemConversa[];
+  contatos: Contato[];
 };
 
 export const VERSAO_ESTADO = 2;
 
 /** Listas novas da versão 2; todas começam vazias. */
-const LISTAS = ['avaliacoes', 'porques', 'planos', 'fissuras', 'recomecos', 'conversa'] as const;
+const LISTAS = ['avaliacoes', 'porques', 'planos', 'fissuras', 'recomecos', 'conversa', 'contatos'] as const;
 
 export function estadoInicial(): EstadoPersistido {
   return {
@@ -52,6 +54,7 @@ export function estadoInicial(): EstadoPersistido {
     fissuras: [],
     recomecos: [],
     conversa: [],
+    contatos: [],
   };
 }
 

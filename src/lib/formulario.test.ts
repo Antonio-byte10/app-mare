@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   brParaIso,
+  diasAntesDeTexto,
   inteiroPositivo,
   isoParaBr,
   paraCentavos,
@@ -81,5 +82,20 @@ describe('recalculaHistorico', () => {
     expect(recalculaHistorico({ ...base, meta: { tipo: 'parar' } }, base)).toBe(true);
     expect(recalculaHistorico(base, { ...base, tipo: 'alcool' })).toBe(true);
     expect(recalculaHistorico(base, { ...base, inicio: '2026-10-01' })).toBe(true);
+  });
+});
+
+describe('diasAntesDeTexto', () => {
+  it('vazio ou zero não é erro: não há dias antes', () => {
+    expect(diasAntesDeTexto('')).toEqual({ valor: undefined });
+    expect(diasAntesDeTexto('  ')).toEqual({ valor: undefined });
+    expect(diasAntesDeTexto('0')).toEqual({ valor: undefined });
+  });
+  it('aceita número inteiro de dias', () => {
+    expect(diasAntesDeTexto('12').valor).toBe(12);
+    expect(diasAntesDeTexto(' 3650 ').valor).toBe(3650);
+  });
+  it('rejeita texto, decimal, negativo e exagero', () => {
+    for (const t of ['abc', '1,5', '-2', '3651']) expect(diasAntesDeTexto(t).erro).toBeTruthy();
   });
 });

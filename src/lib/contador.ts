@@ -35,6 +35,11 @@ export function normalizarRelatoHabito(r: RelatoHabito): RelatoHabito {
   return normalizado;
 }
 
+/** Inteiro de 0 para cima; qualquer outra coisa (ausente, negativo, NaN) vale 0. */
+export function diasAntesValidos(n: number | undefined): number {
+  return typeof n === 'number' && Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
 export function resumoHabito(h: Habito, relatos: Relato[], hoje: string): ResumoHabito {
   const estados: Record<string, EstadoDia> = {};
   for (const relato of relatos) {
@@ -44,9 +49,12 @@ export function resumoHabito(h: Habito, relatos: Relato[], hoje: string): Resumo
     estados[relato.dia] = estadoDoDia(h.meta, normalizarRelatoHabito(entrada));
   }
 
-  let sequenciaAtual = 0;
-  let totalLivres = 0;
-  let recorde = 0;
+  // "Já estou há N dias": os dias de antes do início entram na sequência (até o primeiro deslize),
+  // no total e no recorde.
+  const antes = diasAntesValidos(h.diasAntes);
+  let sequenciaAtual = antes;
+  let totalLivres = antes;
+  let recorde = antes;
   for (let d = h.inicio; d <= hoje; d = deslocarDia(d, 1)) {
     const estado = estados[d];
     if (!estado) continue;

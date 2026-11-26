@@ -1,0 +1,22 @@
+# Servidor de IA do Maré no Render (opcional). Nenhum segredo fica no repositório:
+# IA_CHAVE é pedida no painel do Render e APP_TOKEN (o código de acesso do app) é gerado por ele.
+services:
+  - type: web
+    name: mare-ia
+    runtime: node
+    plan: free
+    # O servidor só usa módulos do Node: não precisa instalar as dependências do app.
+    buildCommand: node --version
+    startCommand: node servidor/servidor-ia.mjs
+    healthCheckPath: /saude
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: IA_PROVEDOR
+        value: gemini
+      - key: IA_MODELO
+        value: gemini-3.5-flash-lite
+      - key: IA_CHAVE
+        sync: false
+      - key: APP_TOKEN
+        generateValue: true
