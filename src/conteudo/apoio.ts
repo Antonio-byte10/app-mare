@@ -41,7 +41,7 @@ export const RECURSOS: Recurso[] = [
     telefone: CVV.telefone,
     rotuloTelefone: 'Ligar 188',
     url: CVV.chat,
-    rotuloUrl: 'Conversar pelo chat',
+    rotuloUrl: 'Chat do CVV',
   },
   {
     id: 'samu',

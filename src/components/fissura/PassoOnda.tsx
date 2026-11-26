@@ -180,10 +180,10 @@ function PainelDificil({ habitoId, aoFechar, aoRespirarDeNovo }: PainelProps) {
                 </Texto>
                 <View style={styles.emergenciaBotoes}>
                   <Botao variante="secundario" onPress={() => ligar(CVV.telefone)} style={styles.flex} accessibilityLabel="Ligar para o CVV, 188">
-                    Ligar 188 (CVV)
+                    CVV 188
                   </Botao>
                   <Botao variante="secundario" onPress={() => ligar(SAMU.telefone)} style={styles.flex} accessibilityLabel="Ligar para o SAMU, 192">
-                    Ligar 192 (SAMU)
+                    SAMU 192
                   </Botao>
                 </View>
               </View>

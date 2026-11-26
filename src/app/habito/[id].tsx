@@ -231,7 +231,7 @@ export default function EditarHabito() {
           maxLength={10}
         />
         <Campo
-          rotulo="Já estou há N dias (opcional)"
+          rotulo="Dias sem usar antes do início (opcional)"
           valor={diasAntes}
           {...campo('diasAntes', setDiasAntes)}
           teclado="number-pad"

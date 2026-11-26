@@ -8,6 +8,7 @@ import { Icone } from '@/components/Icone';
 import { Texto } from '@/components/Texto';
 import { detectarCrise } from '@/lib/crise';
 import { duracaoTexto } from '@/lib/fissura';
+import { RolarAoFim, useRolarAoFim } from '@/lib/rolagem';
 import { useReduzirMovimento } from '@/lib/useReduzirMovimento';
 import { cores, fontes, margemTela } from '@/theme';
 
@@ -72,13 +73,15 @@ export function PassoPassou({
   const { height } = useWindowDimensions();
   const { bottom } = useSafeAreaInsets();
   const [anotando, setAnotando] = useState(false);
+  const { ref, rolar } = useRolarAoFim();
   const crise = ajudou ? detectarCrise(ajudou) : null;
-  const tamanho = height < 700 ? 150 : 200;
+  const tamanho = height < 700 ? 120 : height < 820 ? 150 : 200;
   const miolo = Math.round(tamanho * 0.42);
 
   return (
     <KeyboardAvoidingView style={styles.raiz} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
+        ref={ref}
         style={styles.flex}
         contentContainerStyle={styles.corpo}
         keyboardShouldPersistTaps="handled"
@@ -153,7 +156,9 @@ export function PassoPassou({
         ) : null}
         {crise ? (
           <View style={styles.crise}>
-            <CartaoCrise tipo={crise} />
+            <RolarAoFim.Provider value={rolar}>
+              <CartaoCrise tipo={crise} />
+            </RolarAoFim.Provider>
           </View>
         ) : null}
       </ScrollView>
@@ -181,7 +186,7 @@ const styles = StyleSheet.create({
   },
   circulo: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#5CC79A', borderTopColor: 'rgba(255,255,255,.5)', borderTopWidth: 1 },
   titulo: {
-    marginTop: 22,
+    marginTop: 18,
     textAlign: 'center',
     fontFamily: fontes.display,
     fontSize: 30,
@@ -203,9 +208,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,.03)',
   },
   pilulaTexto: { fontSize: 13, lineHeight: 16, color: cores.text },
-  perguntas: { marginTop: 26 },
+  perguntas: { marginTop: 20 },
   pergunta: { fontFamily: fontes.uiForte, fontSize: 13.5, lineHeight: 18, marginBottom: 12, color: cores.text },
-  perguntaSeguinte: { marginTop: 22 },
+  perguntaSeguinte: { marginTop: 16 },
   anotar: { marginTop: 22 },
   entrada: {
     minHeight: 84,

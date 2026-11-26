@@ -13,8 +13,9 @@ import { Icone } from '@/components/Icone';
 import { Segmento } from '@/components/Segmento';
 import { Texto } from '@/components/Texto';
 import { GATILHOS } from '@/conteudo/gatilhos';
-import { estadoDoDia, normalizarRelatoHabito, resumoHabito } from '@/lib/contador';
+import { estadoDoDia, normalizarRelatoHabito } from '@/lib/contador';
 import { detectarCrise } from '@/lib/crise';
+import { RolarAoFim, useRolarAoFim } from '@/lib/rolagem';
 import { dataLocal, dataValida, formatarData } from '@/lib/datas';
 import {
   alternarGatilho,
@@ -48,7 +49,7 @@ export default function RelatoDoDia() {
   return <Formulario dia={dia} hoje={hoje} />;
 }
 
-type Deslize = { id: string; apelido: string; totalLivres: number };
+type Deslize = { id: string };
 
 function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const router = useRouter();
@@ -56,7 +57,6 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const habitos = useMare((e) => e.habitos);
   const existente = useMare((e) => e.relatos.find((r) => r.dia === dia));
   const salvarRelato = useMare((e) => e.salvarRelato);
-  const ocultarNumeros = useMare((e) => e.ajustes.ocultarNumeros);
   const voltar = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   const ativos = habitosDoDia(habitos, dia);
@@ -73,9 +73,9 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const [gatilhos, setGatilhos] = useState(existente?.gatilhos ?? []);
   const [nota, setNota] = useState(existente?.nota ?? '');
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
-  const [deslizes, setDeslizes] = useState<Deslize[] | null>(null);
 
   const criseNota = detectarCrise(nota);
+  const { ref: refRolagem, rolar } = useRolarAoFim();
   const opcoesGatilho = [...GATILHOS, ...(existente?.gatilhos ?? []).filter((g) => !GATILHOS.includes(g))];
   const comErro = habitoComErro(ativos, rascunhos);
   const temErro = comErro !== undefined;
@@ -92,7 +92,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const salvar = () => {
     if (temErro || ativos.length === 0) return;
     salvarRelato(montarRelato({ dia, ativos, rascunhos, humor, gatilhos, nota, agora: Date.now(), existente }));
-    // Total de dias livres calculado com o que acabou de ser salvo.
+    // Deslizes conferidos com o que acabou de ser salvo.
     const { relatos } = useMare.getState();
     const salvo = relatos.find((r) => r.dia === dia);
     const lista: Deslize[] = [];
@@ -100,55 +100,19 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
       const entrada = salvo?.habitos.find((x) => x.habitoId === h.id);
       if (!entrada || !rascunhos[h.id]?.respondido) continue;
       if (estadoDoDia(h.meta, normalizarRelatoHabito(entrada)) === 'deslize') {
-        lista.push({ id: h.id, apelido: h.apelido, totalLivres: resumoHabito(h, relatos, hoje).totalLivres });
+        lista.push({ id: h.id });
       }
     }
-    if (lista.length > 0) setDeslizes(lista);
-    else voltar();
+    if (lista.length === 0) {
+      voltar();
+      return;
+    }
+    const [primeiro, ...resto] = lista;
+    router.replace({
+      pathname: '/recomecar/[dia]',
+      params: { dia, habito: primeiro.id, restantes: resto.map((d) => d.id).join(',') },
+    });
   };
-
-  if (deslizes) {
-    return (
-      <Fundo>
-        <View style={[styles.agradecimento, { paddingTop: top + 14, paddingBottom: Math.max(bottom, 12) + 22 }]}>
-          <ScrollView style={styles.flex} contentContainerStyle={styles.agradecimentoCorpo} showsVerticalScrollIndicator={false}>
-            <Texto tipo="titulo" style={styles.centro}>
-              Obrigado por registrar. Seus dias continuam contando.
-            </Texto>
-            <Texto tipo="legenda" style={styles.centro}>
-              Se quiser, vale olhar com calma o que estava acontecendo. Leva menos de um minuto.
-            </Texto>
-            {ocultarNumeros ? null : (
-              <View style={styles.totais}>
-                {deslizes.map((d) => (
-                  <Texto key={d.apelido} cor={cores.muted} style={styles.centro}>
-                    {`${d.apelido}: ${d.totalLivres} ${d.totalLivres === 1 ? 'dia livre' : 'dias livres'} no total`}
-                  </Texto>
-                ))}
-              </View>
-            )}
-            {criseNota ? <CartaoCrise tipo={criseNota} /> : null}
-          </ScrollView>
-          <View style={styles.acoesAgradecimento}>
-            <Botao
-              onPress={() => {
-                const [primeiro, ...resto] = deslizes;
-                router.replace({
-                  pathname: '/recomecar/[dia]',
-                  params: { dia, habito: primeiro.id, restantes: resto.map((d) => d.id).join(',') },
-                });
-              }}
-            >
-              Olhar com calma o que aconteceu
-            </Botao>
-            <Botao variante="texto" onPress={voltar}>
-              Agora não
-            </Botao>
-          </View>
-        </View>
-      </Fundo>
-    );
-  }
 
   return (
     <Fundo>
@@ -182,6 +146,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
           <>
             <View style={styles.corpo}>
               <ScrollView
+                ref={refRolagem}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.rolagem}
@@ -262,7 +227,11 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
                     style={styles.nota}
                   />
                 </View>
-                {criseNota ? <CartaoCrise tipo={criseNota} /> : null}
+                {criseNota ? (
+                  <RolarAoFim.Provider value={rolar}>
+                    <CartaoCrise tipo={criseNota} />
+                  </RolarAoFim.Provider>
+                ) : null}
               </ScrollView>
               {/* `.fade` do mockup: a rolagem some devagar sob o botão. */}
               <View pointerEvents="none" style={styles.fade}>
@@ -437,8 +406,4 @@ const styles = StyleSheet.create({
   },
   vazio: { flex: 1, justifyContent: 'center', gap: 22, paddingHorizontal: margemTela },
   centro: { textAlign: 'center' },
-  agradecimento: { flex: 1, paddingHorizontal: margemTela },
-  agradecimentoCorpo: { flexGrow: 1, justifyContent: 'center', gap: 22 },
-  totais: { gap: 6 },
-  acoesAgradecimento: { gap: 6 },
 });

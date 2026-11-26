@@ -2,6 +2,7 @@ import * as Linking from 'expo-linking';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CVV, SAMU } from '@/conteudo/apoio';
 import type { TipoCrise } from '@/lib/crise';
+import { useRolarAoAparecer } from '@/lib/rolagem';
 import { useMare } from '@/store';
 import { comAlfa, cores, fontes, raio } from '@/theme';
 import { Botao } from './Botao';
@@ -42,6 +43,7 @@ const ligar = (numero: string) => {
  */
 export function CartaoCrise({ tipo, aoFechar }: Props) {
   const ligado = useMare((e) => e.ajustes.contatosEmergencia);
+  useRolarAoAparecer(ligado);
   if (!ligado) return null;
   const { titulo, corpo, primario } = TEXTOS[tipo];
   return (

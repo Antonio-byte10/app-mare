@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RolarAoFim, useRolarAoFim } from '@/lib/rolagem';
 import { margemTela } from '@/theme';
 import { BotaoIcone } from './BotaoIcone';
 import { Fundo } from './Fundo';
@@ -21,6 +22,7 @@ type Props = {
  */
 export function TelaPasso({ aoVoltar, topo, children, rodape }: Props) {
   const { top, bottom } = useSafeAreaInsets();
+  const { ref, rolar } = useRolarAoFim();
   return (
     <Fundo>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -32,12 +34,13 @@ export function TelaPasso({ aoVoltar, topo, children, rodape }: Props) {
             </View>
           ) : null}
           <ScrollView
+            ref={ref}
             style={styles.flex}
             contentContainerStyle={styles.corpo}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {children}
+            <RolarAoFim.Provider value={rolar}>{children}</RolarAoFim.Provider>
           </ScrollView>
           <View style={[styles.rodape, { paddingBottom: Math.max(bottom, 12) + 10 }]}>{rodape}</View>
         </View>

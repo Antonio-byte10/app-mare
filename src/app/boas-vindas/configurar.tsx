@@ -129,7 +129,7 @@ export default function ConfigurarHabitos() {
         <Segmento<Comecou>
           opcoes={[
             { valor: 'hoje', rotulo: 'Hoje' },
-            { valor: 'ja', rotulo: 'Já estou há N dias' },
+            { valor: 'ja', rotulo: 'Já estou sem usar' },
           ]}
           valor={r.comecou}
           onChange={(comecou) => mudar(r.tipo, { comecou })}
@@ -138,7 +138,7 @@ export default function ConfigurarHabitos() {
       </View>
       {r.comecou === 'ja' ? (
         <Campo
-          rotulo="Quantos dias?"
+          rotulo="Há quantos dias?"
           valor={r.diasAntes}
           aoMudar={(diasAntes) => {
             mudar(r.tipo, { diasAntes });
