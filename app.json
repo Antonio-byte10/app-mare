@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Maré",
+    "slug": "mare",
+    "scheme": "mare",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#071526",
+    "android": {
+      "package": "com.mare.app",
+      "versionCode": 1
+    },
+    "web": {
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      ["expo-sqlite", { "useSQLCipher": true }],
+      "expo-secure-store"
+    ]
+  }
+}
