@@ -8,10 +8,11 @@
   "scripts": {
     "start": "expo start",
     "web": "expo start --web",
-    "android": "expo run:android",
+    "android": "node scripts/android-env.mjs npx expo run:android",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "apk:teste": "node scripts/apk-teste.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
