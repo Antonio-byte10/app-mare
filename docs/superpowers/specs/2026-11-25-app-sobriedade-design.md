@@ -156,7 +156,7 @@ Escolhida: **A, com 3 provedores (Gemini, ChatGPT/OpenAI e Claude)**. **[decidid
 
 ## 6. Telas e fluxos
 
-> **Referência visual aprovada:** mockups v2 em `.superpowers/brainstorm/315-1795657084/content/telas-v2.html` (13 telas). Quem implementar deve abrir esse arquivo e seguir o visual de lá; esta seção descreve o comportamento.
+> **Referência visual aprovada:** mockups v2 em `docs/design/mockups-v2.html` (13 telas). Quem implementar deve abrir esse arquivo e seguir o visual de lá; esta seção descreve o comportamento.
 
 Navegação em 5 abas, com o **botão de onda (Fissura agora)** no centro da barra. **[decidido via mockup]**
 
@@ -343,7 +343,7 @@ Notificações; biometria; microfone (só se a pessoa gravar áudio do "porquê"
 
 ## 9. Visual e tom **[decidido via mockups v2]**
 
-Referência: `.superpowers/brainstorm/315-1795657084/content/telas-v2.html`.
+Referência: `docs/design/mockups-v2.html`.
 
 - **Marca:**
   - **símbolo** = um círculo com uma onda em degradê (água-marinha → lavanda) na parte de baixo e uma **lua em areia** no alto;

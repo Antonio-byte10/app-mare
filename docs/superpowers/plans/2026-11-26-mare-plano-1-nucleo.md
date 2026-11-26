@@ -16,7 +16,7 @@ Tudo com dados criptografados no celular e o visual dos mockups v2.
 
 **Tech Stack:** Expo ~58, React Native 0.88, React 19.3, TypeScript ~6.0, Expo Router, Zustand 5, react-native-svg, expo-sqlite (SQLCipher), expo-secure-store, expo-crypto, @expo-google-fonts/fraunces, @expo-google-fonts/geist, vitest 5.
 
-**Spec:** [docs/superpowers/specs/2026-11-25-app-sobriedade-design.md](../specs/2026-11-25-app-sobriedade-design.md). Roteiro geral: [2026-11-26-mare-roteiro.md](2026-11-26-mare-roteiro.md). Referência visual obrigatória: `.superpowers/brainstorm/315-1795657084/content/telas-v2.html`.
+**Spec:** [docs/superpowers/specs/2026-11-25-app-sobriedade-design.md](../specs/2026-11-25-app-sobriedade-design.md). Roteiro geral: [2026-11-26-mare-roteiro.md](2026-11-26-mare-roteiro.md). Referência visual obrigatória: `docs/design/mockups-v2.html`.
 
 ## Global Constraints
 
