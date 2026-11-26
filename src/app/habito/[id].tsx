@@ -11,7 +11,14 @@ import { Tela } from '@/components/Tela';
 import { Texto } from '@/components/Texto';
 import { confirmar } from '@/lib/confirmar';
 import { dataLocal } from '@/lib/datas';
-import { centavosParaTexto, inteiroPositivo, isoParaBr, paraCentavos, validarInicio } from '@/lib/formulario';
+import {
+  centavosParaTexto,
+  inteiroPositivo,
+  isoParaBr,
+  paraCentavos,
+  recalculaHistorico,
+  validarInicio,
+} from '@/lib/formulario';
 import type { Habito, TipoHabito } from '@/lib/tipos';
 import { useMare } from '@/store';
 import { cores, fontes } from '@/theme';
@@ -140,8 +147,22 @@ export default function EditarHabito() {
       unidadesPorDia: inteiroPositivo(unidadesPorDia).valor,
       criadoEm: existente?.criadoEm ?? Date.now(),
     };
-    salvarHabito(habito);
-    voltar();
+    const gravar = () => {
+      salvarHabito(habito);
+      voltar();
+    };
+    // Os dias anteriores são lidos com a meta e o início atuais: avisa antes de recalcular.
+    if (existente && recalculaHistorico(existente, habito)) {
+      confirmar(
+        'Recalcular seus dias?',
+        'Isso recalcula seus dias anteriores com a nova meta.',
+        'Salvar e recalcular',
+        gravar,
+        false,
+      );
+      return;
+    }
+    gravar();
   };
 
   const remover = () =>

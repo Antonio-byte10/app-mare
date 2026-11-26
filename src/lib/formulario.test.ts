@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { brParaIso, inteiroPositivo, isoParaBr, paraCentavos, validarInicio } from './formulario';
+import {
+  brParaIso,
+  inteiroPositivo,
+  isoParaBr,
+  paraCentavos,
+  recalculaHistorico,
+  validarInicio,
+} from './formulario';
+import type { Habito } from './tipos';
 
 describe('paraCentavos', () => {
   it('converte reais em centavos', () => {
@@ -40,5 +48,38 @@ describe('inteiroPositivo', () => {
     expect(inteiroPositivo('0').erro).toBeTruthy();
     expect(inteiroPositivo('3.5').erro).toBeTruthy();
     expect(inteiroPositivo('12').valor).toBe(12);
+  });
+});
+
+describe('recalculaHistorico', () => {
+  const base: Habito = {
+    id: 'a',
+    tipo: 'tabaco',
+    apelido: 'Fôlego',
+    cor: 'aqua',
+    meta: { tipo: 'reduzir', maxPorDia: 5, unidade: 'cigarros' },
+    inicio: '2026-11-01',
+    custoPorDiaCentavos: 1000,
+    unidadesPorDia: 10,
+    criadoEm: 1,
+  };
+  it('apelido, cor, custo, unidades e unidade da meta não mexem nos dias anteriores', () => {
+    expect(
+      recalculaHistorico(base, {
+        ...base,
+        apelido: 'Outro',
+        cor: 'peri',
+        custoPorDiaCentavos: 2000,
+        unidadesPorDia: 20,
+        meta: { tipo: 'reduzir', maxPorDia: 5, unidade: 'cigarrilhas' },
+      }),
+    ).toBe(false);
+  });
+  it('mudar o limite, o tipo de meta, o tipo ou o início recalcula', () => {
+    expect(recalculaHistorico(base, { ...base, meta: { tipo: 'reduzir', maxPorDia: 3, unidade: 'cigarros' } })).toBe(true);
+    expect(recalculaHistorico(base, { ...base, meta: { tipo: 'parar' } })).toBe(true);
+    expect(recalculaHistorico({ ...base, meta: { tipo: 'parar' } }, base)).toBe(true);
+    expect(recalculaHistorico(base, { ...base, tipo: 'alcool' })).toBe(true);
+    expect(recalculaHistorico(base, { ...base, inicio: '2026-10-01' })).toBe(true);
   });
 });
