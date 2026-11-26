@@ -51,7 +51,8 @@ export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessi
         onResponderTerminationRequest={() => false}
         onResponderGrant={(e) => {
           toque.current = { x: e.nativeEvent.locationX, pagina: e.nativeEvent.pageX };
-          mudar(passoEm(toque.current.x));
+          // Tocar conta como resposta mesmo no valor que já estava (ex.: confirmar 0).
+          onChange(passoEm(toque.current.x));
         }}
         onResponderMove={(e) => mudar(passoEm(toque.current.x + e.nativeEvent.pageX - toque.current.pagina))}
         onLayout={(e) => setLargura(e.nativeEvent.layout.width)}

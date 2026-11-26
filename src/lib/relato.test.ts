@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   alternarGatilho,
+  aplicarMudanca,
   erroQuantidade,
   habitoAberto,
+  habitoComErro,
   habitosDoDia,
   montarRelato,
   perguntaUso,
@@ -172,5 +174,42 @@ describe('alternarGatilho', () => {
     expect(alternarGatilho(a, 'Solidão')).toEqual(['Tédio', 'Solidão']);
     expect(alternarGatilho(a, 'Tédio')).toEqual([]);
     expect(a).toEqual(['Tédio']);
+  });
+});
+
+describe('aplicarMudanca', () => {
+  const ativos = [fumo, vinho];
+  const comum = { dia: '2026-11-26', agora: 1, humor: undefined, gatilhos: [], nota: '' };
+
+  it('hábito aberto sem mexer continua fora do relato', () => {
+    const rs = rascunhoInicial(ativos);
+    rs.a = { ...rs.a, respondido: true }; // o que abre expandido já conta
+    // "Calmaria" foi aberto só para olhar: nenhuma mudança, nada gravado.
+    const rel = montarRelato({ ...comum, ativos, rascunhos: rs });
+    expect(rel.habitos.map((x) => x.habitoId)).toEqual(['a']);
+  });
+  it('a primeira mudança (vontade, uso ou quantidade) inclui o hábito', () => {
+    for (const mudanca of [{ vontade: 3 }, { usou: false }, { usou: true, quantidade: '2' }, { quantidade: '1' }]) {
+      const rs = aplicarMudanca(rascunhoInicial(ativos), 'b', mudanca);
+      expect(rs.b.respondido).toBe(true);
+      expect(rs.a.respondido).toBe(false);
+      expect(montarRelato({ ...comum, ativos, rascunhos: rs }).habitos.map((x) => x.habitoId)).toEqual(['b']);
+    }
+  });
+  it('não muta o original e mantém o que já estava salvo como respondido', () => {
+    const original = rascunhoInicial(ativos, { dia: 'd', habitos: [{ habitoId: 'a', vontade: 4, usou: true }], gatilhos: [], salvoEm: 1 });
+    const rs = aplicarMudanca(original, 'a', { vontade: 5 });
+    expect(original.a.vontade).toBe(4);
+    expect(rs.a).toEqual({ respondido: true, vontade: 5, usou: true, quantidade: '' });
+    expect(rs.b.respondido).toBe(false);
+  });
+});
+
+describe('habitoComErro', () => {
+  it('acha o primeiro hábito respondido sem quantidade', () => {
+    const ativos = [fumo, vinho];
+    expect(habitoComErro(ativos, { a: r(), b: r({ usou: true }) })?.id).toBe('b');
+    expect(habitoComErro(ativos, { a: r(), b: r({ usou: true, quantidade: '2' }) })).toBeUndefined();
+    expect(habitoComErro(ativos, { a: r(), b: r({ respondido: false, usou: true }) })).toBeUndefined();
   });
 });

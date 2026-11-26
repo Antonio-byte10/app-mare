@@ -16,8 +16,10 @@ import { estadoDoDia, normalizarRelatoHabito, resumoHabito } from '@/lib/contado
 import { dataLocal, dataValida, formatarData } from '@/lib/datas';
 import {
   alternarGatilho,
+  aplicarMudanca,
   erroQuantidade,
   habitoAberto,
+  habitoComErro,
   habitosDoDia,
   montarRelato,
   perguntaUso,
@@ -54,14 +56,15 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const voltar = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   const ativos = habitosDoDia(habitos, dia);
-  const [rascunhos, setRascunhos] = useState(() => {
+  const [inicial] = useState(() => {
     const rs = rascunhoInicial(ativos, existente);
-    // O bloco que abre expandido já conta como respondido (padrão: vontade 0, não usou).
     const primeiro = habitoAberto(ativos, rs);
+    // O bloco que abre expandido já conta como respondido (padrão: vontade 0, não usou).
     if (primeiro) rs[primeiro] = { ...rs[primeiro], respondido: true };
-    return rs;
+    return { rs, primeiro };
   });
-  const [aberto, setAberto] = useState(() => habitoAberto(ativos, rascunhoInicial(ativos, existente)));
+  const [rascunhos, setRascunhos] = useState(inicial.rs);
+  const [aberto, setAberto] = useState(inicial.primeiro);
   const [humor, setHumor] = useState<ValorHumor | undefined>(existente?.humor);
   const [gatilhos, setGatilhos] = useState(existente?.gatilhos ?? []);
   const [nota, setNota] = useState(existente?.nota ?? '');
@@ -69,12 +72,15 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const [deslizes, setDeslizes] = useState<Deslize[] | null>(null);
 
   const opcoesGatilho = [...GATILHOS, ...(existente?.gatilhos ?? []).filter((g) => !GATILHOS.includes(g))];
-  const temErro = ativos.some((h) => rascunhos[h.id] && erroQuantidade(h, rascunhos[h.id]));
+  const comErro = habitoComErro(ativos, rascunhos);
+  const temErro = comErro !== undefined;
   const ehHoje = dia === hoje;
 
-  const mudar = (id: string, p: Partial<Rascunho>) => setRascunhos((rs) => ({ ...rs, [id]: { ...rs[id], ...p } }));
-  const expandir = (id: string) => {
-    mudar(id, { respondido: true });
+  // Só mexer no bloco marca o hábito como respondido; abrir para olhar não grava nada.
+  const mudar = (id: string, p: Partial<Omit<Rascunho, 'respondido'>>) =>
+    setRascunhos((rs) => aplicarMudanca(rs, id, p));
+  const completar = (id: string) => {
+    setTocados((t) => ({ ...t, [id]: true }));
     setAberto(id);
   };
 
@@ -176,7 +182,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
                         key={h.id}
                         accessibilityRole="button"
                         accessibilityLabel={`${h.apelido}, ${resumoLinha(h, r)}`}
-                        onPress={() => expandir(h.id)}
+                        onPress={() => setAberto(h.id)}
                         style={[styles.mini, !proximoRecolhido && styles.miniUltimo]}
                       >
                         <View style={styles.linhaNome}>
@@ -236,7 +242,22 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
               </View>
             </View>
             <View style={[styles.rodape, { paddingBottom: Math.max(bottom, 12) + 10 }]}>
-              <Botao onPress={salvar} desabilitado={temErro}>
+              {comErro ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Falta a quantidade de ${comErro.apelido}. Toque para completar.`}
+                  onPress={() => completar(comErro.id)}
+                >
+                  <Texto tipo="legenda" cor={cores.sand} style={styles.centro}>
+                    {`Falta a quantidade de ${comErro.apelido}. Toque para completar.`}
+                  </Texto>
+                </Pressable>
+              ) : null}
+              <Botao
+                onPress={salvar}
+                desabilitado={temErro}
+                accessibilityLabel={comErro ? `Salvar relato. Falta a quantidade de ${comErro.apelido}.` : undefined}
+              >
                 Salvar relato
               </Botao>
             </View>
@@ -253,7 +274,7 @@ type BlocoProps = {
   separado: boolean;
   rascunho: Rascunho;
   erro?: string;
-  aoMudar: (p: Partial<Rascunho>) => void;
+  aoMudar: (p: Partial<Omit<Rascunho, 'respondido'>>) => void;
   aoTocarQuantidade: () => void;
 };
 

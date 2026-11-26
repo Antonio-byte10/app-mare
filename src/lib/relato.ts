@@ -48,6 +48,18 @@ export function habitoAberto(ativos: Habito[], rascunhos: Rascunhos): string | u
   return (ativos.find((h) => rascunhos[h.id]?.respondido) ?? ativos[0])?.id;
 }
 
+/**
+ * Aplica uma mudança feita dentro do bloco do hábito. Só mexer no bloco (vontade, uso ou
+ * quantidade) marca o hábito como respondido; abrir para olhar não grava nada.
+ */
+export function aplicarMudanca(rascunhos: Rascunhos, id: string, mudanca: Partial<Omit<Rascunho, 'respondido'>>): Rascunhos {
+  return { ...rascunhos, [id]: { ...rascunhos[id], ...mudanca, respondido: true } };
+}
+
+/** Primeiro hábito respondido que não pode ser salvo (falta a quantidade). */
+export const habitoComErro = (ativos: Habito[], rascunhos: Rascunhos) =>
+  ativos.find((h) => rascunhos[h.id] && erroQuantidade(h, rascunhos[h.id]));
+
 /** Na meta reduzir, quem usou precisa dizer quanto (inteiro maior que zero). */
 export function erroQuantidade(h: Habito, r: Rascunho): string | undefined {
   if (!r.respondido || h.meta.tipo !== 'reduzir' || !r.usou) return undefined;
