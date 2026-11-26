@@ -2,12 +2,15 @@ import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { criarArmazenamento, falhaAoAbrir, recomecouDoZero } from './lib/armazenamento';
+import { protegerVersao } from './lib/guardaVersao';
 import {
   aplicarHabito,
   aplicarRelato,
   aplicarRemocaoHabito,
   estadoInicial,
+  mesclar,
   migrar,
+  paraPersistir,
   VERSAO_ESTADO,
   type Ajustes,
   type EstadoPersistido,
@@ -29,6 +32,12 @@ type Mare = EstadoPersistido & {
   dispensarAvisoRecomeco: () => void;
 };
 
+/** Dados de uma versão futura do app: nada é lido nem gravado até a pessoa recomeçar. */
+const guardaVersao = protegerVersao(criarArmazenamento());
+
+/** Campos que só existem na sessão e nunca vão para o disco. */
+const EFEMEROS = ['avisoRecomeco', 'erroArmazenamento'] as const;
+
 export const useMare = create<Mare>()(
   persist(
     (set) => ({
@@ -44,21 +53,19 @@ export const useMare = create<Mare>()(
     {
       name: 'mare',
       version: VERSAO_ESTADO,
-      storage: createJSONStorage(criarArmazenamento),
-      partialize: ({ versao, habitos, relatos, ajustes }): EstadoPersistido => ({
-        versao,
-        habitos,
-        relatos,
-        ajustes,
-      }),
-      migrate: (persistido, versao) => migrar(persistido, versao),
-      // Sempre passa pelo `migrar`, que descarta o que estiver fora do formato.
-      merge: (persistido, atual) => ({
-        ...atual,
-        ...migrar(persistido, VERSAO_ESTADO),
-        avisoRecomeco: recomecouDoZero(),
-        erroArmazenamento: falhaAoAbrir(),
-      }),
+      storage: createJSONStorage(() => guardaVersao.storage),
+      partialize: (e): EstadoPersistido => paraPersistir(e, EFEMEROS),
+      // Só chega aqui versão passada (a futura é barrada por `guardaVersao`); ver `migrar`.
+      migrate: (persistido, versao) => migrar(persistido, versao) ?? estadoInicial(),
+      // Sempre passa pelo `mesclar`, que descarta o que estiver fora do formato.
+      merge: (persistido, atual) => {
+        const mesclado = mesclar(persistido, atual);
+        return {
+          ...(mesclado ?? atual),
+          avisoRecomeco: recomecouDoZero(),
+          erroArmazenamento: mesclado === null || falhaAoAbrir() || guardaVersao.futura(),
+        };
+      },
     },
   ),
 );

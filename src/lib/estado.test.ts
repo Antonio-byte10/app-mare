@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  aplicarMigracoes,
   aplicarHabito,
   aplicarRelato,
   aplicarRemocaoHabito,
   estadoInicial,
+  mesclar,
   migrar,
+  paraPersistir,
+  VERSAO_ESTADO,
 } from './estado';
 import type { Habito, Relato } from './tipos';
 
@@ -71,11 +75,16 @@ describe('aplicarRemocaoHabito', () => {
 });
 
 describe('migrar', () => {
-  it('versão desconhecida devolve o estado inicial, sem lançar erro', () => {
-    expect(migrar({ versao: 1, habitos: [habito('a')] }, 99)).toEqual(estadoInicial());
+  it('versão futura devolve null (nunca o estado vazio) e não lança erro', () => {
+    expect(migrar({ versao: 2, habitos: [habito('a')], relatos: [] }, VERSAO_ESTADO + 1)).toBeNull();
+    expect(migrar({ versao: 1, habitos: [habito('a')] }, 99)).toBeNull();
   });
 
-  it('estado inválido devolve o estado inicial, sem lançar erro', () => {
+  it('versão inválida (0, negativa, fracionária) também devolve null', () => {
+    for (const v of [0, -1, 1.5, Number.NaN]) expect(migrar(estadoInicial(), v)).toBeNull();
+  });
+
+  it('estado inválido na versão atual devolve o estado inicial, sem lançar erro', () => {
     expect(migrar(null, 1)).toEqual(estadoInicial());
     expect(migrar('lixo', 1)).toEqual(estadoInicial());
     expect(migrar({ habitos: 'x' }, 1)).toEqual(estadoInicial());
@@ -84,5 +93,61 @@ describe('migrar', () => {
   it('estado válido da versão 1 é mantido', () => {
     const e = aplicarRelato(aplicarHabito(estadoInicial(), habito('a')), relato('2026-02-01', 'a'));
     expect(migrar(e, 1)).toEqual(e);
+  });
+
+  it('campo extra na raiz sobrevive', () => {
+    const e = { ...estadoInicial(), futuroCampo: { x: 1 } };
+    expect(migrar(e, 1)).toEqual(e);
+  });
+
+  it('campo extra em ajustes sobrevive; os conhecidos são validados', () => {
+    const e = { ...estadoInicial(), ajustes: { ocultarNumeros: 'sim', habitoAtivo: 7, tema: 'escuro' } };
+    expect(migrar(e, 1)?.ajustes).toEqual({ ocultarNumeros: false, tema: 'escuro' });
+  });
+});
+
+describe('aplicarMigracoes', () => {
+  const tabela = {
+    1: (e: Record<string, unknown>) => ({ ...e, passou1: true }),
+    2: (e: Record<string, unknown>) => ({ ...e, passou2: e.passou1 === true }),
+  };
+  it('encadeia as versões em ordem, só as que faltam', () => {
+    expect(aplicarMigracoes({}, 1, 3, tabela)).toEqual({ passou1: true, passou2: true });
+    expect(aplicarMigracoes({}, 2, 3, tabela)).toEqual({ passou2: false });
+  });
+  it('na versão de destino não muda nada', () => {
+    expect(aplicarMigracoes({ a: 1 }, 3, 3, tabela)).toEqual({ a: 1 });
+  });
+  it('versão sem migração definida segue adiante sem mudar', () => {
+    expect(aplicarMigracoes({ a: 1 }, 1, 3, {})).toEqual({ a: 1 });
+  });
+});
+
+describe('mesclar (merge do store)', () => {
+  const atual = { ...estadoInicial(), avisoRecomeco: true };
+  it('o salvo vale por cima do atual e os campos fora do formato são descartados', () => {
+    const salvo = aplicarHabito(estadoInicial(), habito('a'));
+    const r = mesclar({ ...salvo, extra: 1 }, atual);
+    expect(r?.habitos.map((h) => h.id)).toEqual(['a']);
+    expect(r?.avisoRecomeco).toBe(true);
+    expect((r as Record<string, unknown>).extra).toBe(1);
+  });
+  it('sem nada salvo, mantém o estado inicial', () => {
+    expect(mesclar(undefined, atual)?.habitos).toEqual([]);
+  });
+});
+
+describe('paraPersistir (partialize do store)', () => {
+  it('tira funções e flags de sessão e mantém campos extras', () => {
+    const e = {
+      ...aplicarHabito(estadoInicial(), habito('a')),
+      avisoRecomeco: true,
+      erroArmazenamento: false,
+      salvarHabito: () => undefined,
+      futuroCampo: 'fica',
+    };
+    const p = paraPersistir(e, ['avisoRecomeco', 'erroArmazenamento']);
+    expect(Object.keys(p).sort()).toEqual(['ajustes', 'futuroCampo', 'habitos', 'relatos', 'versao']);
+    expect(p.habitos).toHaveLength(1);
   });
 });
