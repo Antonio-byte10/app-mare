@@ -19,7 +19,7 @@ O **Maré** ajuda quem quer **parar ou diminuir** três hábitos:
 
 Muitos apps de acompanhamento cobram para funcionar de verdade. Aqui tudo é livre, porque as pessoas merecem isso.
 
-> **Status:** em desenvolvimento. A pesquisa e o design estão prontos, e a construção do app começou pelo [Plano 1](docs/superpowers/plans/2026-11-26-mare-plano-1-nucleo.md). Ainda não há APK para instalar.
+> **Status:** em desenvolvimento. O [Plano 1](docs/superpowers/plans/2026-11-26-mare-plano-1-nucleo.md) (núcleo diário) está pronto: hábitos, relato diário, contador, início, calendário e marcos, com dados criptografados. Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e entregar os próximos planos.
 
 ## Por que "Maré"
 
@@ -90,7 +90,7 @@ O app **informa e incentiva a procurar ajuda**, mas **não diagnostica, não pre
 
 | | Etapa | O que entrega |
 |---|---|---|
-| ◐ | [1 · Núcleo diário](docs/superpowers/plans/2026-11-26-mare-plano-1-nucleo.md) | Hábitos, relato diário, contador, início, calendário, marcos, dados criptografados |
+| ✓ | [1 · Núcleo diário](docs/superpowers/plans/2026-11-26-mare-plano-1-nucleo.md) | Hábitos, relato diário, contador, início, calendário, marcos, dados criptografados |
 | ○ | 2 · Primeiro uso e cuidado | Avaliação "Como você está", fissura em 3 passos, porquês, biblioteca |
 | ○ | 3 · Lembretes e privacidade | Notificações discretas, "antes da onda", bloqueio, disfarce, backup cifrado |
 | ○ | 4 · IA de cada um | Conversa com Gemini, ChatGPT ou Claude, servidor opcional no Render |
@@ -101,6 +101,13 @@ Detalhes em [docs/superpowers/plans/2026-11-26-mare-roteiro.md](docs/superpowers
 ## Tecnologia
 
 [Expo](https://expo.dev) (React Native) com TypeScript, Expo Router, Zustand e SQLite criptografado (SQLCipher). Os testes de lógica usam [Vitest](https://vitest.dev).
+
+```bash
+npm ci
+npm run web        # abre no navegador (modo celular do DevTools)
+npm test           # testes da lógica
+npm run apk:teste  # gera um APK de teste em dist/ (precisa do Android SDK)
+```
 
 ## Contribuir
 
