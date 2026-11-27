@@ -7,19 +7,20 @@
  *   cada "Bom dia" tem a sua frase. Depois de 14 dias sem abrir o app, os avisos silenciam.
  * - "Antes da onda": semanal, no dia e hora aprendidos (`antesDaOnda.ts`).
  * - Marco: uma só, às 09:00 do dia previsto (`marcos.ts`).
+ * - Reflexão da semana: semanal, no domingo, na hora escolhida (padrão 19:00); texto que não cita o hábito.
  * - Título de toda notificação: o nome do disfarce. O texto nunca cita o hábito.
  */
-import { fraseDoDia, TEXTO_ANTES_DA_ONDA, TEXTO_MARCO, TEXTO_RELATO } from '../../conteudo/lembretes';
+import { fraseDoDia, TEXTO_ANTES_DA_ONDA, TEXTO_MARCO, TEXTO_REFLEXAO, TEXTO_RELATO } from '../../conteudo/lembretes';
 import { dataLocal, deslocarDia } from '../datas';
 import type { AjustesLembretes, Fissura, Habito, Relato } from '../tipos';
 import { calcularAntesDaOnda } from './antesDaOnda';
 import { instanteDoDia, lerHorario } from './horario';
 import { proximoAvisoMarco } from './marcos';
-import { ROTA_FISSURA, ROTA_INICIO, ROTA_MARCOS, rotaRelato } from './toque';
+import { ROTA_FISSURA, ROTA_INICIO, ROTA_MARCOS, ROTA_REFLEXAO, rotaRelato } from './toque';
 
 export const DIAS_JANELA = 14;
 
-export type TipoLembrete = 'relato' | 'bomDia' | 'antesDaOnda' | 'marco';
+export type TipoLembrete = 'relato' | 'bomDia' | 'antesDaOnda' | 'marco' | 'reflexao';
 
 export type Quando =
   | { tipo: 'data'; em: number }
@@ -118,6 +119,19 @@ export function planejarLembretes(e: EntradaPlano): Notificacao[] {
         rota: ROTA_MARCOS,
       });
     }
+  }
+
+  if (habito && lembretes.reflexao?.ligado) {
+    const { hora, minuto } = lerHorario(lembretes.reflexao.hora);
+    lista.push({
+      id: 'reflexao-semanal',
+      tipo: 'reflexao',
+      titulo,
+      corpo: TEXTO_REFLEXAO,
+      // Domingo (1 no padrão do Expo).
+      quando: { tipo: 'semanal', diaSemana: 1, hora, minuto },
+      rota: ROTA_REFLEXAO,
+    });
   }
 
   return lista;

@@ -207,4 +207,51 @@ describe('nome, resumo e restauração', () => {
     expect(r.ajustes.bloqueio).toBeUndefined();
     expect('bloqueio' in r.ajustes).toBe(false);
   });
+
+  describe('fotos dos porquês', () => {
+    const NOME_A = '11111111-2222-4333-8444-555555555555.bin';
+    const NOME_B = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee.bin';
+    const JPEG = paraBase64(Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4]));
+    const comPorques = (porques: EstadoPersistido['porques']): EstadoPersistido => ({ ...estadoDeExemplo(), porques });
+
+    it('vão dentro da parte cifrada e voltam ao abrir', async () => {
+      const e = comPorques([{ id: 'p1', texto: '', criadoEm: 1, foto: NOME_A }]);
+      const { conteudo } = await criarBackup(e, SENHA, { aleatorio, parametros: LEVE, fotos: { [NOME_A]: JPEG } });
+      expect(conteudo).not.toContain(JPEG);
+      const r = await abrirBackup(conteudo, SENHA);
+      expect(r.ok && r.fotos).toEqual({ [NOME_A]: JPEG });
+      expect(r.ok && r.estado.porques).toEqual(e.porques);
+    });
+
+    it('backup sem fotos (ou antigo) abre com fotos vazias', async () => {
+      const { conteudo } = await criar();
+      const r = await abrirBackup(conteudo, SENHA);
+      expect(r.ok && r.fotos).toEqual({});
+    });
+
+    it('porquê com foto que não veio no backup fica só com o texto; sem texto, some', async () => {
+      const e = comPorques([
+        { id: 'p1', texto: 'Meu filho', criadoEm: 1, foto: NOME_A },
+        { id: 'p2', texto: '', criadoEm: 2, foto: NOME_B },
+        { id: 'p3', texto: 'Saúde', criadoEm: 3 },
+        { id: 'p4', texto: '', criadoEm: 4, foto: '11111111-2222-4333-8444-666666666666.bin' },
+      ]);
+      const { conteudo } = await criarBackup(e, SENHA, { aleatorio, parametros: LEVE, fotos: { [NOME_B]: JPEG } });
+      const r = await abrirBackup(conteudo, SENHA);
+      expect(r.ok && r.estado.porques).toEqual([
+        { id: 'p1', texto: 'Meu filho', criadoEm: 1 },
+        { id: 'p2', texto: '', criadoEm: 2, foto: NOME_B },
+        { id: 'p3', texto: 'Saúde', criadoEm: 3 },
+      ]);
+    });
+
+    it('ignora nomes fora do padrão (nada de caminhos) e dados que não são Base64', async () => {
+      const e = comPorques([{ id: 'p1', texto: 'x', criadoEm: 1, foto: '../../banco.bin' }]);
+      const fotos = { '../../banco.bin': JPEG, [NOME_A]: 'isto não é base64!', [NOME_B]: JPEG };
+      const { conteudo } = await criarBackup(e, SENHA, { aleatorio, parametros: LEVE, fotos });
+      const r = await abrirBackup(conteudo, SENHA);
+      expect(r.ok && r.fotos).toEqual({ [NOME_B]: JPEG });
+      expect(r.ok && r.estado.porques).toEqual([{ id: 'p1', texto: 'x', criadoEm: 1 }]);
+    });
+  });
 });

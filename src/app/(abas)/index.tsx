@@ -14,6 +14,7 @@ import { dataLocal } from '@/lib/datas';
 import { dataPorExtenso, saudacao, textoEconomia, textoFaltam, textoPendente } from '@/lib/inicio';
 import { deveSugerirBackup, primeiroUsoEm } from '@/lib/lembreteBackup';
 import { proximoMarco } from '@/lib/marcos';
+import { chaveDaReflexao, deveMostrarCartaoReflexao, ehDiaDaReflexao, resumoDaSemana } from '@/lib/reflexao';
 import { useAgora } from '@/lib/useAgora';
 import { useHabitoAtivo } from '@/lib/useHabitoAtivo';
 import { useMare } from '@/store';
@@ -22,6 +23,8 @@ import { comAlfa, cores, fontes, raio } from '@/theme';
 export default function Inicio() {
   const { habitos, ativo, escolher } = useHabitoAtivo();
   const relatos = useMare((e) => e.relatos);
+  const fissuras = useMare((e) => e.fissuras);
+  const recomecos = useMare((e) => e.recomecos);
   const ajustes = useMare((e) => e.ajustes);
   const avisoRecomeco = useMare((e) => e.avisoRecomeco);
   const dispensarAviso = useMare((e) => e.dispensarAvisoRecomeco);
@@ -44,6 +47,10 @@ export default function Inicio() {
   const pendente = textoPendente(resumo, hoje);
   const oculto = ajustes.ocultarNumeros;
   const faltam = textoFaltam(proximo);
+  // Só calcula a semana nos dias em que o cartão pode aparecer.
+  const mostrarReflexao =
+    ehDiaDaReflexao(hoje) &&
+    deveMostrarCartaoReflexao(hoje, ajustes.reflexaoVistaEm, resumoDaSemana(habitos, relatos, fissuras, recomecos, hoje));
   const sugerirBackup = deveSugerirBackup({
     agora,
     primeiroUsoEm: primeiroUsoEm(habitos, relatos),
@@ -97,6 +104,13 @@ export default function Inicio() {
         </View>
       ) : null}
 
+      {mostrarReflexao ? (
+        <CartaoReflexao
+          aoAbrir={() => router.push('/reflexao')}
+          aoAdiar={() => setAjustes({ reflexaoVistaEm: chaveDaReflexao(hoje) })}
+        />
+      ) : null}
+
       {sugerirBackup ? (
         <CartaoBackup
           aoFazer={() => router.push('/dados')}
@@ -104,6 +118,28 @@ export default function Inicio() {
         />
       ) : null}
     </Tela>
+  );
+}
+
+/** Convite para olhar a semana (domingo e segunda). "Agora não" some com o cartão até o próximo domingo. */
+function CartaoReflexao({ aoAbrir, aoAdiar }: { aoAbrir: () => void; aoAdiar: () => void }) {
+  return (
+    <View style={styles.cartaoReflexao}>
+      <Texto style={styles.cartaoReflexaoTitulo} accessibilityRole="header">
+        Sua semana
+      </Texto>
+      <Texto tipo="legenda" cor={cores.text}>
+        Que tal um olhar gentil sobre os últimos 7 dias? Leva um minuto.
+      </Texto>
+      <View style={styles.cartaoBackupAcoes}>
+        <Botao onPress={aoAbrir} style={styles.cartaoBackupBotao}>
+          Ver minha semana
+        </Botao>
+        <Botao variante="texto" onPress={aoAdiar}>
+          Agora não
+        </Botao>
+      </View>
+    </View>
   );
 }
 
@@ -176,6 +212,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: comAlfa(cores.aqua, 0.22),
   },
+  cartaoReflexao: {
+    gap: 8,
+    padding: 14,
+    marginTop: 22,
+    borderRadius: raio.md,
+    backgroundColor: comAlfa(cores.peri, 0.07),
+    borderWidth: 1,
+    borderColor: comAlfa(cores.peri, 0.26),
+  },
+  cartaoReflexaoTitulo: { fontFamily: fontes.display, fontSize: 18, lineHeight: 24 },
   cartaoBackupAcoes: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cartaoBackupBotao: { minHeight: 44, flex: 1 },
 });

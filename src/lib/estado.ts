@@ -36,6 +36,8 @@ export type Ajustes = {
   ultimoBackupEm?: number;
   /** Quando o app sugeriu fazer backup pela última vez (ms), para não insistir. */
   backupSugeridoEm?: number;
+  /** Última "semana da reflexão" aberta (domingo "AAAA-MM-DD", ver `chaveDaReflexao`), para o cartão do Início não insistir. */
+  reflexaoVistaEm?: string;
 };
 
 export type EstadoPersistido = {

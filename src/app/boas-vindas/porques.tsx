@@ -4,13 +4,16 @@ import { useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
 import { Campo } from '@/components/Campo';
+import { FotoPorque } from '@/components/FotoPorque';
 import { Icone } from '@/components/Icone';
+import { SeletorFoto } from '@/components/SeletorFoto';
 import { TelaPasso } from '@/components/TelaPasso';
 import { Texto } from '@/components/Texto';
 import { montarAvaliacao } from '@/lib/avaliacao';
 import { aplicarHabito } from '@/lib/estado';
+import { apagarFoto } from '@/lib/fotos';
 import { lembretesDisponiveis, lerPermissao, pedirPermissao } from '@/lib/lembretes/agendador';
-import { MAX_PORQUE, validarPorque } from '@/lib/plano';
+import { descreverPorque, MAX_PORQUE, validarPorqueOuFoto } from '@/lib/plano';
 import { useRascunhoPrimeiroUso } from '@/lib/rascunhoPrimeiroUso';
 import { semBloquear } from '@/lib/useBloqueio';
 import { useVoltar } from '@/lib/useVoltar';
@@ -31,7 +34,10 @@ function concluirPrimeiroUso() {
       rascunho.resultados.length > 0
         ? [...e.avaliacoes, montarAvaliacao(randomUUID(), agora, rascunho.resultados)]
         : e.avaliacoes;
-    const porques = [...e.porques, ...rascunho.porques.map((texto, i) => ({ id: randomUUID(), texto, criadoEm: agora + i }))];
+    const porques = [
+      ...e.porques,
+      ...rascunho.porques.map(({ texto, foto }, i) => ({ id: randomUUID(), texto, criadoEm: agora + i, ...(foto ? { foto } : {}) })),
+    ];
     // Com `onboardingConcluido` verdadeiro, o layout raiz troca o primeiro uso pelas abas (Início).
     const ajustes = { ...e.ajustes, habitoAtivo: rascunho.habitos[0]?.id, onboardingConcluido: true };
     return { habitos: comHabitos.habitos, avaliacoes, porques, ajustes };
@@ -66,17 +72,38 @@ export default function PorquesPrimeiroUso() {
   const adicionar = useRascunhoPrimeiroUso((e) => e.adicionarPorque);
   const remover = useRascunhoPrimeiroUso((e) => e.removerPorque);
   const [texto, setTexto] = useState('');
+  // Foto escolhida para o porquê que está sendo escrito (arquivo já cifrado, ainda sem dono).
+  const [foto, setFoto] = useState<string | undefined>();
   const [erro, setErro] = useState<string | undefined>();
 
   const adicionarTexto = () => {
-    const r = validarPorque(texto);
+    const r = validarPorqueOuFoto(texto, foto !== undefined);
     if (r.erro !== undefined) {
       setErro(r.erro);
       return;
     }
-    adicionar(r.valor);
+    adicionar({ texto: r.valor, ...(foto ? { foto } : {}) });
     setTexto('');
+    setFoto(undefined);
     setErro(undefined);
+  };
+
+  const mudarFoto = (nova: string | undefined) => {
+    // A foto anterior (se havia) foi trocada ou tirada: ninguém mais a usa.
+    if (foto) void apagarFoto(foto);
+    setFoto(nova);
+    setErro(undefined);
+  };
+
+  const removerPorque = (indice: number) => {
+    const alvo = porques[indice];
+    if (alvo?.foto) void apagarFoto(alvo.foto);
+    remover(indice);
+  };
+
+  const pular = () => {
+    if (foto) void apagarFoto(foto);
+    concluirPrimeiroUso();
   };
 
   // Quem digitou e esqueceu de tocar em "Adicionar" não perde o texto ao concluir.
@@ -89,8 +116,8 @@ export default function PorquesPrimeiroUso() {
       return;
     }
     concluindo.current = true;
-    const pendente = validarPorque(texto);
-    if (pendente.erro === undefined) adicionar(pendente.valor);
+    const pendente = validarPorqueOuFoto(texto, foto !== undefined);
+    if (pendente.erro === undefined) adicionar({ texto: pendente.valor, ...(foto ? { foto } : {}) });
     try {
       await oferecerLembretes();
     } catch {
@@ -98,7 +125,7 @@ export default function PorquesPrimeiroUso() {
     }
     concluirPrimeiroUso();
   };
-  const temAlgo = porques.length > 0 || validarPorque(texto).erro === undefined;
+  const temAlgo = porques.length > 0 || validarPorqueOuFoto(texto, foto !== undefined).erro === undefined;
 
   return (
     <TelaPasso
@@ -107,7 +134,7 @@ export default function PorquesPrimeiroUso() {
         <>
           <Botao onPress={concluir}>{temAlgo ? 'Concluir' : 'Pular por agora'}</Botao>
           {temAlgo ? (
-            <Botao variante="texto" onPress={concluirPrimeiroUso}>
+            <Botao variante="texto" onPress={pular}>
               Pular por agora
             </Botao>
           ) : null}
@@ -118,19 +145,20 @@ export default function PorquesPrimeiroUso() {
         Por que você quer mudar?
       </Texto>
       <Texto style={styles.sub}>
-        Escreva o que importa para você. Esse porquê vai aparecer na hora da onda, quando a vontade apertar. Você
-        pode pular e escrever depois, em Meu plano.
+        Escreva o que importa para você, se quiser com uma foto. Esse porquê vai aparecer na hora da onda, quando a
+        vontade apertar. Você pode pular e fazer isso depois, em Meu plano.
       </Texto>
 
       {porques.length > 0 ? (
         <View style={styles.lista} accessibilityLiveRegion="polite">
           {porques.map((p, i) => (
-            <View key={`${i}-${p}`} style={[styles.item, i > 0 && styles.itemSeparado]}>
-              <Texto style={styles.itemTexto}>{`“${p}”`}</Texto>
+            <View key={`${i}-${p.foto ?? ''}-${p.texto}`} style={[styles.item, i > 0 && styles.itemSeparado]}>
+              {p.foto ? <FotoPorque nome={p.foto} altura={56} largura={56} raio={12} accessibilityLabel="Foto do porquê" /> : null}
+              <Texto style={styles.itemTexto}>{p.texto.trim() !== '' ? `“${p.texto}”` : ''}</Texto>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Remover o porquê: ${p}`}
-                onPress={() => remover(i)}
+                accessibilityLabel={`Remover o porquê: ${descreverPorque(p)}`}
+                onPress={() => removerPorque(i)}
                 hitSlop={8}
                 style={styles.remover}
               >
@@ -154,6 +182,7 @@ export default function PorquesPrimeiroUso() {
           maxLength={MAX_PORQUE}
           placeholder="Ex.: Quero subir a escada com meu filho sem perder o fôlego."
         />
+        <SeletorFoto foto={foto} aoMudar={mudarFoto} />
         <Botao variante="secundario" onPress={adicionarTexto}>
           Adicionar
         </Botao>

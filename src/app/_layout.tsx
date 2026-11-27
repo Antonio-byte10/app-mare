@@ -74,6 +74,7 @@ export default function RootLayout() {
             <Stack.Screen name="privacidade" />
             <Stack.Screen name="dados" />
             <Stack.Screen name="sobre" />
+            <Stack.Screen name="reflexao" />
           </Stack.Protected>
         </Stack>
         <AvisoEscrita />

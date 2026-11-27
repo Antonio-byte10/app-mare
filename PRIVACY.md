@@ -22,6 +22,7 @@ Hábitos, relatos diários, humor, gatilhos, notas, avaliações, "meus porquês
 - **PIN.** O PIN nunca é guardado: só um resumo irreversível (hash com sal) fica no cofre do aparelho.
 - **Chaves da IA.** A chave do provedor de IA e o código do seu servidor também ficam no cofre do aparelho, fora do banco e fora dos backups.
 - **Sem backup automático.** O app desliga o backup automático do Android (`allowBackup=false`). Isso protege a sua privacidade, mas tem um custo: **se você trocar de celular ou desinstalar o app, os dados não vêm junto**, a menos que você tenha feito o backup manual descrito abaixo.
+- **Fotos dos porquês (opcional).** Se você escolher uma foto para um porquê, ela é reduzida, cifrada (AES-256-GCM) e guardada na pasta privada do app, com a chave no cofre do aparelho: nunca vai para a galeria, nunca é enviada a lugar nenhum nem à IA, e entra no backup cifrado. O app usa o seletor de fotos do Android, sem pedir permissão de arquivos nem de câmera. "Apagar tudo" remove as fotos e a chave.
 - **Telas protegidas (opcional).** Você pode esconder o conteúdo do app na lista de apps recentes e impedir capturas de tela.
 - **Bloqueio e disfarce (opcionais).** Bloqueio por PIN ou digital, e nome e ícone neutros para o app.
 
@@ -32,7 +33,7 @@ Só existem quando você toca em **Mais → Backup e dados → Fazer backup**.
 - O arquivo `.mare` é cifrado com **AES-256-GCM**. A chave vem da **sua senha** (mínimo de 8 caracteres) por meio do **scrypt**, com sal aleatório.
 - **Sem a senha, ninguém consegue abrir o arquivo, nem o Maré, nem quem o desenvolve.** Não há como recuperá-la.
 - O app entrega o arquivo à tela de compartilhar do Android, e você escolhe onde guardá-lo. O Maré não envia o arquivo a nenhum servidor.
-- O backup inclui seus registros e a conversa com a IA. Ficam de fora o PIN, as chaves da IA, o bloqueio, o disfarce e as telas protegidas, que pertencem ao aparelho.
+- O backup inclui seus registros, as fotos dos porquês (dentro da parte cifrada) e a conversa com a IA. Ficam de fora o PIN, as chaves da IA, o bloqueio, o disfarce e as telas protegidas, que pertencem ao aparelho.
 - O app mostra a data do último backup e, de tempos em tempos, pode sugerir fazer um. Essa data fica só no aparelho.
 - Ao restaurar, o conteúdo atual do aparelho é substituído, e o app mostra um resumo antes de você confirmar.
 
@@ -74,11 +75,11 @@ O que o app pede:
 | Vibração | Resposta tátil e vibração dos lembretes. |
 | Biometria e impressão digital | Desbloquear o app com a digital, se você ligar o bloqueio. |
 
-**Bloqueadas de propósito**, mesmo que alguma biblioteca as peça: acesso a arquivos e fotos (leitura e gravação de armazenamento, mídia de imagens), sobreposição sobre outros apps e detecção de captura de tela. O app **não** pede localização, câmera, microfone, contatos nem agenda. Os contatos de apoio são digitados por você.
+**Bloqueadas de propósito**, mesmo que alguma biblioteca as peça: acesso a arquivos e fotos (leitura e gravação de armazenamento, mídia de imagens), sobreposição sobre outros apps e detecção de captura de tela. Para escolher a foto de um porquê, o app usa o seletor de fotos do próprio Android, que entrega só a imagem que você tocar, sem que o app tenha acesso à sua galeria. O app **não** pede localização, câmera, microfone, contatos nem agenda. Os contatos de apoio são digitados por você.
 
 ## Apagar tudo
 
-Em **Mais → Backup e dados → Apagar tudo** (com duas confirmações), o app remove o banco cifrado e a chave dele, o PIN, as chaves e o código da IA, os lembretes agendados e o disfarce do ícone, e volta ao primeiro uso. Não dá para desfazer. Cópias que você exportou para outro lugar não são afetadas: apague-as por lá. Desinstalar o app também remove os dados guardados nele.
+Em **Mais → Backup e dados → Apagar tudo** (com duas confirmações), o app remove o banco cifrado e a chave dele, as fotos dos porquês e a chave delas, o PIN, as chaves e o código da IA, os lembretes agendados e o disfarce do ícone, e volta ao primeiro uso. Não dá para desfazer. Cópias que você exportou para outro lugar não são afetadas: apague-as por lá. Desinstalar o app também remove os dados guardados nele.
 
 ## O que está fora do controle do app
 

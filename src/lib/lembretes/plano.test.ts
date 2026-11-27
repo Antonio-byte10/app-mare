@@ -30,6 +30,7 @@ const TODOS: AjustesLembretes = {
   bomDia: { ligado: true, hora: '08:00' },
   antesDaOnda: true,
   marcos: true,
+  reflexao: { ligado: true, hora: '19:00' },
 };
 
 const entrada = (p: Partial<EntradaPlano> = {}): EntradaPlano => ({
@@ -125,12 +126,39 @@ describe('planejarLembretes', () => {
     expect(marcos[0].corpo).toBe('Hoje é um dia para notar. Vale um momento só pra isso.');
   });
 
+  it('reflexão da semana: semanal no domingo (1 no Expo), na hora escolhida, abrindo /reflexao', () => {
+    const l = planejarLembretes(entrada());
+    const r = l.filter((n) => n.tipo === 'reflexao');
+    expect(r).toHaveLength(1);
+    expect(r[0].id).toBe('reflexao-semanal');
+    expect(r[0].quando).toEqual({ tipo: 'semanal', diaSemana: 1, hora: 19, minuto: 0 });
+    expect(r[0].rota).toBe('/reflexao');
+    expect(r[0].titulo).toBe('Diário');
+    expect(r[0].corpo).toBe('Sua semana está pronta para um olhar gentil.');
+    const tarde = planejarLembretes(entrada({ lembretes: { ...TODOS, reflexao: { ligado: true, hora: '20:45' } } }));
+    expect(tarde.find((n) => n.tipo === 'reflexao')?.quando).toEqual({ tipo: 'semanal', diaSemana: 1, hora: 20, minuto: 45 });
+  });
+
+  it('reflexão desligada, ausente ou sem hábito: não agenda', () => {
+    const desligada = planejarLembretes(entrada({ lembretes: { ...TODOS, reflexao: { ligado: false, hora: '19:00' } } }));
+    expect(desligada.some((n) => n.tipo === 'reflexao')).toBe(false);
+    const { reflexao: _fora, ...semCampo } = TODOS;
+    expect(planejarLembretes(entrada({ lembretes: semCampo })).some((n) => n.tipo === 'reflexao')).toBe(false);
+    expect(planejarLembretes(entrada({ habito: undefined })).some((n) => n.tipo === 'reflexao')).toBe(false);
+  });
+
+  it('o padrão (lembretesDe) já liga a reflexão às 19:00', () => {
+    const l = planejarLembretes(entrada({ lembretes: LEMBRETES_PADRAO }));
+    expect(l.find((n) => n.tipo === 'reflexao')?.quando).toEqual({ tipo: 'semanal', diaSemana: 1, hora: 19, minuto: 0 });
+  });
+
   it('tudo desligado ou sem hábito: lista vazia (exceto o bom dia, que não depende do hábito)', () => {
     const desligado: AjustesLembretes = {
       relato: { ligado: false, hora: '22:00' },
       bomDia: { ligado: false, hora: '08:00' },
       antesDaOnda: false,
       marcos: false,
+      reflexao: { ligado: false, hora: '19:00' },
     };
     expect(planejarLembretes(entrada({ lembretes: desligado }))).toEqual([]);
     const semHabito = planejarLembretes(entrada({ habito: undefined }));

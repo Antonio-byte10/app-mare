@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { rotaDaNotificacao, rotaRelato } from './toque';
+import { ROTA_REFLEXAO, rotaDaNotificacao, rotaRelato } from './toque';
 
 describe('rotaDaNotificacao', () => {
   it('aceita as rotas do app', () => {
     expect(rotaDaNotificacao({ rota: '/' })).toBe('/');
     expect(rotaDaNotificacao({ rota: '/fissura' })).toBe('/fissura');
     expect(rotaDaNotificacao({ rota: '/marcos' })).toBe('/marcos');
+    expect(rotaDaNotificacao({ rota: '/reflexao' })).toBe('/reflexao');
+    expect(ROTA_REFLEXAO).toBe('/reflexao');
     expect(rotaDaNotificacao({ rota: rotaRelato('2026-11-26') })).toBe('/relato/2026-11-26');
   });
 

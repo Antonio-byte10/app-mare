@@ -7,6 +7,9 @@ import type { Habito, ResultadoAvaliacao, TipoHabito } from './tipos';
  * Rascunho do primeiro uso. Fica só na memória: nada é gravado até "Concluir"; se o app for
  * fechado no meio, a pessoa recomeça da abertura (são poucos passos).
  */
+/** Um porquê ainda não gravado: texto (pode ser vazio se houver foto) e o nome do arquivo cifrado da foto. */
+export type PorqueRascunho = { texto: string; foto?: string };
+
 type Rascunho = {
   rascunhos: RascunhoHabito[];
   /** Hábitos já montados (com id), depois do passo "Quando você começou?". */
@@ -15,14 +18,14 @@ type Rascunho = {
   /** `true` quando a pessoa passou pela avaliação (mesmo que não tenha respondido tudo). */
   avaliou: boolean;
   resultados: ResultadoAvaliacao[];
-  porques: string[];
+  porques: PorqueRascunho[];
   alternarTipo: (tipo: TipoHabito) => void;
   mudarHabito: (tipo: TipoHabito, parcial: Partial<RascunhoHabito>) => void;
   definirHabitos: (h: Habito[]) => void;
   responder: (chave: string, indice: number) => void;
   concluirAvaliacao: () => void;
   pularAvaliacao: () => void;
-  adicionarPorque: (texto: string) => void;
+  adicionarPorque: (porque: PorqueRascunho) => void;
   removerPorque: (indice: number) => void;
   reiniciar: () => void;
 };
@@ -33,7 +36,7 @@ const VAZIO = {
   respostas: {} as Respostas,
   avaliou: false,
   resultados: [] as ResultadoAvaliacao[],
-  porques: [] as string[],
+  porques: [] as PorqueRascunho[],
 };
 
 export const useRascunhoPrimeiroUso = create<Rascunho>()((set) => ({
@@ -46,7 +49,7 @@ export const useRascunhoPrimeiroUso = create<Rascunho>()((set) => ({
   responder: (chave, indice) => set((e) => ({ respostas: { ...e.respostas, [chave]: indice } })),
   concluirAvaliacao: () => set((e) => ({ avaliou: true, resultados: calcularResultados(e.habitos, e.respostas) })),
   pularAvaliacao: () => set({ avaliou: true, resultados: [] }),
-  adicionarPorque: (texto) => set((e) => ({ porques: [...e.porques, texto] })),
+  adicionarPorque: (porque) => set((e) => ({ porques: [...e.porques, porque] })),
   removerPorque: (indice) => set((e) => ({ porques: e.porques.filter((_, i) => i !== indice) })),
   reiniciar: () => set({ ...VAZIO }),
 }));

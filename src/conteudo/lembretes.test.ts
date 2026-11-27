@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { FRASES_BOM_DIA, fraseDoDia, TEXTO_ANTES_DA_ONDA, TEXTO_MARCO, TEXTO_RELATO } from './lembretes';
+import { FRASES_BOM_DIA, fraseDoDia, TEXTO_ANTES_DA_ONDA, TEXTO_MARCO, TEXTO_REFLEXAO, TEXTO_RELATO } from './lembretes';
 
-const TODOS = [TEXTO_RELATO, TEXTO_ANTES_DA_ONDA, TEXTO_MARCO, ...FRASES_BOM_DIA];
+const TODOS = [TEXTO_RELATO, TEXTO_ANTES_DA_ONDA, TEXTO_MARCO, TEXTO_REFLEXAO, ...FRASES_BOM_DIA];
 
 // Nada que cite hábito, substância, contagem de dias, o nome do app ou o disfarce.
 const PROIBIDO =

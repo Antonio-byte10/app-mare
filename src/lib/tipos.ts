@@ -65,8 +65,14 @@ export interface Avaliacao {
 /** "Meus porquês": o motivo da pessoa, mostrado na Fissura. */
 export interface Porque {
   id: string;
+  /** Pode ficar vazio quando o porquê é só uma foto. */
   texto: string;
   criadoEm: number;
+  /**
+   * Foto do porquê: nome do arquivo cifrado na pasta privada do app (nunca na galeria).
+   * Ver src/lib/fotos.ts.
+   */
+  foto?: string;
 }
 
 /** Plano "se-então": "Se <situação>, então <ação>". */
@@ -154,6 +160,8 @@ export interface AjustesLembretes {
   antesDaOnda: boolean;
   /** Aviso quando um marco chega. */
   marcos: boolean;
+  /** Reflexão semanal (domingo, padrão 19:00). Ausente = ligado nas leituras via `lembretesDe`. */
+  reflexao?: { ligado: boolean; hora: Horario };
 }
 
 export interface AjustesBloqueio {

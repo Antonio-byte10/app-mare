@@ -10,6 +10,8 @@ export const TEXTO_ANTES_DA_ONDA = 'Esse costuma ser um horário mais pesado. Se
 
 export const TEXTO_MARCO = 'Hoje é um dia para notar. Vale um momento só pra isso.';
 
+export const TEXTO_REFLEXAO = 'Sua semana está pronta para um olhar gentil.';
+
 /** Frases curtas e calmas do "Bom dia". Uma por dia, em rodízio (ver `fraseDoDia`). */
 export const FRASES_BOM_DIA: readonly string[] = [
   'Respire fundo. O dia começa devagar.',

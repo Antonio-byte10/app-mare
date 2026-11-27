@@ -36,6 +36,20 @@ export function validarPorque(texto: string): ResultadoTexto {
   return { valor: t };
 }
 
+/**
+ * Porquê que pode ser só uma foto: com `temFoto`, o texto pode ficar vazio (mas, se houver, vale
+ * a mesma regra de `validarPorque`). Sem texto e sem foto, pede uma das duas.
+ */
+export function validarPorqueOuFoto(texto: string, temFoto: boolean): ResultadoTexto {
+  if (temFoto && texto.trim() === '') return { valor: '' };
+  const r = validarPorque(texto);
+  return r.erro !== undefined && texto.trim() === '' ? { erro: 'Escreva o seu porquê ou escolha uma foto.' } : r;
+}
+
+/** Como o porquê é lido por quem usa leitor de tela: o texto, ou "foto" quando é só a imagem. */
+export const descreverPorque = (p: Pick<Porque, 'texto' | 'foto'>): string =>
+  p.texto.trim() !== '' ? p.texto : p.foto ? 'foto' : '';
+
 /** "Se" e "então" não podem ficar vazios; os dois são aparados e limitados. */
 export function validarPlano(se: string, entao: string): { se: string; entao: string } | { erro: string } {
   const s = se.trim().replace(/[,.]+$/, '');

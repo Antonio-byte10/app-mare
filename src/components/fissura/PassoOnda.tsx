@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Botao } from '@/components/Botao';
+import { FotoPorque } from '@/components/FotoPorque';
 import { LinhaAjuste } from '@/components/LinhaAjuste';
 import { Mar } from '@/components/Mar';
 import { Texto } from '@/components/Texto';
@@ -50,6 +51,10 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
     return () => clearInterval(id);
   }, []);
 
+  // A foto é mais pessoal que o texto: aberta pela tela de bloqueio, ela não aparece (só o texto).
+  const mostrarFoto = !!porque?.foto && !daTrancada;
+  const textoPorque = porque?.texto.trim() ?? '';
+
   const acabou = restante === 0;
   const minutos = Math.floor(restante / 60);
   const segundos = restante % 60;
@@ -82,7 +87,21 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
         {porque ? (
           <View style={styles.citacao}>
             <Texto style={styles.rotuloPorque}>Seu porquê</Texto>
-            <Texto style={styles.textoPorque}>{`“${porque.texto}”`}</Texto>
+            {mostrarFoto && porque.foto ? (
+              <FotoPorque
+                key={porque.foto}
+                nome={porque.foto}
+                altura={180}
+                avisarFalha
+                accessibilityLabel={textoPorque ? `Foto do seu porquê: ${textoPorque}` : 'Foto do seu porquê'}
+                style={textoPorque ? styles.fotoPorque : undefined}
+              />
+            ) : null}
+            {textoPorque ? (
+              <Texto style={styles.textoPorque}>{`“${porque.texto}”`}</Texto>
+            ) : mostrarFoto ? null : (
+              <Texto style={styles.semPorque}>Pense em quem, ou no que, faz você querer mudar.</Texto>
+            )}
           </View>
         ) : (
           <View style={styles.citacao}>
@@ -258,6 +277,7 @@ const styles = StyleSheet.create({
     color: cores.sand,
     marginBottom: 8,
   },
+  fotoPorque: { marginBottom: 14 },
   textoPorque: { fontFamily: fontes.display, fontSize: 17, lineHeight: 25, color: cores.text },
   semPorque: { fontSize: 14, lineHeight: 21, color: cores.muted },
   linkPlano: { minHeight: 44, justifyContent: 'center' },

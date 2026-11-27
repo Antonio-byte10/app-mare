@@ -2,6 +2,7 @@ import { apagarTodosSegredos } from './ia/segredos';
 import { recomecarDoZero } from './armazenamento';
 import { limparArquivosTemporarios } from './arquivos';
 import { apagarPin } from './cofrePin';
+import { apagarChaveDasFotos, apagarTodasAsFotos } from './fotos';
 import { trocarDisfarce } from '../../modules/disfarce';
 import { cancelarTodasNotificacoes } from './notificacoes';
 import { useBloqueio } from './useBloqueio';
@@ -9,7 +10,7 @@ import { useMare } from '@/store';
 
 /**
  * Apaga tudo o que o Maré guarda neste aparelho: o banco cifrado e a chave dele, o PIN, a chave
- * e o código da IA, os lembretes agendados e o disfarce do ícone (este por último). Depois disso o app volta ao
+ * e o código da IA, as fotos dos porquês e a chave delas, os lembretes agendados e o disfarce do ícone (este por último). Depois disso o app volta ao
  * primeiro uso, sem bloqueio. Só chamar depois de a pessoa confirmar duas vezes.
  *
  * Cada etapa é tentada mesmo que a anterior falhe, para apagar o máximo possível; devolve o nome
@@ -27,6 +28,8 @@ export async function apagarTudo(): Promise<string[]> {
   // O PIN e os segredos primeiro: se algo travar depois, o que é mais sensível já saiu.
   await tentar('PIN', apagarPin);
   await tentar('chaves da IA', apagarTodosSegredos);
+  await tentar('fotos', apagarTodasAsFotos);
+  await tentar('chave das fotos', apagarChaveDasFotos);
   await tentar('lembretes', cancelarTodasNotificacoes);
   limparArquivosTemporarios();
   await tentar('banco de dados', async () => {

@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { acoesDoPlano, frasePlano, maisNovosPrimeiro, MAX_PORQUE, sugestoesLivres, validarPlano, validarPorque } from './plano';
+import {
+  acoesDoPlano,
+  descreverPorque,
+  frasePlano,
+  maisNovosPrimeiro,
+  MAX_PORQUE,
+  sugestoesLivres,
+  validarPlano,
+  validarPorque,
+  validarPorqueOuFoto,
+} from './plano';
 import type { PlanoSeEntao } from './tipos';
 
 describe('validarPorque', () => {
@@ -45,5 +55,27 @@ describe('listas', () => {
   });
   it('sugestões já usadas somem da lista', () => {
     expect(sugestoesLivres(['Tomar um banho', 'caminhar'], ['tomar um banho '])).toEqual(['caminhar']);
+  });
+});
+
+describe('validarPorqueOuFoto', () => {
+  it('com foto, o texto pode ficar vazio', () => {
+    expect(validarPorqueOuFoto('   ', true)).toEqual({ valor: '' });
+    expect(validarPorqueOuFoto(' Meu filho ', true).valor).toBe('Meu filho');
+  });
+  it('sem foto, pede texto (ou foto)', () => {
+    expect(validarPorqueOuFoto('  ', false).erro).toContain('foto');
+    expect(validarPorqueOuFoto('Meu filho', false).valor).toBe('Meu filho');
+  });
+  it('o limite de caracteres vale com ou sem foto', () => {
+    expect(validarPorqueOuFoto('a'.repeat(MAX_PORQUE + 1), true).erro).toBeTruthy();
+  });
+});
+
+describe('descreverPorque', () => {
+  it('usa o texto, ou "foto" quando é só a imagem', () => {
+    expect(descreverPorque({ texto: 'Meu filho' })).toBe('Meu filho');
+    expect(descreverPorque({ texto: '', foto: 'x.bin' })).toBe('foto');
+    expect(descreverPorque({ texto: '  ' })).toBe('');
   });
 });

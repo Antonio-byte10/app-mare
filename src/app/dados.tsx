@@ -17,11 +17,14 @@ import {
   MENSAGEM_FALHA,
   SENHA_MIN,
   senhaValida,
+  type FotosBackup,
   type ResumoBackup,
 } from '@/lib/backup';
 import { confirmar } from '@/lib/confirmar';
 import { formatarData } from '@/lib/datas';
 import type { EstadoPersistido } from '@/lib/estado';
+import { apagarFotosSemDono, empacotarFotos, restaurarFotos } from '@/lib/fotos';
+import { nomesDeFotos, removerFotosAusentes } from '@/lib/fotosPuro';
 import { textoUltimoBackup } from '@/lib/lembreteBackup';
 import { useAgora } from '@/lib/useAgora';
 import { useMare } from '@/store';
@@ -74,13 +77,14 @@ export default function Dados() {
   const [senhaRestaurar, setSenhaRestaurar] = useState('');
   const [abrindo, setAbrindo] = useState(false);
   const [progressoAbrir, setProgressoAbrir] = useState(0);
-  const [aberto, setAberto] = useState<{ estado: EstadoPersistido; resumo: ResumoBackup } | null>(null);
+  const [aberto, setAberto] = useState<{ estado: EstadoPersistido; resumo: ResumoBackup; fotos: FotosBackup } | null>(null);
+  const [restaurando, setRestaurando] = useState(false);
   const [statusRestaurar, setStatusRestaurar] = useState<Status>(null);
   // Apagar
   const [apagando, setApagando] = useState(false);
   const [statusApagar, setStatusApagar] = useState<Status>(null);
 
-  const ocupado = trabalhandoBackup || abrindo || apagando;
+  const ocupado = trabalhandoBackup || abrindo || apagando || restaurando;
 
   const erroSenha = !fazendo
     ? ''
@@ -97,9 +101,12 @@ export default function Dados() {
     setProgressoBackup(0);
     setStatusBackup(null);
     try {
+      // As fotos dos porquês vão dentro da parte cifrada do backup (decifradas só em memória, aqui).
+      const { fotos, falhas } = await empacotarFotos(nomesDeFotos(useMare.getState().porques));
       const { nome, conteudo } = await criarBackup(useMare.getState(), senha, {
         aleatorio: bytesAleatorios,
         aoProgresso: setProgressoBackup,
+        fotos,
       });
       const compartilhou = await guardarArquivo(nome, conteudo);
       setSenha('');
@@ -109,7 +116,12 @@ export default function Dados() {
       if (compartilhou) setAjustes({ ultimoBackupEm: Date.now() });
       setStatusBackup(
         compartilhou
-          ? { tipo: 'ok', texto: `Backup pronto (${nome}). Guarde o arquivo e a senha em lugares seguros: sem a senha, não dá para abrir.` }
+          ? {
+              tipo: 'ok',
+              texto:
+                `Backup pronto (${nome}). Guarde o arquivo e a senha em lugares seguros: sem a senha, não dá para abrir.` +
+                (falhas > 0 ? ` ${falhas === 1 ? 'Uma foto não pôde ser lida e ficou de fora' : `${falhas} fotos não puderam ser lidas e ficaram de fora`}.` : ''),
+            }
           : { tipo: 'erro', texto: 'Este aparelho não tem como compartilhar arquivos agora.' },
       );
     } catch {
@@ -144,7 +156,7 @@ export default function Dados() {
     try {
       const r = await abrirBackup(arquivo.texto, senhaRestaurar, setProgressoAbrir);
       if (r.ok) {
-        setAberto({ estado: r.estado, resumo: r.resumo });
+        setAberto({ estado: r.estado, resumo: r.resumo, fotos: r.fotos });
         setSenhaRestaurar('');
       } else {
         setStatusRestaurar({ tipo: 'erro', texto: MENSAGEM_FALHA[r.motivo] });
@@ -169,12 +181,30 @@ export default function Dados() {
       'Restaurar este backup?',
       'Tudo o que está neste aparelho agora (hábitos, relatos, plano) será substituído pelo conteúdo do backup. Não dá para desfazer.',
       'Restaurar',
-      () => {
-        const atual = useMare.getState();
-        useMare.getState().substituirEstado(aplicarRestauracao(atual, aberto.estado));
-        setArquivo(null);
-        setAberto(null);
-        setStatusRestaurar({ tipo: 'ok', texto: 'Pronto. Seus registros foram restaurados.' });
+      async () => {
+        setRestaurando(true);
+        try {
+          // As fotos são cifradas de novo com a chave deste aparelho antes de o estado ser trocado.
+          const gravadas = await restaurarFotos(aberto.fotos);
+          const restaurado = { ...aberto.estado, porques: removerFotosAusentes(aberto.estado.porques, gravadas) };
+          const atual = useMare.getState();
+          useMare.getState().substituirEstado(aplicarRestauracao(atual, restaurado));
+          // Fotos do que havia antes, que o backup não usa, saem do aparelho.
+          await apagarFotosSemDono(nomesDeFotos(restaurado.porques));
+          const faltaram = Object.keys(aberto.fotos).length - gravadas.size;
+          setArquivo(null);
+          setAberto(null);
+          setStatusRestaurar({
+            tipo: 'ok',
+            texto:
+              'Pronto. Seus registros foram restaurados.' +
+              (faltaram > 0 ? ` ${faltaram === 1 ? 'Uma foto não pôde ser guardada' : `${faltaram} fotos não puderam ser guardadas`}.` : ''),
+          });
+        } catch {
+          setStatusRestaurar({ tipo: 'erro', texto: 'Não consegui restaurar agora. Tente de novo.' });
+        } finally {
+          setRestaurando(false);
+        }
       },
       true,
     );
@@ -183,7 +213,7 @@ export default function Dados() {
   const apagar = () => {
     confirmar(
       'Apagar tudo?',
-      'Todos os registros, o PIN, as chaves da IA e as configurações deste aparelho serão apagados. Faça um backup antes, se quiser guardar algo.',
+      'Todos os registros, as fotos, o PIN, as chaves da IA e as configurações deste aparelho serão apagados. Faça um backup antes, se quiser guardar algo.',
       'Continuar',
       () =>
         confirmar(
@@ -309,10 +339,10 @@ export default function Dados() {
                       Restaurar substitui tudo o que está neste aparelho agora. O bloqueio, o disfarce e a IA ficam como estão.
                     </Texto>
                   </View>
-                  <Botao onPress={restaurar} style={styles.botao}>
-                    Restaurar
+                  <Botao onPress={restaurar} desabilitado={ocupado} style={styles.botao}>
+                    {restaurando ? 'Restaurando…' : 'Restaurar'}
                   </Botao>
-                  <Botao variante="texto" onPress={cancelarRestauracao}>
+                  <Botao variante="texto" onPress={cancelarRestauracao} desabilitado={ocupado}>
                     Cancelar
                   </Botao>
                 </>
@@ -353,7 +383,7 @@ export default function Dados() {
 
             <Secao titulo="Apagar tudo">
               <Texto tipo="legenda">
-                Apaga os registros, o PIN, as chaves da IA e os lembretes deste aparelho, e o Maré volta ao começo. Pede duas confirmações e não dá para desfazer.
+                Apaga os registros, as fotos, o PIN, as chaves da IA e os lembretes deste aparelho, e o Maré volta ao começo. Pede duas confirmações e não dá para desfazer.
               </Texto>
               <Botao variante="secundario" onPress={apagar} desabilitado={ocupado} style={[styles.botao, styles.perigo]}>
                 {apagando ? 'Apagando…' : 'Apagar tudo'}

@@ -26,7 +26,7 @@ import { useVoltar } from '@/lib/useVoltar';
 import { useMare } from '@/store';
 import { comAlfa, cores, fontes, raio } from '@/theme';
 
-type Rotina = 'relato' | 'bomDia';
+type Rotina = 'relato' | 'bomDia' | 'reflexao';
 
 const EXPLICACAO =
   'O Maré só avisa nos horários que você escolher. Para isso, precisa da sua permissão de notificações. Os avisos usam um texto discreto e nunca citam o hábito.';
@@ -105,7 +105,8 @@ export default function Lembretes() {
     ligarSe(ligar, () => gravar({ [chave]: { ...lembretes[chave], ligado: ligar } }));
   const mudarHora = (chave: Rotina, hora: string) => gravar({ [chave]: { ...lembretes[chave], hora } });
 
-  const algumLigado = lembretes.relato.ligado || lembretes.bomDia.ligado || lembretes.antesDaOnda || lembretes.marcos;
+  const algumLigado =
+    lembretes.relato.ligado || lembretes.bomDia.ligado || lembretes.reflexao.ligado || lembretes.antesDaOnda || lembretes.marcos;
   const faltaPermissao = lembretesDisponiveis && algumLigado && (permissao === 'pendente' || permissao === 'negada');
 
   const subtituloOnda = onda.status === 'ok' ? textoSugestao(onda) : onda.status === 'semPico' ? TEXTO_SEM_PICO : TEXTO_POUCOS_DADOS;
@@ -172,6 +173,18 @@ export default function Lembretes() {
         aoAbrir={() => setAberto(aberto === 'bomDia' ? null : 'bomDia')}
       >
         <SeletorHorario valor={lembretes.bomDia.hora} aoMudar={(h) => mudarHora('bomDia', h)} rotulo="Bom dia" />
+      </LinhaLembrete>
+      <DivisorAjuste />
+      <LinhaLembrete
+        icone="diario"
+        titulo="Reflexão da semana"
+        subtitulo={`todo domingo às ${lembretes.reflexao.hora}`}
+        ligado={lembretes.reflexao.ligado}
+        aoMudar={(v) => alternarRotina('reflexao', v)}
+        aberto={aberto === 'reflexao'}
+        aoAbrir={() => setAberto(aberto === 'reflexao' ? null : 'reflexao')}
+      >
+        <SeletorHorario valor={lembretes.reflexao.hora} aoMudar={(h) => mudarHora('reflexao', h)} rotulo="Reflexão da semana" />
       </LinhaLembrete>
       <Texto tipo="legenda" style={styles.dica}>
         Toque no nome de uma rotina para mudar o horário.

@@ -14,7 +14,9 @@
  * `sal`, `nonce` e `dados` em Base64. O cabeçalho inteiro entra como dado associado (AAD) do GCM:
  * trocar qualquer campo dele (parâmetros, data, nonce) faz a verificação falhar.
  *
- * O que vai cifrado: `{ versaoEstado, estado }`. Do estado saem as configurações que pertencem ao
+ * O que vai cifrado: `{ versaoEstado, estado, fotos? }`. `fotos` é opcional (backups antigos não têm): as fotos dos
+ * porquês, já reduzidas, em Base64 e indexadas pelo nome do arquivo (`Porque.foto`); entram só dentro da parte
+ * cifrada e são cifradas de novo, com a chave do aparelho, ao restaurar (ver `fotos.ts`). Do estado saem as configurações que pertencem ao
  * aparelho (IA, bloqueio, disfarce, telas protegidas): a chave e o código da IA moram no cofre e o
  * PIN nunca sai dele, então restaurar essas opções deixaria o aparelho num estado incoerente.
  */
@@ -23,6 +25,7 @@ import { scryptAsync } from '@noble/hashes/scrypt.js';
 import { deBase64, deUtf8, paraBase64, paraUtf8 } from './bytes';
 import { dataLocal } from './datas';
 import { VERSAO_ESTADO, ehVersaoFutura, migrar, type EstadoPersistido } from './estado';
+import { nomeFotoValido, removerFotosAusentes } from './fotosPuro';
 import type { Aleatorio } from './pin';
 
 export const FORMATO_BACKUP = 1;
@@ -59,8 +62,11 @@ export interface ResumoBackup {
   criadoEm: string;
 }
 
+/** Fotos dos porquês do backup: nome do arquivo (`Porque.foto`) -> JPEG em Base64. */
+export type FotosBackup = Record<string, string>;
+
 export type ResultadoAbrir =
-  | { ok: true; estado: EstadoPersistido; resumo: ResumoBackup }
+  | { ok: true; estado: EstadoPersistido; resumo: ResumoBackup; fotos: FotosBackup }
   | { ok: false; motivo: MotivoFalha };
 
 export const senhaValida = (senha: string) => senha.length >= SENHA_MIN;
@@ -131,13 +137,15 @@ export interface OpcoesCriar {
   parametros?: { N: number; r: number; p: number };
   /** Progresso da derivação da chave, de 0 a 1. */
   aoProgresso?: (fracao: number) => void;
+  /** Fotos dos porquês (ver `empacotarFotos` em `fotos.ts`). Ausente ou vazio = backup sem fotos. */
+  fotos?: FotosBackup;
 }
 
 /** Cifra o estado com a senha. Devolve o nome sugerido e o texto do arquivo. */
 export async function criarBackup(
   estado: EstadoPersistido,
   senha: string,
-  { aleatorio, agora = new Date(), parametros = PARAMETROS_SCRYPT, aoProgresso }: OpcoesCriar,
+  { aleatorio, agora = new Date(), parametros = PARAMETROS_SCRYPT, aoProgresso, fotos }: OpcoesCriar,
 ): Promise<{ nome: string; conteudo: string }> {
   if (!senhaValida(senha)) throw new Error('Senha curta demais.');
   const sal = aleatorio(16);
@@ -150,7 +158,8 @@ export async function criarBackup(
     cifra: { nome: 'aes-256-gcm', nonce: paraBase64(nonce) },
   };
   const chave = await chaveDaSenha(senha, parametros, sal, aoProgresso);
-  const aberto = paraUtf8(JSON.stringify({ versaoEstado: VERSAO_ESTADO, estado: paraBackup(estado) }));
+  const temFotos = fotos !== undefined && Object.keys(fotos).length > 0;
+  const aberto = paraUtf8(JSON.stringify({ versaoEstado: VERSAO_ESTADO, estado: paraBackup(estado), ...(temFotos ? { fotos } : {}) }));
   const cifrado = gcm(chave, nonce, cabecalhoAutenticado(cabecalho)).encrypt(aberto);
   chave.fill(0);
   const arquivo: ArquivoBackup = { ...cabecalho, dados: paraBase64(cifrado) };
@@ -158,6 +167,16 @@ export async function criarBackup(
 }
 
 const ehObjeto = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+
+/** As fotos do conteúdo decifrado: só nomes válidos com Base64 válido; o resto é ignorado. */
+function lerFotos(bruto: unknown): FotosBackup {
+  const fotos: FotosBackup = {};
+  if (!ehObjeto(bruto)) return fotos;
+  for (const [nome, dados] of Object.entries(bruto)) {
+    if (nomeFotoValido(nome) && typeof dados === 'string' && deBase64(dados) !== null) fotos[nome] = dados;
+  }
+  return fotos;
+}
 const potenciaDeDois = (n: number) => Number.isInteger(n) && n > 0 && (n & (n - 1)) === 0;
 
 /** Lê e confere o cabeçalho. `null` se não for um backup do Maré que este app saiba abrir. */
@@ -215,9 +234,12 @@ export async function abrirBackup(
   if (ehVersaoFutura(conteudo.versaoEstado)) return { ok: false, motivo: 'versao_futura' };
   const bruto = conteudo.estado;
   if (!ehObjeto(bruto) || !Array.isArray(bruto.habitos) || !Array.isArray(bruto.relatos)) return { ok: false, motivo: 'dados' };
-  const estado = migrar(bruto, conteudo.versaoEstado);
-  if (!estado) return { ok: false, motivo: 'dados' };
-  return { ok: true, estado, resumo: resumoDoBackup(estado, cabecalho.criadoEm) };
+  const migrado = migrar(bruto, conteudo.versaoEstado);
+  if (!migrado) return { ok: false, motivo: 'dados' };
+  // Porquê com foto que não veio no backup (ou com nome estranho) fica só com o texto.
+  const fotos = lerFotos(conteudo.fotos);
+  const estado = { ...migrado, porques: removerFotosAusentes(migrado.porques, new Set(Object.keys(fotos))) };
+  return { ok: true, estado, resumo: resumoDoBackup(estado, cabecalho.criadoEm), fotos };
 }
 
 export const MENSAGEM_FALHA: Record<MotivoFalha, string> = {

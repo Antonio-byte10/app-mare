@@ -2,11 +2,15 @@
 import type { Ajustes } from './estado';
 import type { AjustesBloqueio, AjustesLembretes, Disfarce } from './tipos';
 
-export const LEMBRETES_PADRAO: AjustesLembretes = {
+/** Lembretes já com todos os padrões aplicados (`reflexao` sempre presente). */
+export type LembretesCompletos = AjustesLembretes & Required<Pick<AjustesLembretes, 'reflexao'>>;
+
+export const LEMBRETES_PADRAO: LembretesCompletos = {
   relato: { ligado: true, hora: '22:00' },
   bomDia: { ligado: false, hora: '08:00' },
   antesDaOnda: true,
   marcos: true,
+  reflexao: { ligado: true, hora: '19:00' },
 };
 
 export const BLOQUEIO_PADRAO: AjustesBloqueio = { ligado: false, biometria: true, aposMinutos: 1, ondaLivre: false };
@@ -29,7 +33,7 @@ function rotina(v: unknown, padrao: { ligado: boolean; hora: string }) {
   };
 }
 
-export function lembretesDe(a: Pick<Ajustes, 'lembretes'>): AjustesLembretes {
+export function lembretesDe(a: Pick<Ajustes, 'lembretes'>): LembretesCompletos {
   const l: unknown = a.lembretes;
   if (!ehObjeto(l)) return LEMBRETES_PADRAO;
   return {
@@ -37,6 +41,7 @@ export function lembretesDe(a: Pick<Ajustes, 'lembretes'>): AjustesLembretes {
     bomDia: rotina(l.bomDia, LEMBRETES_PADRAO.bomDia),
     antesDaOnda: typeof l.antesDaOnda === 'boolean' ? l.antesDaOnda : LEMBRETES_PADRAO.antesDaOnda,
     marcos: typeof l.marcos === 'boolean' ? l.marcos : LEMBRETES_PADRAO.marcos,
+    reflexao: rotina(l.reflexao, LEMBRETES_PADRAO.reflexao),
   };
 }
 

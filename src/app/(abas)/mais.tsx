@@ -58,6 +58,13 @@ export default function Mais() {
       />
       <DivisorAjuste />
       <LinhaAjuste
+        titulo="Reflexão da semana"
+        subtitulo="um olhar gentil sobre os últimos 7 dias"
+        icone="diario"
+        onPress={() => router.push('/reflexao')}
+      />
+      <DivisorAjuste />
+      <LinhaAjuste
         titulo="Meu plano"
         subtitulo="seus porquês e o que fazer nos momentos difíceis"
         icone="notas"
@@ -101,7 +108,7 @@ export default function Mais() {
       <GrupoAjuste>Lembretes</GrupoAjuste>
       <LinhaAjuste
         titulo="Lembretes"
-        subtitulo="relato do dia, bom dia, antes da onda e marcos, com texto discreto"
+        subtitulo="relato do dia, bom dia, reflexão da semana, antes da onda e marcos, com texto discreto"
         icone="sino"
         onPress={() => router.push('/lembretes')}
       />

@@ -1,19 +1,24 @@
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
 import { BotaoIcone } from '@/components/BotaoIcone';
 import { Campo } from '@/components/Campo';
 import { CartaoCrise } from '@/components/CartaoCrise';
 import { Chip } from '@/components/Chip';
+import { FotoPorque } from '@/components/FotoPorque';
 import { Icone } from '@/components/Icone';
 import { GrupoAjuste } from '@/components/LinhaAjuste';
+import { SeletorFoto } from '@/components/SeletorFoto';
 import { TelaPasso } from '@/components/TelaPasso';
 import { Texto } from '@/components/Texto';
 import { confirmar } from '@/lib/confirmar';
 import { detectarCriseEmTextos } from '@/lib/crise';
+import { apagarFoto, apagarFotosSemDono } from '@/lib/fotos';
+import { nomesDeFotos } from '@/lib/fotosPuro';
 import {
+  descreverPorque,
   frasePlano,
   maisNovosPrimeiro,
   MAX_PLANO,
@@ -22,7 +27,7 @@ import {
   SUGESTOES_SE,
   sugestoesLivres,
   validarPlano,
-  validarPorque,
+  validarPorqueOuFoto,
 } from '@/lib/plano';
 import { useVoltar } from '@/lib/useVoltar';
 import { useMare } from '@/store';
@@ -44,7 +49,15 @@ export default function MeuPlano() {
   // Porquê: 'novo' = adicionando, um id = editando, null = só a lista.
   const [editando, setEditando] = useState<string | 'novo' | null>(null);
   const [textoPorque, setTextoPorque] = useState('');
+  const [fotoPorque, setFotoPorque] = useState<string | undefined>();
   const [erroPorque, setErroPorque] = useState<string | undefined>();
+  const erroArmazenamento = useMare((e) => e.erroArmazenamento);
+
+  // Fotos que sobraram de um formulário aberto e fechado sem salvar (ou de um app fechado no meio).
+  // Com o armazenamento em erro a lista de porquês pode estar vazia sem estar: não apaga nada.
+  useEffect(() => {
+    if (!erroArmazenamento) void apagarFotosSemDono(nomesDeFotos(useMare.getState().porques));
+  }, [erroArmazenamento]);
 
   // Plano: se veio do "Recomeçar com cuidado", o formulário já abre preenchido.
   const veioPronto = param(seParam) !== '' || param(entaoParam) !== '';
@@ -55,22 +68,51 @@ export default function MeuPlano() {
 
   const crise = detectarCriseEmTextos([textoPorque, se, entao]);
 
-  const abrirPorque = (id: string | 'novo', texto = '') => {
+  const abrirPorque = (id: string | 'novo', texto = '', foto?: string) => {
     setEditando(id);
     setTextoPorque(texto);
+    setFotoPorque(foto);
+    setErroPorque(undefined);
+  };
+
+  /** Uma foto escolhida neste formulário e ainda não salva não serve para nada se for trocada ou descartada. */
+  const descartarFotoNova = () => {
+    const atual = porques.find((p) => p.id === editando)?.foto;
+    if (fotoPorque && fotoPorque !== atual) void apagarFoto(fotoPorque);
+  };
+
+  const mudarFoto = (nova: string | undefined) => {
+    descartarFotoNova();
+    setFotoPorque(nova);
+    setErroPorque(undefined);
+  };
+
+  const fecharPorque = () => {
+    descartarFotoNova();
+    setEditando(null);
+    setTextoPorque('');
+    setFotoPorque(undefined);
     setErroPorque(undefined);
   };
 
   const salvarTextoPorque = () => {
-    const r = validarPorque(textoPorque);
+    const r = validarPorqueOuFoto(textoPorque, fotoPorque !== undefined);
     if (r.erro !== undefined) {
       setErroPorque(r.erro);
       return;
     }
     const existente = porques.find((p) => p.id === editando);
-    salvarPorque({ id: existente?.id ?? randomUUID(), texto: r.valor, criadoEm: existente?.criadoEm ?? Date.now() });
+    salvarPorque({
+      id: existente?.id ?? randomUUID(),
+      texto: r.valor,
+      criadoEm: existente?.criadoEm ?? Date.now(),
+      ...(fotoPorque ? { foto: fotoPorque } : {}),
+    });
+    // A foto antiga, se foi trocada ou tirada, não é mais usada por ninguém.
+    if (existente?.foto && existente.foto !== fotoPorque) void apagarFoto(existente.foto);
     setEditando(null);
     setTextoPorque('');
+    setFotoPorque(undefined);
   };
 
   const salvarNovoPlano = () => {
@@ -116,17 +158,22 @@ export default function MeuPlano() {
           <View key={p.id} style={[styles.item, i > 0 && styles.itemSeparado]}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Editar o porquê: ${p.texto}`}
-              onPress={() => abrirPorque(p.id, p.texto)}
-              style={styles.itemTexto}
+              accessibilityLabel={`Editar o porquê: ${descreverPorque(p)}`}
+              onPress={() => abrirPorque(p.id, p.texto, p.foto)}
+              style={styles.itemPorque}
             >
-              <Texto style={styles.porque}>{`“${p.texto}”`}</Texto>
+              {p.foto ? <FotoPorque key={p.foto} nome={p.foto} altura={56} largura={56} raio={12} accessibilityLabel="Foto do porquê" /> : null}
+              {p.texto.trim() !== '' ? <Texto style={[styles.porque, styles.itemTexto]}>{`“${p.texto}”`}</Texto> : <View style={styles.itemTexto} />}
             </Pressable>
             <BotaoIcone
               icone="lixeira"
-              accessibilityLabel={`Remover o porquê: ${p.texto}`}
+              accessibilityLabel={`Remover o porquê: ${descreverPorque(p)}`}
               onPress={() =>
-                confirmar('Remover este porquê?', 'Ele deixa de aparecer na hora da onda.', 'Remover', () => removerPorque(p.id))
+                confirmar('Remover este porquê?', 'Ele deixa de aparecer na hora da onda.', 'Remover', () => {
+                  removerPorque(p.id);
+                  // A foto cifrada vai junto: não fica nada para trás no celular.
+                  if (p.foto) void apagarFoto(p.foto);
+                })
               }
               style={styles.botaoPequeno}
             />
@@ -148,9 +195,10 @@ export default function MeuPlano() {
             placeholder="Ex.: Quero subir a escada com meu filho sem perder o fôlego."
             autoFoco
           />
+          <SeletorFoto foto={fotoPorque} aoMudar={mudarFoto} />
           <View style={styles.acoes}>
             <Botao onPress={salvarTextoPorque}>Salvar</Botao>
-            <Botao variante="texto" onPress={() => setEditando(null)}>
+            <Botao variante="texto" onPress={fecharPorque}>
               Cancelar
             </Botao>
           </View>
@@ -267,6 +315,7 @@ const styles = StyleSheet.create({
   item: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 },
   itemSeparado: { borderTopWidth: 1, borderTopColor: cores.line },
   itemTexto: { flex: 1, minHeight: 48, justifyContent: 'center' },
+  itemPorque: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
   porque: { fontFamily: fontes.display, fontSize: 16, lineHeight: 23 },
   plano: { fontSize: 14.5, lineHeight: 22 },
   botaoPequeno: { width: 44, height: 44 },

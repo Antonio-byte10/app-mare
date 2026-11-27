@@ -18,6 +18,17 @@ describe('preferências do Plano 3', () => {
     expect(nomeDisfarce({ disfarce: 'diario' })).toBe('Diário');
   });
 
+  it('reflexão semanal: padrão ligado às 19:00; ausente, inválida ou salva é lida com segurança', () => {
+    expect(LEMBRETES_PADRAO.reflexao).toEqual({ ligado: true, hora: '19:00' });
+    // Quem salvou lembretes antes da reflexão existir (sem o campo) recebe o padrão.
+    const antigo = { relato: { ligado: false, hora: '21:00' }, bomDia: { ligado: true, hora: '07:30' }, antesDaOnda: false, marcos: false };
+    expect(lembretesDe({ lembretes: antigo }).reflexao).toEqual({ ligado: true, hora: '19:00' });
+    expect(lembretesDe({ lembretes: antigo }).relato).toEqual({ ligado: false, hora: '21:00' });
+    expect(lembretesDe({ lembretes: { ...antigo, reflexao: { ligado: false, hora: '20:15' } } }).reflexao).toEqual({ ligado: false, hora: '20:15' });
+    expect(lembretesDe({ lembretes: { ...antigo, reflexao: { ligado: 'sim', hora: '99:99' } } as never }).reflexao).toEqual({ ligado: true, hora: '19:00' });
+    expect(lembretesDe({ lembretes: { ...antigo, reflexao: 'x' } as never }).reflexao).toEqual({ ligado: true, hora: '19:00' });
+  });
+
   it('ondaLivre só vale quando é exatamente true', () => {
     expect(bloqueioDe({ bloqueio: { ligado: true, biometria: true, aposMinutos: 1, ondaLivre: true } }).ondaLivre).toBe(true);
     expect(bloqueioDe({ bloqueio: { ligado: true, biometria: true, aposMinutos: 1 } as never }).ondaLivre).toBe(false);
