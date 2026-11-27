@@ -9,7 +9,7 @@ export const LEMBRETES_PADRAO: AjustesLembretes = {
   marcos: true,
 };
 
-export const BLOQUEIO_PADRAO: AjustesBloqueio = { ligado: false, biometria: true, aposMinutos: 1 };
+export const BLOQUEIO_PADRAO: AjustesBloqueio = { ligado: false, biometria: true, aposMinutos: 1, ondaLivre: false };
 
 export const DISFARCES: { id: Disfarce; nome: string; descricao: string }[] = [
   { id: 'mare', nome: 'Maré', descricao: 'o nome e o símbolo do app' },
@@ -48,7 +48,13 @@ export function bloqueioDe(a: Pick<Ajustes, 'bloqueio'>): AjustesBloqueio {
     ligado: b.ligado === true,
     biometria: b.biometria !== false,
     aposMinutos: typeof min === 'number' && Number.isInteger(min) && min >= 0 && min <= 60 ? min : BLOQUEIO_PADRAO.aposMinutos,
+    ondaLivre: b.ondaLivre === true,
   };
+}
+
+/** Telas protegidas: o que a pessoa escolheu; sem escolha, acompanha o bloqueio (ligado com ele). */
+export function protegerTelaDe(a: Pick<Ajustes, 'protegerTela' | 'bloqueio'>): boolean {
+  return typeof a.protegerTela === 'boolean' ? a.protegerTela : bloqueioDe(a).ligado;
 }
 
 export function disfarceDe(a: Pick<Ajustes, 'disfarce'>): Disfarce {

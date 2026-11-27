@@ -9,6 +9,8 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { AvisoDados } from '@/components/AvisoDados';
 import { Fundo } from '@/components/Fundo';
+import { GerenciadorLembretes } from '@/components/GerenciadorLembretes';
+import { GuardaPrivacidade } from '@/components/GuardaPrivacidade';
 import { Tela } from '@/components/Tela';
 import { useHydrated, useMare } from '@/store';
 import { cores } from '@/theme';
@@ -47,26 +49,32 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cores.bg } }}>
-        {/* Primeiro uso: quem ainda não concluiu só enxerga estas telas (e o resto só depois). */}
-        <Stack.Protected guard={!onboardingConcluido}>
-          <Stack.Screen name="boas-vindas" options={{ animation: 'fade' }} />
-        </Stack.Protected>
-        <Stack.Protected guard={onboardingConcluido}>
-          <Stack.Screen name="(abas)" />
-          <Stack.Screen name="fissura" options={{ animation: 'fade' }} />
-          <Stack.Screen name="habito/[id]" />
-          <Stack.Screen name="relato/[dia]" />
-          <Stack.Screen name="recomecar/[dia]" options={{ animation: 'fade' }} />
-          <Stack.Screen name="marcos" />
-          <Stack.Screen name="plano" />
-          <Stack.Screen name="avaliacao" />
-          <Stack.Screen name="apoio" />
-          <Stack.Screen name="biblioteca" />
-          <Stack.Screen name="aprender/[id]" />
-          <Stack.Screen name="ia" />
-        </Stack.Protected>
-      </Stack>
+      {/* Bloqueio, telas protegidas e disfarce. Os lembretes só rodam com o app destrancado. */}
+      <GuardaPrivacidade desbloqueado={onboardingConcluido ? <GerenciadorLembretes /> : null}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cores.bg } }}>
+          {/* Primeiro uso: quem ainda não concluiu só enxerga estas telas (e o resto só depois). */}
+          <Stack.Protected guard={!onboardingConcluido}>
+            <Stack.Screen name="boas-vindas" options={{ animation: 'fade' }} />
+          </Stack.Protected>
+          <Stack.Protected guard={onboardingConcluido}>
+            <Stack.Screen name="(abas)" />
+            <Stack.Screen name="fissura" options={{ animation: 'fade' }} />
+            <Stack.Screen name="habito/[id]" />
+            <Stack.Screen name="relato/[dia]" />
+            <Stack.Screen name="recomecar/[dia]" options={{ animation: 'fade' }} />
+            <Stack.Screen name="marcos" />
+            <Stack.Screen name="plano" />
+            <Stack.Screen name="avaliacao" />
+            <Stack.Screen name="apoio" />
+            <Stack.Screen name="biblioteca" />
+            <Stack.Screen name="aprender/[id]" />
+            <Stack.Screen name="ia" />
+            <Stack.Screen name="lembretes" />
+            <Stack.Screen name="privacidade" />
+            <Stack.Screen name="dados" />
+          </Stack.Protected>
+        </Stack>
+      </GuardaPrivacidade>
     </>
   );
 }

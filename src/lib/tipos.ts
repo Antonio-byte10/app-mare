@@ -155,6 +155,8 @@ export interface AjustesBloqueio {
   biometria: boolean;
   /** Bloqueia ao voltar ao app depois de N minutos fora (0 = sempre). */
   aposMinutos: number;
+  /** A tela de bloqueio mostra um botão que abre só a onda (Fissura) sem pedir o PIN. */
+  ondaLivre: boolean;
 }
 
 /** Nome e ícone que aparecem na tela do celular e nas notificações. */

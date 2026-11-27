@@ -41,6 +41,8 @@ type Mare = EstadoPersistido & {
   removerHabito: (id: string) => void;
   salvarRelato: (r: Relato) => void;
   setAjustes: (p: Partial<Ajustes>) => void;
+  /** Troca todos os dados de uma vez (restaurar backup). Quem chama monta o estado com `aplicarRestauracao`. */
+  substituirEstado: (e: EstadoPersistido) => void;
   dispensarAvisoRecomeco: () => void;
   salvarAvaliacao: (a: Avaliacao) => void;
   salvarPorque: (p: Porque) => void;
@@ -73,6 +75,7 @@ export const useMare = create<Mare>()(
       removerHabito: (id) => set((e) => aplicarRemocaoHabito(e, id)),
       salvarRelato: (r) => set((e) => aplicarRelato(e, r)),
       setAjustes: (p) => set((e) => ({ ajustes: { ...e.ajustes, ...p } })),
+      substituirEstado: (novo) => set({ ...novo }),
       dispensarAvisoRecomeco: () => set({ avisoRecomeco: false }),
       salvarAvaliacao: (a) => set((e) => ({ avaliacoes: inserirOuTrocar(e.avaliacoes, a) })),
       salvarPorque: (p) => set((e) => ({ porques: inserirOuTrocar(e.porques, p) })),

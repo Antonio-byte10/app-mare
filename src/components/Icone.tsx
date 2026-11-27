@@ -56,7 +56,19 @@ const desenhos = {
   humor3: [{ c: [12, 12, 9] }, { p: 'M8.5 15h7M9 10h.01M15 10h.01' }],
   humor4: [{ c: [12, 12, 9] }, { p: 'M8.5 15.5c1.5-.8 5.5-.8 7 0M9 10h.01M15 10h.01' }],
   humor5: [{ c: [12, 12, 9] }, { p: 'M8 16.5c1.5-2 6.5-2 8 0M9 10h.01M15 10h.01' }],
-  // Não existe no mockup: controles deslizantes, no mesmo traço.
+  // Não existem no mockup: teclado numérico do PIN e digital, no mesmo traço.
+  apagarTecla: [{ p: 'M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z' }, { p: 'M17 9.5l-5 5M12 9.5l5 5' }],
+  digital: [
+    { p: 'M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4' },
+    { p: 'M14 13.12c0 2.38 0 6.38-1 8.88' },
+    { p: 'M17.29 21.02c.12-.6.43-2.3.5-3.02' },
+    { p: 'M2 12a10 10 0 0 1 18-6' },
+    { p: 'M21.8 16c.2-2 .131-5.354 0-6' },
+    { p: 'M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2' },
+    { p: 'M8.65 22c.21-.66.45-1.32.57-2' },
+    { p: 'M9 6.8a6 6 0 0 1 9 5.2v2' },
+  ],
+  // Controles deslizantes, no mesmo traço.
   ajustes: [{ p: 'M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10' }, { c: [15, 6, 2.2] }, { c: [9, 12, 2.2] }, { c: [17, 18, 2.2] }],
 } satisfies Record<string, Elemento[]>;
 

@@ -24,6 +24,7 @@
       "expo-router",
       "expo-font",
       "./plugins/with-short-cmake-paths",
+      "./plugins/with-disfarce",
       [
         "expo-sqlite",
         {
@@ -31,7 +32,15 @@
         }
       ],
       "expo-secure-store",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-local-authentication",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6FD3E0"
+        }
+      ]
     ]
   }
 }

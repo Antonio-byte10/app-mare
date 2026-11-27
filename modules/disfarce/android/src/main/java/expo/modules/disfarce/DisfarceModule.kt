@@ -1,0 +1,59 @@
+package expo.modules.disfarce
+
+import android.content.ComponentName
+import android.content.Context
+import android.content.pm.PackageManager
+import expo.modules.kotlin.exception.CodedException
+import expo.modules.kotlin.exception.Exceptions
+import expo.modules.kotlin.modules.Module
+import expo.modules.kotlin.modules.ModuleDefinition
+
+/**
+ * Troca o nome e o ícone do app na tela inicial. O plugin `plugins/with-disfarce.js` declara um
+ * `activity-alias` por disfarce no AndroidManifest (só um fica habilitado por vez, e é ele que
+ * aparece no launcher). Aqui apenas ligamos um alias e desligamos os outros.
+ *
+ * Os nomes dos aliases são `<applicationId>.Disfarce<Id>`; no Maré o `namespace` e o `applicationId`
+ * são o mesmo ("com.mare.app", definido em `android.package` no app.json).
+ */
+class DisfarceModule : Module() {
+  private val context: Context
+    get() = appContext.reactContext ?: throw Exceptions.AppContextLost()
+
+  private fun alias(id: String) = ComponentName(context.packageName, "${context.packageName}.Disfarce${id.replaceFirstChar { it.uppercase() }}")
+
+  override fun definition() = ModuleDefinition {
+    Name("Disfarce")
+
+    // Id do disfarce que está habilitado agora ("mare" se nenhum tiver sido trocado ainda).
+    Function("atual") {
+      val pm = context.packageManager
+      IDS.firstOrNull { id ->
+        when (pm.getComponentEnabledSetting(alias(id))) {
+          PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+          PackageManager.COMPONENT_ENABLED_STATE_DEFAULT -> id == PADRAO
+          else -> false
+        }
+      } ?: PADRAO
+    }
+
+    // Habilita o alias escolhido e desabilita os demais, sem matar o app (DONT_KILL_APP).
+    // O novo é habilitado primeiro para nunca ficar sem nenhum ícone no launcher.
+    AsyncFunction("definir") { id: String ->
+      if (id !in IDS) throw InvalidDisguiseException(id)
+      val pm = context.packageManager
+      pm.setComponentEnabledSetting(alias(id), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
+      IDS.filter { it != id }.forEach {
+        pm.setComponentEnabledSetting(alias(it), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+      }
+    }
+  }
+
+  companion object {
+    const val PADRAO = "mare"
+    // Mesma lista de `DISFARCES` em src/lib/preferencias.ts e de plugins/with-disfarce.js.
+    val IDS = listOf("mare", "diario", "notas", "calma")
+  }
+}
+
+internal class InvalidDisguiseException(id: String) : CodedException("ERR_DISFARCE_INVALIDO", "Disfarce desconhecido: $id", null)

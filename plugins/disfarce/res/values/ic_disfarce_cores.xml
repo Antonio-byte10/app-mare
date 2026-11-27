@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="ic_disfarce_mare_bg">#071526</color>
+  <color name="ic_disfarce_diario_bg">#2E3F5E</color>
+  <color name="ic_disfarce_notas_bg">#F2C94C</color>
+  <color name="ic_disfarce_calma_bg">#1F6F78</color>
+</resources>
