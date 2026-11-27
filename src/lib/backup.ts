@@ -24,6 +24,7 @@ import { gcm } from '@noble/ciphers/aes.js';
 import { scryptAsync } from '@noble/hashes/scrypt.js';
 import { deBase64, deUtf8, paraBase64, paraUtf8 } from './bytes';
 import { dataLocal } from './datas';
+import { validarContato } from './contatos';
 import { VERSAO_ESTADO, ehVersaoFutura, migrar, type EstadoPersistido } from './estado';
 import { nomeFotoValido, removerFotosAusentes } from './fotosPuro';
 import type { Aleatorio } from './pin';
@@ -195,7 +196,7 @@ function lerCabecalho(texto: string): { arquivo: ArquivoBackup; futuro: boolean 
   const { N, r, p, sal } = kdf;
   if (kdf.nome !== 'scrypt' || typeof N !== 'number' || typeof r !== 'number' || typeof p !== 'number' || typeof sal !== 'string') return null;
   // Limites contra um arquivo malicioso que peça memória ou tempo demais.
-  if (!potenciaDeDois(N) || N < 2 ** 10 || N > 2 ** 17 || !Number.isInteger(r) || r < 1 || r > 8 || !Number.isInteger(p) || p < 1 || p > 4) return null;
+  if (!potenciaDeDois(N) || N < 2 ** 10 || N > 2 ** 17 || !Number.isInteger(r) || r < 1 || r > 8 || !Number.isInteger(p) || p < 1 || p > 2) return null;
   if (cifra.nome !== 'aes-256-gcm' || typeof cifra.nonce !== 'string') return null;
   if (deBase64(sal)?.length !== 16 || deBase64(cifra.nonce)?.length !== 12) return null;
   return { arquivo: bruto as unknown as ArquivoBackup, futuro: false };
@@ -238,7 +239,16 @@ export async function abrirBackup(
   if (!migrado) return { ok: false, motivo: 'dados' };
   // Porquê com foto que não veio no backup (ou com nome estranho) fica só com o texto.
   const fotos = lerFotos(conteudo.fotos);
-  const estado = { ...migrado, porques: removerFotosAusentes(migrado.porques, new Set(Object.keys(fotos))) };
+  const estado = {
+    ...migrado,
+    // Itens fora do formato saem em vez de travar telas depois (um arquivo pode ter sido montado à mão).
+    habitos: migrado.habitos.filter((h) => ehObjeto(h) && typeof h.id === 'string' && ehObjeto(h.meta) && typeof h.inicio === 'string'),
+    relatos: migrado.relatos.filter((r) => ehObjeto(r) && typeof r.dia === 'string' && Array.isArray(r.habitos)),
+    contatos: migrado.contatos.filter(
+      (c) => ehObjeto(c) && typeof c.id === 'string' && typeof c.nome === 'string' && 'telefone' in validarContato(c.nome, String(c.telefone ?? '')),
+    ),
+    porques: removerFotosAusentes(migrado.porques, new Set(Object.keys(fotos))),
+  };
   return { ok: true, estado, resumo: resumoDoBackup(estado, cabecalho.criadoEm), fotos };
 }
 

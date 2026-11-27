@@ -7,7 +7,7 @@ import { Icone } from '@/components/Icone';
 import { TelaPasso } from '@/components/TelaPasso';
 import { Texto } from '@/components/Texto';
 import { ICONE_TIPO } from '@/lib/avaliacao';
-import { DICA_TIPO, errosDoRascunho, ROTULO_TIPO, TIPOS_ORDEM } from '@/lib/primeiroUso';
+import { DICA_TIPO, errosDoRascunho, passoDoPrimeiroUso, ROTULO_TIPO, TIPOS_ORDEM } from '@/lib/primeiroUso';
 import { useRascunhoPrimeiroUso } from '@/lib/rascunhoPrimeiroUso';
 import type { Habito } from '@/lib/tipos';
 import { useVoltar } from '@/lib/useVoltar';
@@ -36,6 +36,7 @@ export default function EscolherHabitos() {
   return (
     <TelaPasso
       aoVoltar={voltar}
+      topo={<Texto tipo="legenda">{passoDoPrimeiroUso('habitos', rascunhos)?.texto}</Texto>}
       rodape={
         <Botao
           desabilitado={!podeSeguir}

@@ -8,7 +8,7 @@ export const MAX_PLANO = 140;
 export const SUGESTOES_ENTAO = [
   'beber um copo de água gelada',
   'respirar fundo por 1 minuto',
-  'abrir a Fissura agora',
+  'abrir a onda agora',
   'sair para uma caminhada curta',
   'tomar um banho',
   'ligar para alguém de confiança',
@@ -19,7 +19,7 @@ export const SUGESTOES_ENTAO = [
 /** Situações comuns para o "se". */
 export const SUGESTOES_SE = [
   'eu sentir vontade depois do café',
-  'eu estiver sozinho à noite',
+  'eu estiver sem ninguém por perto à noite',
   'eu estiver numa festa ou num bar',
   'eu sentir muita ansiedade',
   'eu acordar sentindo vontade',

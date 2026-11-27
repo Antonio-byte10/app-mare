@@ -12,16 +12,17 @@ import { GATILHOS } from '@/conteudo/gatilhos';
 import { resumoHabito } from '@/lib/contador';
 import { detectarCriseEmTextos } from '@/lib/crise';
 import { dataLocal, dataValida, formatarData } from '@/lib/datas';
+import { gatilhosComHalt, haltDosGatilhos } from '@/lib/gatilhos';
 import {
   alternarItem,
   INICIO_CONVERSA_RECOMECO,
   montarRecomeco,
-  OPCOES_HALT,
   recomecoExistente,
   sugestaoPlano,
   SUGESTOES_PROXIMA_VEZ,
 } from '@/lib/recomeco';
-import type { Halt, Habito } from '@/lib/tipos';
+import { seDoGatilhoTexto } from '@/lib/reflexao';
+import type { Habito } from '@/lib/tipos';
 import { useAgora } from '@/lib/useAgora';
 import { useVoltar } from '@/lib/useVoltar';
 import { useVoltarInterno } from '@/lib/useVoltarInterno';
@@ -63,8 +64,10 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
   const existente = recomecoExistente(recomecos, dia, habito.id);
 
   const [passo, setPasso] = useState<1 | 2 | 3>(1);
-  const [gatilhos, setGatilhos] = useState<string[]>(existente?.gatilhos ?? relato?.gatilhos ?? []);
-  const [halt, setHalt] = useState<Halt[]>(existente?.halt ?? []);
+  // Uma lista só de "o que mexeu": o antigo bloco HALT (fome, raiva, solidão, cansaço) virou parte dela.
+  const [gatilhos, setGatilhos] = useState<string[]>(() =>
+    gatilhosComHalt(existente?.gatilhos ?? relato?.gatilhos ?? [], existente?.halt),
+  );
   const [oQue, setOQue] = useState(existente?.oQueAcontecia ?? '');
   const [proxima, setProxima] = useState(existente?.proximaVez ?? '');
 
@@ -96,7 +99,7 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
         dia,
         habitoId: habito.id,
         gatilhos,
-        halt,
+        halt: haltDosGatilhos(gatilhos),
         oQueAcontecia: oQue,
         proximaVez: proxima,
         agora: Date.now(),
@@ -123,7 +126,10 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
   const virarPlano = () => {
     if (!iniciarSaida()) return;
     gravar();
-    const { se, entao } = sugestaoPlano({ gatilhos, halt, proximaVez: proxima });
+    const sugestao = sugestaoPlano({ gatilhos, halt: haltDosGatilhos(gatilhos), proximaVez: proxima });
+    // Os gatilhos da lista nova (Celular/telas, Um lugar...) têm frase própria; o resto cai na sugestão do recomeço.
+    const se = (gatilhos[0] ? seDoGatilhoTexto(gatilhos[0]) : undefined) ?? sugestao.se;
+    const { entao } = sugestao;
     // Com mais deslizes na fila, abre o plano por cima (empilhando) e esta tela continua por baixo:
     // ao voltar, "Salvar" segue para o próximo hábito. Sem fila, o plano substitui esta tela.
     if (restantes.length > 0) router.push({ pathname: '/plano', params: { se, entao } });
@@ -159,7 +165,7 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
         ) : (
           <>
             <Botao onPress={salvarEFechar}>Salvar</Botao>
-            {proxima.trim() !== '' || gatilhos.length > 0 || halt.length > 0 ? (
+            {proxima.trim() !== '' || gatilhos.length > 0 ? (
               <Botao variante="secundario" onPress={virarPlano}>
                 Transformar em plano
               </Botao>
@@ -179,7 +185,7 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
             {habito.apelido}
           </Chip>
           <Texto style={styles.titulo} accessibilityRole="header">
-            Obrigado por registrar. Isso exige coragem.
+            Registrar não é fácil, e você fez.
           </Texto>
           <Texto style={styles.texto}>
             {`Um deslize não apaga o que você já construiu. ${formatarData(dia, { day: 'numeric', month: 'long' })} foi um dia difícil, e amanhã é outro.`}
@@ -214,14 +220,6 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
             {opcoesGatilho.map((g) => (
               <Chip key={g} ativo={gatilhos.includes(g)} cor={cores.peri} onPress={() => setGatilhos((gs) => alternarItem(gs, g))}>
                 {g}
-              </Chip>
-            ))}
-          </View>
-          <Texto style={styles.rotulo}>E o seu corpo e o seu dia?</Texto>
-          <View style={styles.chips}>
-            {OPCOES_HALT.map((o) => (
-              <Chip key={o.id} ativo={halt.includes(o.id)} cor={cores.sand} onPress={() => setHalt((h) => alternarItem(h, o.id))}>
-                {o.rotulo}
               </Chip>
             ))}
           </View>
@@ -281,7 +279,7 @@ const styles = StyleSheet.create({
   numero: { fontFamily: fontes.displayLeve, fontSize: 64, lineHeight: 66, letterSpacing: -2.4, color: cores.text },
   destaqueTexto: { fontSize: 14.5, lineHeight: 21, color: cores.muted, textAlign: 'center' },
   rotulo: { marginTop: 22, marginBottom: 12, fontFamily: fontes.uiForte, fontSize: 13.5, lineHeight: 18 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   campo: { marginTop: 22 },
   crise: { marginTop: 18 },
 });

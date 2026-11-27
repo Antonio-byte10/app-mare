@@ -247,7 +247,11 @@ const IP_PRIVADO = /^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.
  * escrito pelo próprio cliente (dá para inventar um a cada pedido); o fim é escrito pelos proxies.
  * Por isso vale o último endereço público da lista, lido da direita para a esquerda.
  */
-export function ipDoCliente(encaminhado, remoto = '') {
+export function ipDoCliente(encaminhado, remoto = '', cloudflare = '') {
+  // O Render fica atrás da Cloudflare, que escreve CF-Connecting-IP com o IP real (o cliente não
+  // consegue trocá-lo). Sem ele, cai na leitura de X-Forwarded-For abaixo.
+  const cf = String(cloudflare ?? '').trim();
+  if (cf) return cf;
   const lista = String(encaminhado ?? '')
     .split(',')
     .map((x) => x.trim())
@@ -325,7 +329,7 @@ export function criarServico({
       });
       return res.end(JSON.stringify(dados));
     };
-    const ip = ipDoCliente(req.headers['x-forwarded-for'], req.socket.remoteAddress);
+    const ip = ipDoCliente(req.headers['x-forwarded-for'], req.socket.remoteAddress, req.headers['cf-connecting-ip']);
     // Fora do Render, só o próprio computador.
     if (!publico && !/^(127\.0\.0\.1|localhost|\[::1\]):\d+$/.test(req.headers.host ?? '')) return enviar(403, {});
     // Navegadores só podem chamar a partir do app aberto em localhost; o app nativo não manda Origin.
@@ -341,9 +345,12 @@ export function criarServico({
     const conversa = req.url === '/conversa';
     if (!saude && !conversa) return enviar(404, {});
 
-    // Em modo público sem APP_TOKEN, ninguém é autorizado: quem usaria a chave seria qualquer pessoa.
-    if (conversa && publico && !token) {
-      return enviar(503, { erro: 'O servidor está sem APP_TOKEN. Defina o código de acesso no painel do Render.', tipo: 'servidorConfig' });
+    // Em modo público sem APP_TOKEN (ou com um curto demais, fácil de adivinhar), ninguém é autorizado.
+    if (conversa && publico && (!token || token.length < 24)) {
+      return enviar(503, {
+        erro: token ? 'O APP_TOKEN do servidor é curto demais: use 24 caracteres ou mais.' : 'O servidor está sem APP_TOKEN. Defina o código de acesso no painel do Render.',
+        tipo: 'servidorConfig',
+      });
     }
     if (token && bloqueado(ip)) {
       return enviar(429, { erro: 'Muitas tentativas com código errado. Aguarde 15 minutos.', tipo: 'tentativas' });
@@ -468,7 +475,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (!PROVEDORES[provedor]) console.warn('IA_PROVEDOR inválido: use gemini, openai ou claude.');
   if (!chave) console.warn('IA_CHAVE não definida: a conversa fica indisponível até você configurá-la.');
   if (publico && !token) console.warn('APP_TOKEN não definido: a conversa fica recusada até você definir o código de acesso.');
-  if (token && token.length < 24) console.warn('APP_TOKEN curto: use 24 caracteres ou mais.');
+  if (token && token.length < 24) console.warn('APP_TOKEN curto: a conversa fica recusada até ter 24 caracteres ou mais.');
+  // Um erro inesperado não derruba o servidor sem deixar rastro (o conteúdo nunca vai para o log).
+  process.on('unhandledRejection', (e) => console.warn('Erro inesperado:', e instanceof Error ? e.name : typeof e));
   const porta = Number(PORT) || 8787;
   const host = publico ? '0.0.0.0' : '127.0.0.1';
   criarServico({

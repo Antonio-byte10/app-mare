@@ -15,6 +15,7 @@ import {
   resumoDaSemana,
   semanaTemDados,
   seDoGatilho,
+  seDoGatilhoTexto,
   type SemanaHabito,
 } from './reflexao';
 import type { Fissura, Habito, Recomeco, Relato, TipoHabito } from './tipos';
@@ -538,6 +539,13 @@ describe('seDoGatilho', () => {
   it('frase de plano para os gatilhos de um toque e para os do relato', () => {
     expect(seDoGatilho({ chave: 'tedio', rotulo: 'Tédio', total: 2 })).toBe('eu sentir tédio');
     expect(seDoGatilho({ chave: 'celular', rotulo: 'Celular/telas', total: 2 })).toBe('eu estiver com o celular na mão');
+  });
+
+  it('seDoGatilhoTexto casa o rótulo guardado no relato ou no Recomeçar com a frase do plano', () => {
+    expect(seDoGatilhoTexto('Celular/telas')).toBe('eu estiver com o celular na mão');
+    expect(seDoGatilhoTexto('Celular à noite')).toBe('eu estiver com o celular na mão');
+    expect(seDoGatilhoTexto('Festa ou evento')).toBe('eu estiver numa festa ou num evento');
+    expect(seDoGatilhoTexto('Prova na faculdade')).toBeUndefined();
   });
 
   it('gatilho livre cai na sugestão do recomeço, sem quebrar', () => {

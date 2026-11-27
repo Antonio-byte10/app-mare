@@ -185,14 +185,14 @@ export default function Privacidade() {
               </View>
               <DivisorAjuste />
               <LinhaAjuste
-                titulo="Abrir a onda sem desbloquear"
-                subtitulo="a tela de bloqueio ganha um botão que abre só a Fissura, para uma hora difícil"
+                titulo="Abrir a onda na tela de bloqueio"
+                subtitulo="a tela de bloqueio ganha um botão que abre só a onda, sem liberar o resto do app, para uma hora difícil"
                 icone="onda"
                 direita={
                   <Interruptor
                     ligado={bloqueio.ondaLivre}
                     aoMudar={(v) => setAjustes({ bloqueio: { ...bloqueio, ondaLivre: v } })}
-                    accessibilityLabel="Abrir a onda sem desbloquear"
+                    accessibilityLabel="Abrir a onda na tela de bloqueio"
                   />
                 }
               />

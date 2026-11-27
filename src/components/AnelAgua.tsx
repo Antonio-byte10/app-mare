@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
-import { rotuloSequencia } from '@/lib/inicio';
+import { heroContador } from '@/lib/inicio';
 import { useReduzirMovimento } from '@/lib/useReduzirMovimento';
 import { cores, fontes } from '@/theme';
 import { Texto } from './Texto';
@@ -9,6 +9,8 @@ import { Texto } from './Texto';
 type Props = {
   /** Dias seguidos da sequência atual. */
   sequencia: number;
+  /** Dias livres no total: vira o número grande quando a sequência zerou (recomeço). */
+  totalLivres?: number;
   /** Próximo marco; `null` quando todos já foram alcançados (anel cheio). */
   proximo: { dias: number; faltam: number } | null;
   /** Esconde o número e o progresso: só a água e "Um dia de cada vez". */
@@ -69,14 +71,17 @@ function Onda({ cor, opacidade = 1, altura, crista, duracao, parada }: OndaProps
 }
 
 /** Anel de água do Início: arco até o próximo marco, ondas deslizando e a sequência no centro. */
-export function AnelAgua({ sequencia, proximo, oculto = false }: Props) {
+export function AnelAgua({ sequencia, totalLivres = 0, proximo, oculto = false }: Props) {
   const base = `anel${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const idArco = `${base}a`;
   const idAgua = `${base}w`;
   const reduzir = useReduzirMovimento();
   // Oculto não revela o progresso: o arco fica cheio.
   const p = oculto ? 1 : progresso(sequencia, proximo);
-  const rotulo = oculto ? 'Um dia de cada vez' : `${sequencia} ${rotuloSequencia(sequencia)}`;
+  const hero = heroContador(sequencia, totalLivres);
+  const rotulo = oculto
+    ? 'Um dia de cada vez'
+    : `${hero.valor} ${hero.rotulo}${hero.nota ? `. ${hero.nota}` : ''}`;
 
   return (
     <View style={styles.anel} accessible accessibilityLabel={rotulo} accessibilityRole="image">
@@ -129,8 +134,9 @@ export function AnelAgua({ sequencia, proximo, oculto = false }: Props) {
           <Texto style={styles.oculto}>Um dia de cada vez</Texto>
         ) : (
           <>
-            <Texto tipo="display">{String(sequencia)}</Texto>
-            <Texto style={styles.legenda}>{rotuloSequencia(sequencia)}</Texto>
+            <Texto tipo="display">{String(hero.valor)}</Texto>
+            <Texto style={styles.legenda}>{hero.rotulo}</Texto>
+            {hero.nota ? <Texto style={styles.nota}>{hero.nota}</Texto> : null}
           </>
         )}
       </View>
@@ -160,6 +166,7 @@ const styles = StyleSheet.create({
   },
   texto: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   legenda: { fontFamily: fontes.uiMedia, fontSize: 13, lineHeight: 16, color: cores.text, opacity: 0.85, marginTop: 8 },
+  nota: { fontSize: 12, lineHeight: 16, color: cores.text, opacity: 0.8, textAlign: 'center', width: 132, marginTop: 6 },
   oculto: {
     fontFamily: fontes.display,
     fontSize: 21,

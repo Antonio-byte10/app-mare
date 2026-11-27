@@ -1,19 +1,37 @@
-/** Gatilhos do fim da Fissura ("O que puxou a onda?") e a contagem do cartão do Diário. */
+/**
+ * Gatilhos do app: UMA lista só, usada no relato do dia ("O que mexeu com você?"), no fim da onda
+ * ("O que puxou a onda?") e em Recomeçar com cuidado. Também alimenta a contagem do cartão do Diário.
+ */
 import { dataLocal, deslocarDia } from './datas';
-import type { Fissura, Relato } from './tipos';
+import type { Fissura, Halt, Relato } from './tipos';
 
-/** Gatilhos de um toque, na ordem em que aparecem. O `id` é o que fica guardado em `Fissura.gatilhos`. */
-export const GATILHOS_FISSURA = [
-  { id: 'fome', rotulo: 'Fome' },
-  { id: 'raiva', rotulo: 'Raiva' },
+/**
+ * Gatilhos de um toque, na ordem em que aparecem. O `id` é o que fica guardado em `Fissura.gatilhos`;
+ * o relato do dia e o Recomeçar guardam o `rotulo`. Nunca troque um id ou rótulo que já existiu: dados
+ * antigos dependem deles (para um rótulo antigo que mudou, use `ROTULOS_ANTIGOS`).
+ */
+export const GATILHOS_CANONICOS = [
+  { id: 'estresse', rotulo: 'Estresse' },
+  { id: 'ansiedade', rotulo: 'Ansiedade' },
+  { id: 'tedio', rotulo: 'Tédio' },
   { id: 'solidao', rotulo: 'Solidão' },
   { id: 'cansaco', rotulo: 'Cansaço' },
-  { id: 'estresse', rotulo: 'Estresse' },
-  { id: 'tedio', rotulo: 'Tédio' },
+  { id: 'raiva', rotulo: 'Raiva' },
+  { id: 'fome', rotulo: 'Fome' },
+  { id: 'celular', rotulo: 'Celular/telas' },
+  { id: 'festa', rotulo: 'Festa ou evento' },
+  { id: 'discussao', rotulo: 'Discussão' },
   { id: 'lugar', rotulo: 'Um lugar' },
   { id: 'pessoas', rotulo: 'Pessoas' },
-  { id: 'celular', rotulo: 'Celular/telas' },
 ] as const;
+
+/** Mesma lista, com o nome que a tela do fim da onda já usava. */
+export const GATILHOS_FISSURA = GATILHOS_CANONICOS;
+
+/** Rótulos que já foram oferecidos no relato e hoje contam como outro gatilho (texto normalizado -> id). */
+const ROTULOS_ANTIGOS: Record<string, string> = {
+  'celular a noite': 'celular',
+};
 
 export type IdGatilhoFissura = (typeof GATILHOS_FISSURA)[number]['id'];
 
@@ -36,14 +54,45 @@ export function limparGatilhosFissura(ids: readonly string[] | undefined): strin
 }
 
 // Texto normalizado (rótulo ou id) -> id, para casar o texto livre do relato com os gatilhos de um toque.
-const PORTEXTO = new Map<string, string>(
-  GATILHOS_FISSURA.flatMap((g) => [
+const PORTEXTO = new Map<string, string>([
+  ...GATILHOS_FISSURA.flatMap((g) => [
     [normalizarGatilho(g.rotulo), g.id] as [string, string],
     [g.id, g.id] as [string, string],
   ]),
-);
+  ...Object.entries(ROTULOS_ANTIGOS),
+]);
+
+/** Id do gatilho conhecido para um texto (rótulo, id ou rótulo antigo, sem ligar para caixa e acento). */
+export const idDoGatilho = (texto: string): string | undefined => PORTEXTO.get(normalizarGatilho(texto));
 
 const ROTULO_DO_ID = new Map<string, string>(GATILHOS_FISSURA.map((g) => [g.id, g.rotulo]));
+
+/**
+ * Os rótulos da lista no lugar de textos antigos ("celular à noite" vira "Celular/telas"), sem repetir.
+ * O texto livre que não é da lista fica como está.
+ */
+export function rotulosCanonicos(textos: readonly string[]): string[] {
+  const saida: string[] = [];
+  for (const t of textos) {
+    const id = idDoGatilho(t);
+    const r = id ? (ROTULO_DO_ID.get(id) ?? t) : t;
+    if (!saida.includes(r)) saida.push(r);
+  }
+  return saida;
+}
+
+/** O antigo bloco "HALT" do Recomeçar (fome, raiva, solidão, cansaço) agora faz parte da lista única. */
+const IDS_HALT: readonly Halt[] = ['fome', 'raiva', 'solidao', 'cansaco'];
+
+/** Quais itens do HALT estão entre os gatilhos marcados (para guardar em `Recomeco.halt`). */
+export const haltDosGatilhos = (gatilhos: readonly string[]): Halt[] => {
+  const ids = gatilhos.map(idDoGatilho);
+  return IDS_HALT.filter((h) => ids.includes(h));
+};
+
+/** Gatilhos de um recomeço antigo: o que estava no HALT vira um gatilho marcado também. */
+export const gatilhosComHalt = (gatilhos: readonly string[], halt: readonly Halt[] = []): string[] =>
+  rotulosCanonicos([...gatilhos, ...halt.map((h) => ROTULO_DO_ID.get(h) ?? h)]);
 
 /** Rótulo de um id guardado; um id que não existe mais volta como veio (nunca quebra a tela). */
 export const rotuloGatilho = (id: string): string => ROTULO_DO_ID.get(id) ?? id;
@@ -94,7 +143,7 @@ export function contarGatilhos({ fissuras, relatos, hoje, dias = 30, limite = 3 
     for (const texto of r.gatilhos) {
       const norm = normalizarGatilho(texto);
       if (!norm) continue;
-      const id = PORTEXTO.get(norm);
+      const id = idDoGatilho(texto);
       const chave = id ?? norm;
       if (vistos.has(chave)) continue;
       vistos.add(chave);

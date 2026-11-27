@@ -1,6 +1,6 @@
 {
   "name": "mare",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Maré: app de sobriedade open source (Expo/React Native), offline e sem conta.",
   "main": "expo-router/entry",
   "license": "MIT",

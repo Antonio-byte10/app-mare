@@ -1,8 +1,5 @@
-import Constants from 'expo-constants';
-import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { Icone } from '@/components/Icone';
 import { Interruptor } from '@/components/Interruptor';
 import { DivisorAjuste, GrupoAjuste, LinhaAjuste } from '@/components/LinhaAjuste';
 import { Tela } from '@/components/Tela';
@@ -13,8 +10,6 @@ import { useAgora } from '@/lib/useAgora';
 import { useMare } from '@/store';
 import { cores } from '@/theme';
 
-const REPOSITORIO = 'https://github.com/Antonio-byte10/app-mare';
-
 export default function Mais() {
   const habitos = useMare((e) => e.habitos);
   const ocultarNumeros = useMare((e) => e.ajustes.ocultarNumeros);
@@ -24,7 +19,6 @@ export default function Mais() {
   const setAjustes = useMare((e) => e.setAjustes);
   const router = useRouter();
   const agora = useAgora();
-  const versao = Constants.expoConfig?.version ?? '0.1.0';
 
   return (
     <Tela rolavel style={styles.rodape}>
@@ -49,7 +43,7 @@ export default function Mais() {
         <LinhaAjuste titulo="Adicionar hábito" icone="adicionar" onPress={() => router.push('/habito/novo')} />
       </View>
 
-      <GrupoAjuste>Jornada</GrupoAjuste>
+      <GrupoAjuste>Meu caminho</GrupoAjuste>
       <LinhaAjuste
         titulo="Marcos"
         subtitulo="o que o seu corpo e a sua rotina ganham com o tempo"
@@ -78,7 +72,7 @@ export default function Mais() {
         onPress={() => router.push('/avaliacao')}
       />
 
-      <GrupoAjuste>Cuidado</GrupoAjuste>
+      <GrupoAjuste>Ajuda</GrupoAjuste>
       <LinhaAjuste
         titulo="Aprender"
         subtitulo="textos curtos, com fontes, sobre o que você vive"
@@ -93,19 +87,18 @@ export default function Mais() {
         onPress={() => router.push('/apoio')}
       />
 
-      <GrupoAjuste>Inteligência artificial</GrupoAjuste>
+      <GrupoAjuste>Ajustes</GrupoAjuste>
       <LinhaAjuste
         titulo="Inteligência artificial"
         subtitulo={
           ia
             ? `${NOME_PROVEDOR[ia.provedor]} · ${ia.modo === 'direto' ? 'sua chave' : 'seu servidor'}`
-            : 'desligada — o app funciona inteiro sem ela'
+            : 'desligada · o app funciona inteiro sem ela'
         }
         icone="ajustes"
         onPress={() => router.push('/ia')}
       />
-
-      <GrupoAjuste>Lembretes</GrupoAjuste>
+      <DivisorAjuste />
       <LinhaAjuste
         titulo="Lembretes"
         subtitulo="relato do dia, bom dia, reflexão da semana, antes da onda e marcos, com texto discreto"
@@ -143,7 +136,7 @@ export default function Mais() {
       <DivisorAjuste />
       <LinhaAjuste
         titulo="Contatos de emergência"
-        subtitulo="mostra CVV 188 e SAMU 192 na Fissura e quando o app notar sinais de risco"
+        subtitulo="mostra CVV 188 e SAMU 192 na onda e quando o app notar sinais de risco"
         icone="telefone"
         direita={
           <Interruptor
@@ -157,24 +150,9 @@ export default function Mais() {
       <GrupoAjuste>Sobre</GrupoAjuste>
       <LinhaAjuste
         titulo="Sobre o Maré"
-        subtitulo="versão, procurar atualização e privacidade"
+        subtitulo="versão, código aberto, atualização e privacidade"
         icone="folha"
         onPress={() => router.push('/sobre')}
-      />
-      <DivisorAjuste />
-      <LinhaAjuste titulo="Versão" subtitulo={versao} />
-      <DivisorAjuste />
-      <LinhaAjuste titulo="Licença MIT" subtitulo="software livre, use e adapte" />
-      <DivisorAjuste />
-      <LinhaAjuste
-        titulo="Código aberto"
-        subtitulo="github.com/Antonio-byte10/app-mare"
-        direita={<Icone nome="setaDireita" tamanho={18} cor={cores.faint} />}
-        onPress={() => {
-          // Sem navegador instalado o link não abre; não há o que fazer além de não quebrar.
-          Linking.openURL(REPOSITORIO).catch(() => undefined);
-        }}
-        accessibilityLabel="Código aberto, abre o repositório no navegador"
       />
     </Tela>
   );

@@ -11,7 +11,15 @@ import { Trio } from '@/components/Trio';
 import { Vazio } from '@/components/Vazio';
 import { resumoHabito } from '@/lib/contador';
 import { dataLocal } from '@/lib/datas';
-import { dataPorExtenso, saudacao, textoEconomia, textoFaltam, textoPendente } from '@/lib/inicio';
+import {
+  dataPorExtenso,
+  escolherSugestao,
+  heroContador,
+  saudacao,
+  textoEconomia,
+  textoFaltam,
+  textoPendente,
+} from '@/lib/inicio';
 import { deveSugerirBackup, primeiroUsoEm } from '@/lib/lembreteBackup';
 import { proximoMarco } from '@/lib/marcos';
 import { chaveDaReflexao, deveMostrarCartaoReflexao, ehDiaDaReflexao, resumoDaSemana } from '@/lib/reflexao';
@@ -57,10 +65,20 @@ export default function Inicio() {
     ultimoBackupEm: ajustes.ultimoBackupEm,
     backupSugeridoEm: ajustes.backupSugeridoEm,
   });
+  // Só uma sugestão por vez, para o Início não virar uma lista de tarefas.
+  const sugestao = escolherSugestao({
+    avisoRecomeco,
+    dicaOnda: ajustes.dicaOndaVista !== true,
+    pendente: pendente !== null,
+    reflexao: mostrarReflexao,
+    backup: sugerirBackup,
+  });
+  // Depois de um deslize, o número grande é o total de dias e a sequência segue no trio.
+  const recomecando = heroContador(resumo.sequenciaAtual, resumo.totalLivres).recomecando;
 
   return (
     <Tela rolavel>
-      {avisoRecomeco ? <FaixaRecomeco aoDispensar={dispensarAviso} /> : null}
+      {sugestao === 'recomeco' ? <FaixaRecomeco aoDispensar={dispensarAviso} /> : null}
 
       <View>
         <Texto tipo="legenda" style={styles.data}>
@@ -73,7 +91,7 @@ export default function Inicio() {
 
       <SeletorHabito habitos={habitos} ativoId={ativo.id} onEscolher={escolher} style={styles.chips} />
 
-      <AnelAgua sequencia={resumo.sequenciaAtual} proximo={proximo} oculto={oculto} />
+      <AnelAgua sequencia={resumo.sequenciaAtual} totalLivres={resumo.totalLivres} proximo={proximo} oculto={oculto} />
 
       {oculto ? null : (
         <>
@@ -86,7 +104,9 @@ export default function Inicio() {
           </Texto>
           <Trio
             itens={[
-              { valor: String(resumo.totalLivres), rotulo: 'dias no total' },
+              recomecando
+                ? { valor: String(resumo.sequenciaAtual), rotulo: 'dias seguidos' }
+                : { valor: String(resumo.totalLivres), rotulo: 'dias no total' },
               { valor: String(resumo.recorde), rotulo: 'seu recorde' },
               { valor: textoEconomia(ativo, relatos, hoje), rotulo: 'economizados', cor: cores.sand },
             ]}
@@ -94,7 +114,9 @@ export default function Inicio() {
         </>
       )}
 
-      {pendente ? (
+      {sugestao === 'dica-onda' ? <CartaoDicaOnda aoEntender={() => setAjustes({ dicaOndaVista: true })} /> : null}
+
+      {sugestao === 'pendente' && pendente ? (
         <View style={oculto ? styles.pendenteOculto : null}>
           <LinhaPendente
             titulo={pendente.titulo}
@@ -104,20 +126,36 @@ export default function Inicio() {
         </View>
       ) : null}
 
-      {mostrarReflexao ? (
+      {sugestao === 'reflexao' ? (
         <CartaoReflexao
           aoAbrir={() => router.push('/reflexao')}
           aoAdiar={() => setAjustes({ reflexaoVistaEm: chaveDaReflexao(hoje) })}
         />
       ) : null}
 
-      {sugerirBackup ? (
+      {sugestao === 'backup' ? (
         <CartaoBackup
           aoFazer={() => router.push('/dados')}
           aoAdiar={() => setAjustes({ backupSugeridoEm: Date.now() })}
         />
       ) : null}
     </Tela>
+  );
+}
+
+/** Dica única depois do primeiro uso: onde fica o botão para a hora da vontade. Só texto e um "Entendi" discreto. */
+function CartaoDicaOnda({ aoEntender }: { aoEntender: () => void }) {
+  return (
+    <View style={styles.cartaoBackup}>
+      <Texto tipo="legenda" cor={cores.text}>
+        Quando a vontade apertar, toque na onda aqui embaixo. Ela te guia em 3 minutos.
+      </Texto>
+      <View style={styles.cartaoBackupAcoes}>
+        <Botao variante="texto" onPress={aoEntender}>
+          Entendi
+        </Botao>
+      </View>
+    </View>
   );
 }
 
@@ -132,7 +170,7 @@ function CartaoReflexao({ aoAbrir, aoAdiar }: { aoAbrir: () => void; aoAdiar: ()
         Que tal um olhar gentil sobre os últimos 7 dias? Leva um minuto.
       </Texto>
       <View style={styles.cartaoBackupAcoes}>
-        <Botao onPress={aoAbrir} style={styles.cartaoBackupBotao}>
+        <Botao variante="secundario" onPress={aoAbrir} style={styles.cartaoBackupBotao}>
           Ver minha semana
         </Botao>
         <Botao variante="texto" onPress={aoAdiar}>
@@ -148,10 +186,10 @@ function CartaoBackup({ aoFazer, aoAdiar }: { aoFazer: () => void; aoAdiar: () =
   return (
     <View style={styles.cartaoBackup}>
       <Texto tipo="legenda" cor={cores.text}>
-        Seus registros ficam só neste celular. Que tal guardar uma cópia cifrada? Se você trocar de aparelho, ela evita começar do zero.
+        Seus registros ficam só neste celular. Que tal guardar uma cópia protegida por senha? Se você trocar de aparelho, ela evita começar do zero.
       </Texto>
       <View style={styles.cartaoBackupAcoes}>
-        <Botao onPress={aoFazer} style={styles.cartaoBackupBotao}>
+        <Botao variante="secundario" onPress={aoFazer} style={styles.cartaoBackupBotao}>
           Fazer backup
         </Botao>
         <Botao variante="texto" onPress={aoAdiar}>

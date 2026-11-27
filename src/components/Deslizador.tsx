@@ -18,6 +18,8 @@ type Props = {
   pontas?: [esquerda: string, direita: string];
   accessibilityLabel: string;
   style?: StyleProp<ViewStyle>;
+  /** Ainda não respondido: sem bola nem preenchimento, para não parecer um 0 marcado. */
+  semResposta?: boolean;
 };
 
 /**
@@ -25,7 +27,7 @@ type Props = {
  * e tocar na trilha salta para o passo mais próximo. Leitores de tela usam
  * os gestos de aumentar e diminuir.
  */
-export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessibilityLabel, style }: Props) {
+export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessibilityLabel, style, semResposta = false }: Props) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const [largura, setLargura] = useState(0);
   // Ponto do toque no início do arrasto e em que fase o gesto está (só lidos nos eventos):
@@ -92,7 +94,7 @@ export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessi
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={valor}
-        aria-valuetext={String(valor)}
+        aria-valuetext={semResposta ? 'sem resposta' : String(valor)}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={(e) => {
           if (e.nativeEvent.actionName === 'increment') mudar(Math.min(max, valor + 1));
@@ -101,7 +103,7 @@ export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessi
         style={styles.area}
       >
         <View pointerEvents="none" style={styles.trilha} />
-        {centro > 0 ? (
+        {centro > 0 && !semResposta ? (
           <View pointerEvents="none" style={[styles.preenchimento, { width: centro }]}>
             <Svg width="100%" height={ALTURA_TRILHA}>
               <Defs>
@@ -114,11 +116,13 @@ export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessi
             </Svg>
           </View>
         ) : null}
-        <View pointerEvents="none" style={[styles.bola, { left: centro - RAIO_BOLA }]}>
-          <Texto style={styles.numero} cor="#0A2039">
-            {String(valor)}
-          </Texto>
-        </View>
+        {semResposta ? null : (
+          <View pointerEvents="none" style={[styles.bola, { left: centro - RAIO_BOLA }]}>
+            <Texto style={styles.numero} cor="#0A2039">
+              {String(valor)}
+            </Texto>
+          </View>
+        )}
       </View>
       {pontas ? (
         <View style={styles.pontas}>
@@ -131,14 +135,14 @@ export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessi
 }
 
 const styles = StyleSheet.create({
-  // 44 de altura para o toque; a bola de 28 fica centralizada.
-  // As margens negativas devolvem os 8 de folga de cima e de baixo ao ritmo do mockup (28).
-  area: { height: 44, justifyContent: 'center', marginVertical: -8 },
+  // 48 de altura para o toque (mínimo de 48dp); a bola de 28 fica centralizada.
+  // As margens negativas devolvem os 10 de folga de cima e de baixo ao ritmo do mockup (28).
+  area: { height: 48, justifyContent: 'center', marginVertical: -10 },
   trilha: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 20,
+    top: 22,
     height: ALTURA_TRILHA,
     borderRadius: 9,
     backgroundColor: 'rgba(255,255,255,.08)',
@@ -146,14 +150,14 @@ const styles = StyleSheet.create({
   preenchimento: {
     position: 'absolute',
     left: 0,
-    top: 20,
+    top: 22,
     height: ALTURA_TRILHA,
     borderRadius: 9,
     overflow: 'hidden',
   },
   bola: {
     position: 'absolute',
-    top: 8,
+    top: 10,
     width: RAIO_BOLA * 2,
     height: RAIO_BOLA * 2,
     borderRadius: RAIO_BOLA,
@@ -164,5 +168,5 @@ const styles = StyleSheet.create({
   },
   numero: { fontFamily: fontes.uiForte, fontSize: 12, lineHeight: 14 },
   pontas: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  ponta: { fontSize: 11.5, lineHeight: 15, color: cores.faint },
+  ponta: { fontSize: 12, lineHeight: 16, color: cores.faint },
 });

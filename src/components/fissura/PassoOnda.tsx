@@ -9,7 +9,8 @@ import { LinhaAjuste } from '@/components/LinhaAjuste';
 import { Mar } from '@/components/Mar';
 import { Texto } from '@/components/Texto';
 import { EsperaDezMinutos } from '@/components/fissura/EsperaDezMinutos';
-import { CVV, SAMU } from '@/conteudo/apoio';
+import { saidasDeApoio } from '@/lib/ajudaAgora';
+import { urlLigar } from '@/lib/contatos';
 import { formatarContagem, ONDA_SEG } from '@/lib/fissura';
 import { acoesDoPlano, frasePlano } from '@/lib/plano';
 import type { Porque } from '@/lib/tipos';
@@ -26,16 +27,16 @@ type Props = {
   aoRespirarDeNovo: () => void;
 };
 
-const ligar = (numero: string) => {
-  Linking.openURL(`tel:${numero}`).catch(() => undefined);
+const ligar = (telefone: string) => {
+  // Sem discador (ex.: navegador no computador) não há o que fazer além de não quebrar.
+  Linking.openURL(urlLigar(telefone)).catch(() => undefined);
 };
 
 /**
  * Passo 2, "Surfe a onda": contagem de 3 minutos, a frase da onda, o porquê da pessoa e o mar com
- * "Ainda difícil" / "Passou". "Ainda difícil" abre as saídas: respirar de novo, o plano, a IA e CVV/SAMU.
+ * "Ainda difícil" / "Passou". "Ainda difícil" abre as saídas: respirar de novo, o plano, a IA e quem ligar (contatos, CVV e, no álcool, SAMU).
  */
 export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRespirarDeNovo }: Props) {
-  const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const [restante, setRestante] = useState(ONDA_SEG);
   // Com a espera de 10 minutos ligada, um relógio só na tela: o dela.
@@ -106,19 +107,7 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
         ) : (
           <View style={styles.citacao}>
             <Texto style={styles.rotuloPorque}>Seu porquê</Texto>
-            <Texto style={styles.semPorque}>
-              Ainda não há um porquê por aqui. Escrever um pode ajudar nas próximas ondas.
-            </Texto>
-            {daTrancada ? null : (
-              <Pressable
-                accessibilityRole="link"
-                accessibilityLabel="Escrever meu porquê, abre Meu plano"
-                onPress={() => router.push('/plano')}
-                style={styles.linkPlano}
-              >
-                <Texto style={styles.linkTexto}>Escrever em Meu plano</Texto>
-              </Pressable>
-            )}
+            <Texto style={styles.semPorque}>Ainda não há um porquê por aqui. Depois da onda, dá para escrever um.</Texto>
           </View>
         )}
 
@@ -165,10 +154,14 @@ function PainelDificil({ habitoId, daTrancada, aoFechar, aoRespirarDeNovo }: Pai
   const planos = useMare((e) => e.planos);
   const temIa = useMare((e) => e.ajustes.ia !== undefined);
   const emergencia = useMare((e) => e.ajustes.contatosEmergencia);
+  const contatos = useMare((e) => e.contatos);
+  const tipoHabito = useMare((e) => e.habitos.find((h) => h.id === habitoId)?.tipo);
   const [verPlano, setVerPlano] = useState(false);
   const acoes = acoesDoPlano(planos, habitoId).slice(0, 4);
   // Pela tela de bloqueio: "Meu plano" só mostra as ações já escritas (sem abrir a tela) e a IA some.
   const mostrarPlano = !daTrancada || acoes.length > 0;
+  // Contatos de confiança primeiro, depois CVV (e SAMU só no álcool). Pela tela de bloqueio, sem nomes.
+  const saidas = saidasDeApoio({ tipoHabito, contatos, emergencia, daTrancada });
 
   return (
     <View style={styles.painelFundo} accessibilityViewIsModal>
@@ -189,7 +182,7 @@ function PainelDificil({ habitoId, daTrancada, aoFechar, aoRespirarDeNovo }: Pai
               <View style={styles.divisor} />
               <LinhaAjuste
                 titulo="As ações do meu plano"
-                subtitulo={acoes.length > 0 ? 'o que você combinou com você mesmo' : 'você ainda não tem ações no plano'}
+                subtitulo={acoes.length > 0 ? 'o que você combinou consigo' : 'você ainda não tem ações no plano'}
                 icone="notas"
                 onPress={() => (acoes.length > 0 ? setVerPlano((v) => !v) : (aoFechar(), router.push('/plano')))}
                 accessibilityLabel={acoes.length > 0 ? 'As ações do meu plano, mostrar ou esconder' : 'Criar ações no Meu plano'}
@@ -218,22 +211,24 @@ function PainelDificil({ habitoId, daTrancada, aoFechar, aoRespirarDeNovo }: Pai
               />
             </>
           ) : null}
-          {emergencia ? (
+          {saidas.length > 0 ? (
             <>
               <View style={styles.divisor} />
-              <View style={styles.emergencia}>
-                <Texto style={styles.emergenciaTexto}>
-                  Se estiver demais, fale com uma pessoa agora. É de graça e 24 horas.
-                </Texto>
-                <View style={styles.emergenciaBotoes}>
-                  <Botao variante="secundario" onPress={() => ligar(CVV.telefone)} style={styles.flex} accessibilityLabel="Ligar para o CVV, 188">
-                    CVV 188
-                  </Botao>
-                  <Botao variante="secundario" onPress={() => ligar(SAMU.telefone)} style={styles.flex} accessibilityLabel="Ligar para o SAMU, 192">
-                    SAMU 192
-                  </Botao>
+              <Texto style={styles.emergenciaTexto} accessibilityRole="header">
+                Se estiver pesado demais, fale com alguém agora.
+              </Texto>
+              {saidas.map((o, i) => (
+                <View key={o.id}>
+                  {i > 0 ? <View style={styles.divisor} /> : null}
+                  <LinhaAjuste
+                    titulo={o.titulo}
+                    subtitulo={o.subtitulo}
+                    icone="telefone"
+                    onPress={() => ligar(o.telefone)}
+                    accessibilityLabel={o.subtitulo ? `${o.titulo}, ${o.subtitulo}` : o.titulo}
+                  />
                 </View>
-              </View>
+              ))}
             </>
           ) : null}
         </ScrollView>
@@ -280,8 +275,6 @@ const styles = StyleSheet.create({
   fotoPorque: { marginBottom: 14 },
   textoPorque: { fontFamily: fontes.display, fontSize: 17, lineHeight: 25, color: cores.text },
   semPorque: { fontSize: 14, lineHeight: 21, color: cores.muted },
-  linkPlano: { minHeight: 44, justifyContent: 'center' },
-  linkTexto: { fontFamily: fontes.uiMedia, fontSize: 13.5, color: cores.aqua, textDecorationLine: 'underline' },
   botoes: { position: 'absolute', left: margemTela, right: margemTela, flexDirection: 'row', gap: 10 },
   ainda: { flex: 1, backgroundColor: 'rgba(4,16,30,.62)' },
   passou: { flex: 1.25 },
@@ -308,7 +301,5 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: cores.muted,
   },
-  emergencia: { paddingVertical: 16, gap: 12 },
-  emergenciaTexto: { fontSize: 13.5, lineHeight: 20, color: cores.muted },
-  emergenciaBotoes: { flexDirection: 'row', gap: 8 },
+  emergenciaTexto: { paddingTop: 16, paddingBottom: 4, fontSize: 13.5, lineHeight: 20, color: cores.muted },
 });

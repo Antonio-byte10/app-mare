@@ -7,7 +7,10 @@ type Props = {
   accessibilityLabel: string;
 };
 
-/** Interruptor (`.tg` do mockup 11): 44x26, bolinha de 20. Sem animação, então não há o que reduzir. */
+/**
+ * Interruptor (`.tg` do mockup 11): 44x26, bolinha de 20. Sem animação, então não há o que reduzir.
+ * Desligado, o contorno usa `faint` (pelo menos 3:1 contra o fundo): só o preenchimento quase some.
+ */
 export function Interruptor({ ligado, aoMudar, accessibilityLabel }: Props) {
   return (
     <Pressable
@@ -21,7 +24,7 @@ export function Interruptor({ ligado, aoMudar, accessibilityLabel }: Props) {
         styles.trilho,
         ligado
           ? { backgroundColor: comAlfa(cores.aqua, 0.35), borderColor: comAlfa(cores.aqua, 0.5) }
-          : { backgroundColor: 'rgba(255,255,255,.1)', borderColor: cores.line },
+          : { backgroundColor: 'rgba(255,255,255,.1)', borderColor: cores.faint },
       ]}
     >
       <View

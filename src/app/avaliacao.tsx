@@ -79,7 +79,7 @@ export default function ComoVoceEsta() {
         <Texto tipo="rotulo" accessibilityRole="header">
           Como você está agora
         </Texto>
-        <Texto style={styles.titulo}>{'Obrigado por\nolhar para isso.'}</Texto>
+        <Texto style={styles.titulo}>{'Olhar para isso\nexige coragem.'}</Texto>
         <Texto style={styles.sub}>
           {anterior
             ? 'Aqui está o seu retrato de hoje, ao lado do anterior. Não é um diagnóstico, e muda com você.'

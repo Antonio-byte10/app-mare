@@ -38,6 +38,8 @@ export type Ajustes = {
   backupSugeridoEm?: number;
   /** Última "semana da reflexão" aberta (domingo "AAAA-MM-DD", ver `chaveDaReflexao`), para o cartão do Início não insistir. */
   reflexaoVistaEm?: string;
+  /** A dica "toque na onda" do Início já foi vista ou dispensada (aparece uma vez só). */
+  dicaOndaVista?: boolean;
 };
 
 export type EstadoPersistido = {

@@ -1,5 +1,6 @@
 /** Lógica pura do "Recomeçar com cuidado" (spec 6.5). */
-import type { Halt, Recomeco } from './tipos';
+import { estadoDaEntrada, normalizarRelatoHabito } from './contador';
+import type { Habito, Halt, Recomeco, Relato } from './tipos';
 
 export const OPCOES_HALT: { id: Halt; rotulo: string }[] = [
   { id: 'fome', rotulo: 'Fome' },
@@ -75,3 +76,18 @@ export const SUGESTOES_PROXIMA_VEZ = [
 
 /** Frase curta, sem nomes nem detalhes, que abre a Conversa com a IA depois de um deslize. */
 export const INICIO_CONVERSA_RECOMECO = 'Tive um deslize e quero entender o que aconteceu, sem me culpar.';
+
+/**
+ * Hábitos com deslize registrado em `relato` que ainda não passaram pelo "Recomeçar com cuidado"
+ * (a pessoa tocou em "Depois"). Ids na ordem dos hábitos.
+ */
+export function deslizesSemRecomeco(habitos: Habito[], relato: Relato | undefined, recomecos: Recomeco[], dia: string): string[] {
+  if (!relato) return [];
+  return habitos
+    .filter((h) => {
+      const entrada = relato.habitos.find((x) => x.habitoId === h.id);
+      return entrada !== undefined && estadoDaEntrada(h.meta, normalizarRelatoHabito(entrada)) === 'deslize';
+    })
+    .filter((h) => !recomecoExistente(recomecos, dia, h.id))
+    .map((h) => h.id);
+}

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { alternarTipo, errosDoRascunho, montarHabito, proximaDepoisDaAvaliacao, rascunhoPadrao, temErros } from './primeiroUso';
+import {
+  alternarTipo,
+  errosDoRascunho,
+  montarHabito,
+  passoDoPrimeiroUso,
+  proximaDepoisDaAvaliacao,
+  rascunhoPadrao,
+  temErros,
+} from './primeiroUso';
 
 describe('rascunhoPadrao', () => {
   it('sugere apelido discreto e cor por tipo', () => {
@@ -85,5 +93,20 @@ describe('proximaDepoisDaAvaliacao', () => {
   it('com álcool, passa pelo aviso de segurança; sem álcool, vai direto aos porquês', () => {
     expect(proximaDepoisDaAvaliacao([{ tipo: 'tabaco' }, { tipo: 'alcool' }])).toBe('/boas-vindas/seguranca');
     expect(proximaDepoisDaAvaliacao([{ tipo: 'tabaco' }, { tipo: 'sexual' }])).toBe('/boas-vindas/porques');
+  });
+});
+
+describe('passoDoPrimeiroUso', () => {
+  it('sem álcool são 4 passos e os porquês são o último', () => {
+    const h = [{ tipo: 'tabaco' as const }];
+    expect(passoDoPrimeiroUso('habitos', h)).toEqual({ atual: 1, total: 4, texto: 'Passo 1 de 4' });
+    expect(passoDoPrimeiroUso('porques', h)?.texto).toBe('Passo 4 de 4');
+    expect(passoDoPrimeiroUso('seguranca', h)).toBeNull();
+  });
+
+  it('com álcool entra o aviso de segurança e são 5 passos', () => {
+    const h = [{ tipo: 'tabaco' as const }, { tipo: 'alcool' as const }];
+    expect(passoDoPrimeiroUso('seguranca', h)?.texto).toBe('Passo 4 de 5');
+    expect(passoDoPrimeiroUso('porques', h)?.texto).toBe('Passo 5 de 5');
   });
 });

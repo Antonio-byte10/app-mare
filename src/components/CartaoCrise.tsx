@@ -13,7 +13,7 @@ type Props = { tipo: TipoCrise; aoFechar?: () => void };
 
 const TEXTOS: Record<TipoCrise, { titulo: string; corpo: string; primario: 'cvv' | 'samu' }> = {
   suicidio: {
-    titulo: 'Você importa, e não precisa passar por isso sozinho',
+    titulo: 'Você importa, e não está só nisso',
     corpo:
       'Sinto muito que esteja doendo tanto. Falar com uma pessoa agora pode ajudar: o CVV atende 24 horas, de graça, por telefone ou chat. Se você está em perigo agora, ligue para o SAMU.',
     primario: 'cvv',

@@ -96,6 +96,26 @@ export function montarHabito(r: RascunhoHabito, id: string, hoje: string, agora:
   };
 }
 
+/** Etapas do primeiro uso que contam no "Passo X de Y" (a avaliação tem a barra dela). */
+export type EtapaPrimeiroUso = 'habitos' | 'configurar' | 'avaliacao' | 'seguranca' | 'porques';
+
+/**
+ * "Passo X de Y" do primeiro uso. O aviso do álcool só existe para quem escolheu álcool, então
+ * o total é 4, ou 5 com ele. `null` para uma etapa que não existe nesse caminho.
+ */
+export function passoDoPrimeiroUso(
+  etapa: EtapaPrimeiroUso,
+  habitos: Pick<Habito, 'tipo'>[],
+): { atual: number; total: number; texto: string } | null {
+  const alcool = habitos.some((h) => h.tipo === 'alcool');
+  const etapas: EtapaPrimeiroUso[] = alcool
+    ? ['habitos', 'configurar', 'avaliacao', 'seguranca', 'porques']
+    : ['habitos', 'configurar', 'avaliacao', 'porques'];
+  const indice = etapas.indexOf(etapa);
+  if (indice < 0) return null;
+  return { atual: indice + 1, total: etapas.length, texto: `Passo ${indice + 1} de ${etapas.length}` };
+}
+
 /** Depois da avaliação (ou de pular): álcool pede o aviso de segurança; senão, os porquês. */
 export const proximaDepoisDaAvaliacao = (habitos: Pick<Habito, 'tipo'>[]) =>
   habitos.some((h) => h.tipo === 'alcool') ? ('/boas-vindas/seguranca' as const) : ('/boas-vindas/porques' as const);

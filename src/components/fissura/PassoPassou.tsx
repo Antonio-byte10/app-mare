@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, KeyboardAvoidingView, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,11 +14,14 @@ import { GATILHOS_FISSURA } from '@/lib/gatilhos';
 import { alternarGatilho } from '@/lib/relato';
 import { RolarAoFim, useRolarAoFim } from '@/lib/rolagem';
 import { useReduzirMovimento } from '@/lib/useReduzirMovimento';
+import { useMare } from '@/store';
 import { cores, fontes, margemTela } from '@/theme';
 
 type Props = {
-  /** Número desta fissura vencida ("Fissura vencida nº 23"). */
+  /** Número desta onda atravessada ("Onda nº 23 atravessada"). */
   numero: number;
+  /** Aberta pela tela de bloqueio: sem link para Meu plano (tela privada). */
+  daTrancada?: boolean;
   duracaoSeg: number;
   vontadeAntes?: number;
   vontadeDepois?: number;
@@ -61,11 +65,32 @@ function Ondulacao({ atraso, tamanho, parada }: { atraso: number; tamanho: numbe
 }
 
 /**
+ * Pergunta de vontade (0 a 10) que só vale depois do toque: sem resposta, o deslizador fica
+ * esmaecido e diz "Toque para marcar", para não parecer um 0 já respondido.
+ */
+function Vontade({ valor, onChange, rotulo }: { valor?: number; onChange: (v: number) => void; rotulo: string }) {
+  const semResposta = valor === undefined;
+  return (
+    <View>
+      {semResposta ? <Texto style={styles.toqueMarcar}>Toque para marcar</Texto> : null}
+      <Deslizador
+        valor={valor ?? 0}
+        onChange={onChange}
+        pontas={['nenhuma', 'muita']}
+        accessibilityLabel={semResposta ? `${rotulo}, de 0 a 10, ainda sem resposta` : `${rotulo}, de 0 a 10`}
+        semResposta={semResposta}
+      />
+    </View>
+  );
+}
+
+/**
  * Passo 3, "Passou": a conquista, o tempo, a vontade de antes e de agora (por toque) e, se a
  * pessoa quiser, o que ajudou. Cada passagem vencida conta como conquista.
  */
 export function PassoPassou({
   numero,
+  daTrancada = false,
   duracaoSeg,
   vontadeAntes,
   vontadeDepois,
@@ -77,6 +102,8 @@ export function PassoPassou({
   aoMudarGatilhos,
   aoVoltar,
 }: Props) {
+  const router = useRouter();
+  const semPorque = useMare((e) => e.porques.length === 0);
   const reduzir = useReduzirMovimento();
   const { height } = useWindowDimensions();
   const { bottom } = useSafeAreaInsets();
@@ -107,7 +134,7 @@ export function PassoPassou({
         <Texto style={styles.titulo} accessibilityRole="header" accessibilityLiveRegion="polite">
           {'Você atravessou\na onda.'}
         </Texto>
-        <Texto style={styles.sub}>{`Fissura vencida nº ${numero}. Isso também conta.`}</Texto>
+        <Texto style={styles.sub}>{`Onda nº ${numero} atravessada. Isso também conta.`}</Texto>
 
         <View style={styles.pilulas}>
           <View style={styles.pilula} accessible accessibilityLabel={`Duração: ${duracaoTexto(duracaoSeg)}`}>
@@ -130,19 +157,9 @@ export function PassoPassou({
 
         <View style={styles.perguntas}>
           <Texto style={styles.pergunta}>Quanta vontade você sentia quando abriu a onda?</Texto>
-          <Deslizador
-            valor={vontadeAntes ?? 0}
-            onChange={aoMudarAntes}
-            pontas={['nenhuma', 'muita']}
-            accessibilityLabel="Vontade de antes, de 0 a 10"
-          />
+          <Vontade valor={vontadeAntes} onChange={aoMudarAntes} rotulo="Vontade de antes" />
           <Texto style={[styles.pergunta, styles.perguntaSeguinte]}>E agora?</Texto>
-          <Deslizador
-            valor={vontadeDepois ?? 0}
-            onChange={aoMudarDepois}
-            pontas={['nenhuma', 'muita']}
-            accessibilityLabel="Vontade de agora, de 0 a 10"
-          />
+          <Vontade valor={vontadeDepois} onChange={aoMudarDepois} rotulo="Vontade de agora" />
         </View>
 
         <View style={styles.gatilhos}>
@@ -195,6 +212,11 @@ export function PassoPassou({
         <Botao variante="texto" onPress={() => setAnotando((a) => !a)} accessibilityLabel={anotando ? 'Esconder o campo de anotação' : 'Anotar o que ajudou'}>
           {anotando ? 'Pronto' : 'Anotar o que ajudou'}
         </Botao>
+        {semPorque && !daTrancada ? (
+          <Botao variante="texto" onPress={() => router.push('/plano')} accessibilityLabel="Escrever um porquê, abre Meu plano">
+            Escrever um porquê para a próxima onda
+          </Botao>
+        ) : null}
       </View>
     </KeyboardAvoidingView>
   );
@@ -238,6 +260,7 @@ const styles = StyleSheet.create({
   perguntas: { marginTop: 20 },
   pergunta: { fontFamily: fontes.uiForte, fontSize: 13.5, lineHeight: 18, marginBottom: 12, color: cores.text },
   perguntaSeguinte: { marginTop: 16 },
+  toqueMarcar: { marginTop: -6, marginBottom: 14, fontSize: 12.5, lineHeight: 16, color: cores.muted },
   gatilhos: { marginTop: 24 },
   dica: { marginTop: -6, marginBottom: 12, fontSize: 12.5, lineHeight: 18, color: cores.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

@@ -9,7 +9,14 @@ import { Segmento } from '@/components/Segmento';
 import { TelaPasso } from '@/components/TelaPasso';
 import { Texto } from '@/components/Texto';
 import { dataLocal } from '@/lib/datas';
-import { errosDoRascunho, montarHabito, temErros, type Comecou, type RascunhoHabito } from '@/lib/primeiroUso';
+import {
+  errosDoRascunho,
+  montarHabito,
+  passoDoPrimeiroUso,
+  temErros,
+  type Comecou,
+  type RascunhoHabito,
+} from '@/lib/primeiroUso';
 import { useRascunhoPrimeiroUso } from '@/lib/rascunhoPrimeiroUso';
 import { useVoltar } from '@/lib/useVoltar';
 import { useVoltarInterno } from '@/lib/useVoltarInterno';
@@ -62,9 +69,11 @@ export default function ConfigurarHabitos() {
     <TelaPasso
       aoVoltar={voltarPasso}
       topo={
-        rascunhos.length > 1 ? (
-          <Texto tipo="legenda" accessibilityLiveRegion="polite">{`Hábito ${indice + 1} de ${rascunhos.length}`}</Texto>
-        ) : undefined
+        <Texto tipo="legenda" accessibilityLiveRegion="polite">
+          {[passoDoPrimeiroUso('configurar', rascunhos)?.texto, rascunhos.length > 1 ? `Hábito ${indice + 1} de ${rascunhos.length}` : undefined]
+            .filter(Boolean)
+            .join(' · ')}
+        </Texto>
       }
       rodape={<Botao onPress={seguir}>{ultimo ? 'Continuar' : 'Próximo hábito'}</Botao>}
     >

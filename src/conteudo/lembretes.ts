@@ -24,7 +24,7 @@ export const FRASES_BOM_DIA: readonly string[] = [
   'Hoje vale cuidar de você.',
   'O que importa hoje cabe em um passo pequeno.',
   'Você já chegou até aqui. Siga com calma.',
-  'Dê a si mesmo o mesmo cuidado que daria a um amigo.',
+  'Cuide de você como cuidaria de um amigo.',
   'Hoje pode ser simples. E isso basta.',
   'Um minuto de silêncio antes de começar o dia.',
   'Seu ritmo é o ritmo certo.',

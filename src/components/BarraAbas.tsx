@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useMare } from '@/store';
 import { cores, fontes } from '@/theme';
 import { Degrade } from './Degrade';
 import { Icone, type NomeIcone } from './Icone';
@@ -43,6 +44,8 @@ function useTecladoAberto(): boolean {
 export function BarraAbas({ state, descriptors, emitter, navigateToTab, insets }: BottomTabBarProps) {
   const router = useRouter();
   const tecladoAberto = useTecladoAberto();
+  const dicaVista = useMare((e) => e.ajustes.dicaOndaVista === true);
+  const setAjustes = useMare((e) => e.setAjustes);
 
   // Só as abas visíveis, na ordem certa (as escondidas com `href: null` ficam de fora).
   const visiveis = ORDEM.flatMap((nome) => {
@@ -87,15 +90,23 @@ export function BarraAbas({ state, descriptors, emitter, navigateToTab, insets }
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Estou com vontade. Abrir a onda"
-            onPress={() => router.push('/fissura')}
+            onPress={() => {
+              // Quem já tocou na onda não precisa mais da dica do Início.
+              if (!dicaVista) setAjustes({ dicaOndaVista: true });
+              router.push('/fissura');
+            }}
             style={({ pressed }) => [styles.fab, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
           >
             <Degrade de="#8BE1EA" para="#5BBFD0" />
             <View style={styles.fabBrilho} pointerEvents="none" />
             <View style={styles.fabIcone}>
-              <Icone nome="onda" tamanho={25} traco={2} cor={cores.tinta} />
+              <Icone nome="onda" tamanho={24} traco={2} cor={cores.tinta} />
             </View>
           </Pressable>
+          {/* O nome vem do botão acima (accessibilityLabel); o texto é só para quem enxerga. */}
+          <Texto style={styles.rotulo} cor={cores.aqua} importantForAccessibility="no" accessibilityElementsHidden>
+            Onda
+          </Texto>
         </View>
         {aba(2)}
         {aba(3)}
@@ -107,7 +118,9 @@ export function BarraAbas({ state, descriptors, emitter, navigateToTab, insets }
 const styles = StyleSheet.create({
   externa: { paddingHorizontal: 12 },
   barra: {
-    height: 68,
+    // minHeight (e não height): com a fonte do sistema grande os rótulos crescem e a barra acompanha, sem cortar.
+    minHeight: 76,
+    paddingVertical: 6,
     borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
@@ -124,12 +137,13 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(255,255,255,.04)',
   },
-  aba: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
-  rotulo: { fontFamily: fontes.uiMedia, fontSize: 10.5, lineHeight: 13 },
+  // alignSelf: 'stretch' faz a área de toque ocupar a altura toda da barra, não só o ícone e o rótulo.
+  aba: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  rotulo: { fontFamily: fontes.uiMedia, fontSize: 11.5, lineHeight: 15 },
   fab: {
-    width: 54,
-    height: 54,
-    borderRadius: 19,
+    width: 50,
+    height: 50,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

@@ -141,7 +141,7 @@ describe('evolução', () => {
   it('as frases nunca cobram nem usam tom de fracasso', () => {
     expect(textoEvolucao('alta', 'leve')).toMatch(/passo/);
     expect(textoEvolucao('leve', 'leve')).toMatch(/Mudar leva tempo/);
-    expect(textoEvolucao('leve', 'alta')).toMatch(/não precisa passar por isso sozinho/);
+    expect(textoEvolucao('leve', 'alta')).toMatch(/você não está só/);
   });
 
   const resultado = (habitoId: string, nivel: ResultadoAvaliacao['nivel']): ResultadoAvaliacao => ({

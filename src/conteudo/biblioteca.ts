@@ -183,14 +183,14 @@ export const ARTIGOS: Artigo[] = [
   {
     id: 'surfar-a-fissura',
     grupo: 'No momento difícil',
-    titulo: 'Surfar a fissura',
+    titulo: 'Surfar a onda',
     resumo: 'A vontade sobe, chega ao pico e passa.',
     minutos: 3,
     blocos: [
       {
         tipo: 'paragrafo',
         texto:
-          'A fissura é uma onda. Ela sobe, chega ao pico e depois desce, mesmo que você não faça nada. No tabaco, cada fissura costuma durar poucos minutos.',
+          'A vontade vem como uma onda. Ela sobe, chega ao pico e depois desce, mesmo que você não faça nada. No tabaco, cada onda costuma durar poucos minutos.',
       },
       { tipo: 'subtitulo', texto: 'O que é "surfar"' },
       {
@@ -237,7 +237,7 @@ export const ARTIGOS: Artigo[] = [
       {
         tipo: 'paragrafo',
         texto:
-          'Pesquisadores de prevenção de recaída descreveram um efeito comum: depois de um deslize, a pessoa se enche de culpa ("sou fraco, nunca vou conseguir") e pensa "já que estraguei, vou até o fim". É a vergonha, e não o deslize, que empurra para o uso de novo.',
+          'Pesquisadores de prevenção de recaída descreveram um efeito comum: depois de um deslize, a pessoa se enche de culpa ("não tenho jeito, nunca vou conseguir") e pensa "já que estraguei, vou até o fim". É a vergonha, e não o deslize, que empurra para o uso de novo.',
       },
       { tipo: 'subtitulo', texto: 'O que costuma ajudar' },
       {
@@ -245,7 +245,7 @@ export const ARTIGOS: Artigo[] = [
         itens: [
           'Tratar o deslize como informação: o que estava acontecendo?',
           'Perceber os gatilhos (fome, raiva, solidão, cansaço, uma situação).',
-          'Combinar com você mesmo o que vai ser diferente da próxima vez.',
+          'Combinar consigo o que vai ser diferente da próxima vez.',
           'Voltar ao plano no mesmo dia, sem se punir.',
         ],
       },
@@ -366,7 +366,7 @@ export const ARTIGOS: Artigo[] = [
       {
         tipo: 'paragrafo',
         texto:
-          'Não existe uma "abstinência" física como a do álcool. Muita gente sente inquietação, irritação, tédio e vontade em ondas, principalmente à noite, sozinha e com o celular. Promessas de "superpoderes" ou de efeitos garantidos não têm base científica sólida.',
+          'Não existe uma "abstinência" física como a do álcool. Muita gente sente inquietação, irritação, tédio e vontade em ondas, principalmente à noite, sem ninguém por perto e com o celular. Promessas de "superpoderes" ou de efeitos garantidos não têm base científica sólida.',
       },
       {
         tipo: 'lista',

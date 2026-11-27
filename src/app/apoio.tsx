@@ -82,7 +82,7 @@ export default function Apoio() {
 
       <GrupoAjuste>Contatos de confiança</GrupoAjuste>
       <Texto tipo="legenda" style={styles.legenda}>
-        Pessoas para quem você pode ligar. Ficam só neste celular e nunca vão para a IA.
+        Pessoas para quem você pode ligar, também em “Ainda difícil”, durante a onda. Ficam só neste celular e nunca vão para a IA.
       </Texto>
       {contatos.length === 0 && !adicionando ? (
         <Texto style={styles.corpo}>
@@ -156,7 +156,7 @@ export default function Apoio() {
       <GrupoAjuste>Privacidade</GrupoAjuste>
       <LinhaAjuste
         titulo="Contatos de emergência"
-        subtitulo="mostra CVV 188 e SAMU 192 na Fissura e quando o app notar sinais de risco"
+        subtitulo="mostra CVV 188 e SAMU 192 na onda e quando o app notar sinais de risco"
         icone="telefone"
         direita={
           <Interruptor

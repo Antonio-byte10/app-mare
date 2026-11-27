@@ -64,7 +64,7 @@ export default function Sobre() {
 
           <LinhaAjuste
             titulo="Código aberto"
-            subtitulo="github.com/Antonio-byte10/app-mare"
+            subtitulo="Licença MIT · github.com/Antonio-byte10/app-mare"
             direita={<Icone nome="setaDireita" tamanho={18} cor={cores.faint} />}
             onPress={() => abrirLink(REPOSITORIO)}
             accessibilityLabel="Código aberto, abre o repositório no navegador"

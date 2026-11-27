@@ -105,7 +105,7 @@ export default function Fissura() {
     registrarRef.current();
   };
 
-  // Número desta fissura vencida: as já salvas (inclui esta, depois de salva).
+  // Número desta onda atravessada: as já salvas (inclui esta, depois de salva).
   const numero = Math.max(1, contarFissurasVencidas(fissuras));
 
   return (
@@ -143,6 +143,7 @@ export default function Fissura() {
         {passo === 3 ? (
           <PassoPassou
             numero={numero}
+            daTrancada={daTrancada}
             duracaoSeg={duracaoFinal}
             vontadeAntes={vontadeAntes}
             vontadeDepois={vontadeDepois}

@@ -211,7 +211,7 @@ export default function MeuPlano() {
 
       <GrupoAjuste>Se... então...</GrupoAjuste>
       <Texto tipo="legenda" style={styles.legenda}>
-        Combine com você mesmo o que fazer numa situação difícil. Ações prontas são mais fáceis de seguir.
+        Combine consigo o que fazer numa situação difícil. Ações prontas são mais fáceis de seguir.
       </Texto>
       {planos.length === 0 && !novoPlano ? (
         <Texto style={styles.vazio}>

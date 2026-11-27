@@ -101,11 +101,15 @@ export function Calendario({ mes, estados, hoje, inicio, onMes, onDia }: Props) 
       </View>
 
       <View style={styles.legenda}>
+        {/* Cada estado tem uma forma própria, para não depender só da cor: cheio, anel duplo, tracejado e ponto. */}
         <ItemLegenda rotulo="livre" estilo={{ backgroundColor: cores.foam }} />
-        <ItemLegenda rotulo="deslize" estilo={{ borderWidth: 1.5, borderColor: cores.sand }} />
-        <ItemLegenda rotulo="sem relato" estilo={{ borderWidth: 1.5, borderColor: cores.muted }} />
+        <ItemLegenda rotulo="deslize" estilo={marcaDeslize} />
+        <ItemLegenda rotulo="sem relato" estilo={marcaSemRelato} />
         <ItemLegenda rotulo="hoje" estilo={{ backgroundColor: cores.aqua }} />
       </View>
+      <Texto tipo="legenda" style={styles.notaLegenda}>
+        Deslize é um dia em que o hábito fugiu do combinado. Não apaga o que você já construiu.
+      </Texto>
     </View>
   );
 }
@@ -192,11 +196,18 @@ const corNumero: Record<EstadoCelula, string> = {
 
 const livre: ViewStyle = { backgroundColor: comAlfa(cores.foam, 0.13) };
 
+// Deslize: anel contínuo com um leve preenchimento. Sem relato: anel tracejado e vazio. Livre: preenchido, sem anel.
+const deslize: ViewStyle = { borderWidth: 1.5, borderColor: comAlfa(cores.sand, 0.8), backgroundColor: comAlfa(cores.sand, 0.12) };
+const semRelato: ViewStyle = { borderWidth: 1.5, borderStyle: 'dashed', borderColor: comAlfa(cores.muted, 0.6) };
+
+const marcaDeslize: ViewStyle = { borderWidth: 1.5, borderColor: cores.sand, backgroundColor: comAlfa(cores.sand, 0.3) };
+const marcaSemRelato: ViewStyle = { borderWidth: 1.5, borderStyle: 'dashed', borderColor: cores.muted };
+
 const estilosEstado: Record<EstadoCelula, ViewStyle> = {
   livre,
   dentroDaMeta: livre,
-  deslize: { borderWidth: 1.5, borderColor: comAlfa(cores.sand, 0.7) },
-  semRelato: { borderWidth: 1.5, borderColor: comAlfa(cores.muted, 0.45) },
+  deslize,
+  semRelato,
   hoje: { borderWidth: 1.5, borderColor: cores.aqua, backgroundColor: comAlfa(cores.aqua, 0.08) },
   futuro: {},
   antes: {},
@@ -233,6 +244,7 @@ const styles = StyleSheet.create({
   },
   legenda: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 6, marginTop: 12 },
   itemLegenda: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  marca: { width: 9, height: 9, borderRadius: 4.5 },
+  marca: { width: 11, height: 11, borderRadius: 5.5 },
+  notaLegenda: { marginTop: 8 },
   textoLegenda: { fontFamily: fontes.ui, fontSize: 11.5, lineHeight: 15, color: cores.muted },
 });

@@ -4,7 +4,7 @@ import { ResultadoView } from '@/components/avaliacao/ResultadoView';
 import { Botao } from '@/components/Botao';
 import { TelaPasso } from '@/components/TelaPasso';
 import { Texto } from '@/components/Texto';
-import { proximaDepoisDaAvaliacao } from '@/lib/primeiroUso';
+import { passoDoPrimeiroUso, proximaDepoisDaAvaliacao } from '@/lib/primeiroUso';
 import { useRascunhoPrimeiroUso } from '@/lib/rascunhoPrimeiroUso';
 import { useVoltar } from '@/lib/useVoltar';
 import { cores, fontes } from '@/theme';
@@ -21,6 +21,7 @@ export default function Resultado() {
   return (
     <TelaPasso
       aoVoltar={voltar}
+      topo={<Texto tipo="legenda">{passoDoPrimeiroUso('avaliacao', habitos)?.texto}</Texto>}
       rodape={
         <Botao onPress={() => router.push(proximaDepoisDaAvaliacao(habitos))}>Começar minha jornada</Botao>
       }
@@ -28,7 +29,7 @@ export default function Resultado() {
       <Texto tipo="rotulo" accessibilityRole="header">
         Seu ponto de partida
       </Texto>
-      <Texto style={styles.titulo}>{'Obrigado pela\nhonestidade.'}</Texto>
+      <Texto style={styles.titulo}>{'Sua honestidade\najuda.'}</Texto>
       <Texto style={styles.sub}>
         Isso não é um diagnóstico. É um retrato de hoje, e ele vai mudar com você.
       </Texto>

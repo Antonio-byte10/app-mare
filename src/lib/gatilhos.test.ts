@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { contarGatilhos, limparGatilhosFissura, normalizarGatilho, rotuloGatilho } from './gatilhos';
+import { GATILHOS } from '../conteudo/gatilhos';
+import {
+  contarGatilhos,
+  GATILHOS_CANONICOS,
+  gatilhosComHalt,
+  haltDosGatilhos,
+  idDoGatilho,
+  limparGatilhosFissura,
+  normalizarGatilho,
+  rotulosCanonicos,
+  rotuloGatilho,
+} from './gatilhos';
 import type { Fissura, Relato } from './tipos';
 
 const HOJE = '2026-11-27';
@@ -17,9 +28,50 @@ describe('normalizarGatilho', () => {
   });
 });
 
+describe('lista única de gatilhos', () => {
+  it('o relato do dia oferece os mesmos rótulos, sem repetir', () => {
+    expect(GATILHOS).toEqual(GATILHOS_CANONICOS.map((g) => g.rotulo));
+    expect(new Set(GATILHOS).size).toBe(GATILHOS.length);
+    expect(new Set(GATILHOS_CANONICOS.map((g) => g.id)).size).toBe(GATILHOS_CANONICOS.length);
+  });
+
+  it('mantém os ids antigos do fim da onda e os rótulos antigos do relato', () => {
+    for (const id of ['fome', 'raiva', 'solidao', 'cansaco', 'estresse', 'tedio', 'lugar', 'pessoas', 'celular']) {
+      expect(GATILHOS_CANONICOS.map((g) => g.id)).toContain(id);
+    }
+    for (const rotulo of ['Ansiedade', 'Tédio', 'Solidão', 'Cansaço', 'Estresse', 'Festa ou evento', 'Discussão']) {
+      expect(GATILHOS).toContain(rotulo);
+    }
+  });
+
+  it('idDoGatilho casa rótulo, id e o rótulo antigo "Celular à noite"', () => {
+    expect(idDoGatilho('Festa ou evento')).toBe('festa');
+    expect(idDoGatilho(' CELULAR à noite ')).toBe('celular');
+    expect(idDoGatilho('discussao')).toBe('discussao');
+    expect(idDoGatilho('Prova na faculdade')).toBeUndefined();
+  });
+});
+
+describe('Recomeçar: gatilhos e o antigo HALT numa lista só', () => {
+  it('rotulosCanonicos troca textos antigos pelo rótulo da lista e tira repetidos', () => {
+    expect(rotulosCanonicos(['Celular à noite', 'Celular/telas', 'tédio', 'Prova'])).toEqual(['Celular/telas', 'Tédio', 'Prova']);
+  });
+
+  it('o HALT guardado vira gatilho marcado, sem duplicar Solidão e Cansaço', () => {
+    expect(gatilhosComHalt(['Solidão', 'Estresse'], ['solidao', 'fome'])).toEqual(['Solidão', 'Estresse', 'Fome']);
+    expect(gatilhosComHalt(['Tédio'])).toEqual(['Tédio']);
+  });
+
+  it('haltDosGatilhos devolve só os itens do HALT marcados, na ordem do HALT', () => {
+    expect(haltDosGatilhos(['Cansaço', 'Estresse', 'fome', 'Raiva'])).toEqual(['fome', 'raiva', 'cansaco']);
+    expect(haltDosGatilhos(['Tédio'])).toEqual([]);
+  });
+});
+
 describe('limparGatilhosFissura', () => {
   it('mantém só ids conhecidos, sem repetir, na ordem da lista', () => {
     expect(limparGatilhosFissura(['celular', 'fome', 'xyz', 'fome'])).toEqual(['fome', 'celular']);
+    expect(limparGatilhosFissura(['festa', 'ansiedade', 'estresse'])).toEqual(['estresse', 'ansiedade', 'festa']);
     expect(limparGatilhosFissura(undefined)).toEqual([]);
   });
 });
@@ -57,16 +109,37 @@ describe('contarGatilhos', () => {
     expect(r.find((g) => g.chave === 'cansaco')?.rotulo).toBe('Cansaço');
   });
 
-  it('conta o que não casa pelo próprio texto (juntando variações de caixa)', () => {
+  it('soma o rótulo antigo "Celular à noite" com o gatilho Celular/telas', () => {
     const r = contarGatilhos({
-      fissuras: [],
-      relatos: [relato('2026-11-26', ['Celular à noite']), relato('2026-11-25', ['celular à noite']), relato('2026-11-24', ['Discussão'])],
+      fissuras: [fissura('2026-11-26', ['celular'])],
+      relatos: [relato('2026-11-26', ['Celular à noite']), relato('2026-11-25', ['celular à noite', 'Celular/telas']), relato('2026-11-24', ['Discussão'])],
       hoje: HOJE,
     });
     expect(r).toEqual([
-      { chave: 'celular a noite', rotulo: 'Celular à noite', total: 2 },
+      { chave: 'celular', rotulo: 'Celular/telas', total: 3 },
       { chave: 'discussao', rotulo: 'Discussão', total: 1 },
     ]);
+  });
+
+  it('os gatilhos novos da lista (ansiedade, festa, discussão) contam pelo id nas duas origens', () => {
+    const r = contarGatilhos({
+      fissuras: [fissura('2026-11-26', ['festa', 'ansiedade'])],
+      relatos: [relato('2026-11-26', ['Festa ou evento', 'Ansiedade'])],
+      hoje: HOJE,
+    });
+    expect(r).toEqual([
+      { chave: 'ansiedade', rotulo: 'Ansiedade', total: 2 },
+      { chave: 'festa', rotulo: 'Festa ou evento', total: 2 },
+    ]);
+  });
+
+  it('conta o que não casa pelo próprio texto (juntando variações de caixa)', () => {
+    const r = contarGatilhos({
+      fissuras: [],
+      relatos: [relato('2026-11-26', ['Prova na faculdade']), relato('2026-11-25', ['prova na faculdade'])],
+      hoje: HOJE,
+    });
+    expect(r).toEqual([{ chave: 'prova na faculdade', rotulo: 'Prova na faculdade', total: 2 }]);
   });
 
   it('conta uma vez por fissura e por relato, mesmo com repetição', () => {

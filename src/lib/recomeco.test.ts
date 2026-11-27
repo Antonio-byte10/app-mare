@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { alternarItem, INICIO_CONVERSA_RECOMECO, montarRecomeco, recomecoExistente, sugestaoPlano } from './recomeco';
+import { alternarItem, deslizesSemRecomeco, INICIO_CONVERSA_RECOMECO, montarRecomeco, recomecoExistente, sugestaoPlano } from './recomeco';
 
 describe('alternarItem', () => {
   it('liga e desliga sem mexer na lista original', () => {
@@ -51,5 +51,24 @@ describe('recomecoExistente', () => {
   it('o início da conversa com a IA não leva nomes', () => {
     expect(INICIO_CONVERSA_RECOMECO).not.toMatch(/[A-Z]\w+ (disse|é)/);
     expect(INICIO_CONVERSA_RECOMECO.length).toBeLessThan(100);
+  });
+});
+
+describe('deslizesSemRecomeco', () => {
+  const h = (id: string) => ({ id, tipo: 'tabaco' as const, apelido: id, cor: 'aqua' as const, meta: { tipo: 'parar' as const }, inicio: '2026-11-01', criadoEm: 1 });
+  const relato = {
+    dia: '2026-11-20',
+    habitos: [
+      { habitoId: 'a', vontade: 5, usou: true },
+      { habitoId: 'b', vontade: 2, usou: false },
+      { habitoId: 'c', vontade: 7, usou: true },
+    ],
+    gatilhos: [],
+    salvoEm: 1,
+  };
+  it('lista os deslizes do dia que ainda não tiveram recomeço', () => {
+    const feito = { id: 'r', dia: '2026-11-20', habitoId: 'c', gatilhos: [], halt: [], salvoEm: 1 };
+    expect(deslizesSemRecomeco([h('a'), h('b'), h('c')], relato, [feito], '2026-11-20')).toEqual(['a']);
+    expect(deslizesSemRecomeco([h('a')], undefined, [], '2026-11-20')).toEqual([]);
   });
 });

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  escolherSugestao,
   habitoAtivoDe,
+  heroContador,
   moeda,
   rotuloSequencia,
   saudacao,
@@ -58,9 +60,9 @@ describe('textoPendente', () => {
     expect(textoPendente({ pendentes: [], hojeRespondido: true }, HOJE)).toBeNull();
   });
 
-  it('mais de um pendente: "N relatos para pôr em dia" e destino é o mais antigo', () => {
+  it('mais de um pendente: convite sem cobrança e destino é o mais antigo', () => {
     const t = textoPendente({ pendentes: ['2026-11-23', '2026-11-24', '2026-11-25'], hojeRespondido: false }, HOJE);
-    expect(t).toMatchObject({ titulo: '3 relatos para pôr em dia', dia: '2026-11-23' });
+    expect(t).toMatchObject({ titulo: 'Quer completar os últimos dias? Sem pressa.', dia: '2026-11-23' });
   });
 
   it('um pendente mais antigo que ontem: usa a data e leva para ele', () => {
@@ -136,5 +138,43 @@ describe('rotuloSequencia', () => {
     expect(rotuloSequencia(1)).toBe('dia seguido');
     expect(rotuloSequencia(0)).toBe('dias seguidos');
     expect(rotuloSequencia(12)).toBe('dias seguidos');
+  });
+});
+
+describe('heroContador', () => {
+  it('sequência em andamento: mostra os dias seguidos', () => {
+    expect(heroContador(5, 9)).toEqual({ valor: 5, rotulo: 'dias seguidos', recomecando: false });
+    expect(heroContador(1, 1)).toMatchObject({ valor: 1, rotulo: 'dia seguido', recomecando: false });
+  });
+
+  it('depois de um deslize, com dias no total: o herói é o total e há uma nota de apoio', () => {
+    expect(heroContador(0, 12)).toEqual({
+      valor: 12,
+      rotulo: 'dias no total',
+      nota: 'Recomeçando hoje. Seus dias continuam contando.',
+      recomecando: true,
+    });
+    expect(heroContador(0, 1).rotulo).toBe('dia no total');
+  });
+
+  it('começo de tudo (sem dias livres): mantém "0 dias seguidos"', () => {
+    expect(heroContador(0, 0)).toEqual({ valor: 0, rotulo: 'dias seguidos', recomecando: false });
+  });
+});
+
+describe('escolherSugestao', () => {
+  const nada = { avisoRecomeco: false, dicaOnda: false, pendente: false, reflexao: false, backup: false };
+
+  it('sem nada a sugerir: null', () => {
+    expect(escolherSugestao(nada)).toBeNull();
+  });
+
+  it('só uma por vez, na ordem recomeço > dica da onda > pendente > reflexão > backup', () => {
+    const tudo = { avisoRecomeco: true, dicaOnda: true, pendente: true, reflexao: true, backup: true };
+    expect(escolherSugestao(tudo)).toBe('recomeco');
+    expect(escolherSugestao({ ...tudo, avisoRecomeco: false })).toBe('dica-onda');
+    expect(escolherSugestao({ ...tudo, avisoRecomeco: false, dicaOnda: false })).toBe('pendente');
+    expect(escolherSugestao({ ...nada, reflexao: true, backup: true })).toBe('reflexao');
+    expect(escolherSugestao({ ...nada, backup: true })).toBe('backup');
   });
 });

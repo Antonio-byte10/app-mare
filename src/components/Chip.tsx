@@ -22,14 +22,15 @@ export function Chip({ children, ativo = false, cor = cores.aqua, ponto = false,
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected: ativo }}
       disabled={!onPress}
-      // 32 de altura no visual; a área de toque chega a 48dp.
-      hitSlop={{ top: 8, bottom: 8 }}
+      // 36 de altura no visual; a área de toque chega a 42dp. A folga é de 3 em cima e embaixo para não
+      // invadir o chip vizinho (os grupos de chips usam espaço de 7 ou mais entre as linhas).
+      hitSlop={{ top: 3, bottom: 3 }}
       onPress={onPress}
       style={[
         styles.base,
         ativo
           ? { backgroundColor: comAlfa(cor, 0.1), borderColor: comAlfa(cor, 0.42) }
-          : { borderColor: cores.line },
+          : { borderColor: cores.faint }, // contorno com pelo menos 3:1 contra o fundo
         style,
       ]}
     >
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 7,
-    minHeight: 32,
+    minHeight: 36,
     paddingVertical: 5,
     maxWidth: '100%',
     paddingHorizontal: 13,

@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Botao } from '@/components/Botao';
 import { CartaoCrise } from '@/components/CartaoCrise';
@@ -13,6 +13,8 @@ import { Icone } from '@/components/Icone';
 import { Segmento } from '@/components/Segmento';
 import { Texto } from '@/components/Texto';
 import { GATILHOS } from '@/conteudo/gatilhos';
+import { rotulosCanonicos } from '@/lib/gatilhos';
+import { deslizesSemRecomeco } from '@/lib/recomeco';
 import { estadoDoDia, normalizarRelatoHabito } from '@/lib/contador';
 import { detectarCrise } from '@/lib/crise';
 import { RolarAoFim, useRolarAoFim } from '@/lib/rolagem';
@@ -31,6 +33,7 @@ import {
   resumoLinha,
   type Rascunho,
 } from '@/lib/relato';
+import { resumoDoRelato } from '@/lib/resumoRelato';
 import type { Habito } from '@/lib/tipos';
 import { useAgora } from '@/lib/useAgora';
 import { useMare } from '@/store';
@@ -53,6 +56,29 @@ export default function RelatoDoDia() {
 
 type Deslize = { id: string };
 
+/**
+ * Ponte calma entre salvar um relato com deslize e o Recomeçar: o relato já está salvo, e a pessoa
+ * escolhe se quer olhar para o que aconteceu agora ou depois. Sem resposta (fora do Alert), vale "Depois".
+ */
+function oferecerRecomeco(aoAgora: () => void, aoDepois: () => void) {
+  const titulo = 'Registrado.';
+  const mensagem = 'Quer olhar com calma o que aconteceu?';
+  if (Platform.OS === 'web') {
+    if (window.confirm(`${titulo}\n\n${mensagem}`)) aoAgora();
+    else aoDepois();
+    return;
+  }
+  Alert.alert(
+    titulo,
+    mensagem,
+    [
+      { text: 'Depois', style: 'cancel', onPress: aoDepois },
+      { text: 'Agora', onPress: aoAgora },
+    ],
+    { cancelable: true, onDismiss: aoDepois },
+  );
+}
+
 function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const router = useRouter();
   const { top, bottom } = useSafeAreaInsets();
@@ -74,16 +100,22 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const [rascunhos, setRascunhos] = useState(inicial.rs);
   const [aberto, setAberto] = useState(inicial.primeiro);
   const [humor, setHumor] = useState<ValorHumor | undefined>(existente?.humor);
-  const [gatilhos, setGatilhos] = useState(existente?.gatilhos ?? []);
+  // Rótulos antigos (ex.: "Celular à noite") viram os da lista atual, sem chip repetido.
+  const [gatilhos, setGatilhos] = useState(() => rotulosCanonicos(existente?.gatilhos ?? []));
   const [nota, setNota] = useState(existente?.nota ?? '');
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
 
   const criseNota = detectarCrise(nota);
   const { ref: refRolagem, rolar } = useRolarAoFim();
-  const opcoesGatilho = [...GATILHOS, ...(existente?.gatilhos ?? []).filter((g) => !GATILHOS.includes(g))];
+  const opcoesGatilho = [...GATILHOS, ...gatilhos.filter((g) => !GATILHOS.includes(g))];
+  // Deslizes deste dia já salvos que ainda não passaram pelo "Recomeçar com cuidado" (quem tocou em "Depois").
+  const recomecos = useMare((e) => e.recomecos);
+  const pendentesRecomeco = deslizesSemRecomeco(ativos, existente, recomecos, dia);
   const comErro = habitoComErro(ativos, rascunhos);
   const temErro = comErro !== undefined;
   const ehHoje = dia === hoje;
+  // O que "Salvar relato" vai gravar, em uma linha (o primeiro hábito já vem respondido com o padrão).
+  const resumo = resumoDoRelato(ativos, rascunhos, ehHoje);
 
   // Só mexer no bloco marca o hábito como respondido; abrir para olhar não grava nada.
   const mudar = (id: string, p: Partial<Omit<Rascunho, 'respondido'>>) =>
@@ -113,10 +145,14 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
       return;
     }
     const [primeiro, ...resto] = lista;
-    router.replace({
-      pathname: '/recomecar/[dia]',
-      params: { dia, habito: primeiro.id, restantes: resto.map((d) => d.id).join(',') },
-    });
+    oferecerRecomeco(
+      () =>
+        router.replace({
+          pathname: '/recomecar/[dia]',
+          params: { dia, habito: primeiro.id, restantes: resto.map((d) => d.id).join(',') },
+        }),
+      voltar,
+    );
   };
 
   return (
@@ -254,6 +290,22 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
                     {`Falta a quantidade de ${comErro.apelido}. Toque para completar.`}
                   </Texto>
                 </Pressable>
+              ) : null}
+              {pendentesRecomeco.length > 0 ? (
+                <Botao
+                  variante="texto"
+                  onPress={() => {
+                    const [primeiro, ...resto] = pendentesRecomeco;
+                    router.push({ pathname: '/recomecar/[dia]', params: { dia, habito: primeiro, restantes: resto.join(',') } });
+                  }}
+                >
+                  Olhar com calma para esse dia
+                </Botao>
+              ) : null}
+              {resumo && !comErro ? (
+                <Texto tipo="legenda" style={styles.centro} accessibilityLiveRegion="polite">
+                  {resumo}
+                </Texto>
               ) : null}
               <Botao
                 onPress={salvar}

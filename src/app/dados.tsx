@@ -60,7 +60,7 @@ function Secao({ titulo, children }: { titulo: string; children: React.ReactNode
 
 const porcentagem = (f: number) => `${Math.min(100, Math.round(f * 100))}%`;
 
-/** Backup cifrado, restaurar e apagar tudo (spec 5.2). */
+/** Backup protegido por senha, restaurar e apagar tudo (spec 5.2). */
 export default function Dados() {
   const ultimoBackupEm = useMare((e) => e.ajustes.ultimoBackupEm);
   const setAjustes = useMare((e) => e.setAjustes);
@@ -246,7 +246,7 @@ export default function Dados() {
             showsVerticalScrollIndicator={false}
           >
             <Texto tipo="legenda">
-              Seus registros ficam só neste celular, cifrados. O backup é uma cópia que você guarda onde quiser, fechada com uma senha só sua.
+              Seus registros ficam só neste celular, protegidos por criptografia. O backup é uma cópia que você guarda onde quiser, fechada com uma senha só sua.
             </Texto>
 
             <Secao titulo="Fazer backup">
@@ -291,7 +291,7 @@ export default function Dados() {
                   </Botao>
                   {trabalhandoBackup ? (
                     <Texto tipo="legenda" accessibilityLiveRegion="polite">
-                      Cifrando com a sua senha. Pode levar alguns segundos.
+                      Protegendo com a sua senha. Pode levar alguns segundos.
                     </Texto>
                   ) : (
                     <Botao
@@ -372,7 +372,7 @@ export default function Dados() {
                 </>
               ) : (
                 <>
-                  <Texto tipo="legenda">Escolha um arquivo .mare e digite a senha que você usou ao criá-lo. Antes de trocar qualquer coisa, eu mostro um resumo.</Texto>
+                  <Texto tipo="legenda">Escolha um arquivo .mare e digite a senha que você usou ao criá-lo. Antes de trocar qualquer coisa, aparece um resumo para você conferir.</Texto>
                   <Botao variante="secundario" onPress={escolher} desabilitado={ocupado} style={styles.botao}>
                     Restaurar backup
                   </Botao>

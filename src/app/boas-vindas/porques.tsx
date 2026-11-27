@@ -14,6 +14,7 @@ import { aplicarHabito } from '@/lib/estado';
 import { apagarFoto } from '@/lib/fotos';
 import { lembretesDisponiveis, lerPermissao, pedirPermissao } from '@/lib/lembretes/agendador';
 import { descreverPorque, MAX_PORQUE, validarPorqueOuFoto } from '@/lib/plano';
+import { passoDoPrimeiroUso } from '@/lib/primeiroUso';
 import { useRascunhoPrimeiroUso } from '@/lib/rascunhoPrimeiroUso';
 import { semBloquear } from '@/lib/useBloqueio';
 import { useVoltar } from '@/lib/useVoltar';
@@ -69,6 +70,7 @@ async function oferecerLembretes(): Promise<void> {
 export default function PorquesPrimeiroUso() {
   const voltar = useVoltar();
   const porques = useRascunhoPrimeiroUso((e) => e.porques);
+  const habitos = useRascunhoPrimeiroUso((e) => e.habitos);
   const adicionar = useRascunhoPrimeiroUso((e) => e.adicionarPorque);
   const remover = useRascunhoPrimeiroUso((e) => e.removerPorque);
   const [texto, setTexto] = useState('');
@@ -130,6 +132,7 @@ export default function PorquesPrimeiroUso() {
   return (
     <TelaPasso
       aoVoltar={voltar}
+      topo={<Texto tipo="legenda">{passoDoPrimeiroUso('porques', habitos)?.texto}</Texto>}
       rodape={
         <>
           <Botao onPress={concluir}>{temAlgo ? 'Concluir' : 'Pular por agora'}</Botao>

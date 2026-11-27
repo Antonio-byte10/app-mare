@@ -305,5 +305,6 @@ describe('instrução de sistema', () => {
     expect(INSTRUCAO_SISTEMA).toMatch(/192/);
     expect(INSTRUCAO_SISTEMA).toMatch(/inteligência artificial/);
     expect(INSTRUCAO_SISTEMA).toMatch(/Curtas/);
+    expect(INSTRUCAO_SISTEMA).toMatch(/não sabe o gênero/);
   });
 });

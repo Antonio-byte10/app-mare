@@ -11,7 +11,7 @@
  */
 import { estadoDaEntrada, normalizarRelatoHabito } from './contador';
 import { dataLocal, deslocarDia, meioDia } from './datas';
-import { contarGatilhos, GATILHOS_FISSURA, normalizarGatilho, type GatilhoContado } from './gatilhos';
+import { contarGatilhos, GATILHOS_FISSURA, idDoGatilho, normalizarGatilho, type GatilhoContado } from './gatilhos';
 import { mediaCircular } from './lembretes/antesDaOnda';
 import { economia, type Economia } from './marcos';
 import { GATILHOS } from '../conteudo/gatilhos';
@@ -394,6 +394,15 @@ const SE_DO_GATILHO: Record<string, string> = {
   lugar: 'eu estiver naquele lugar que costuma puxar a vontade',
   pessoas: 'eu estiver com as pessoas que costumam puxar a vontade',
   celular: 'eu estiver com o celular na mão',
+  ansiedade: 'eu sentir ansiedade',
+  festa: 'eu estiver numa festa ou num evento',
+  discussao: 'eu tiver uma discussão',
+};
+
+/** O "Se..." para um gatilho guardado como texto (rótulo do relato ou do Recomeçar); `undefined` se for livre. */
+export const seDoGatilhoTexto = (texto: string): string | undefined => {
+  const id = idDoGatilho(texto);
+  return id ? SE_DO_GATILHO[id] : undefined;
 };
 
 /** O "Se..." do plano para um gatilho da semana (o `chave` de `contarGatilhos`). */

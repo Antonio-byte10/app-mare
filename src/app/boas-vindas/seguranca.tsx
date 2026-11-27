@@ -6,6 +6,8 @@ import { Icone } from '@/components/Icone';
 import { TelaPasso } from '@/components/TelaPasso';
 import { Texto } from '@/components/Texto';
 import { SAMU } from '@/conteudo/apoio';
+import { passoDoPrimeiroUso } from '@/lib/primeiroUso';
+import { useRascunhoPrimeiroUso } from '@/lib/rascunhoPrimeiroUso';
 import { useVoltar } from '@/lib/useVoltar';
 import { useMare } from '@/store';
 import { comAlfa, cores, fontes } from '@/theme';
@@ -18,10 +20,12 @@ export default function SegurancaAlcool() {
   const router = useRouter();
   const voltar = useVoltar();
   const emergencia = useMare((e) => e.ajustes.contatosEmergencia);
+  const habitos = useRascunhoPrimeiroUso((e) => e.habitos);
 
   return (
     <TelaPasso
       aoVoltar={voltar}
+      topo={<Texto tipo="legenda">{passoDoPrimeiroUso('seguranca', habitos)?.texto}</Texto>}
       rodape={
         <>
           <Botao onPress={() => router.push('/boas-vindas/porques')}>Entendi</Botao>

@@ -18,7 +18,7 @@ type Props = {
   aoConcluir: () => void;
   /** Voltar na primeira pergunta (sair do fluxo). */
   aoSair: () => void;
-  /** "pular avaliação" (só no primeiro uso). */
+  /** "Fazer depois" (só no primeiro uso): pula a avaliação, que dá para fazer quando quiser em Mais. */
   aoPular?: () => void;
 };
 
@@ -102,8 +102,8 @@ export function FluxoAvaliacao({ habitos, respostas, aoResponder, aoConcluir, ao
           {ultima ? 'Ver meu resultado' : 'Continuar'}
         </Botao>
         {aoPular ? (
-          <Botao variante="texto" onPress={aoPular}>
-            pular avaliação
+          <Botao variante="secundario" onPress={aoPular} accessibilityLabel="Fazer a avaliação depois">
+            Fazer depois
           </Botao>
         ) : null}
       </View>
@@ -148,5 +148,5 @@ const styles = StyleSheet.create({
   opcaoTexto: { flex: 1, fontFamily: fontes.uiMedia, fontSize: 15, lineHeight: 20 },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: '#3B5878' },
   radioSel: { borderWidth: 6, borderColor: cores.aqua },
-  rodape: { paddingHorizontal: margemTela, paddingTop: 12, gap: 6 },
+  rodape: { paddingHorizontal: margemTela, paddingTop: 12, gap: 10 },
 });

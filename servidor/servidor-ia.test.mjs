@@ -71,6 +71,17 @@ describe('/saude', () => {
     expect(await r.json()).toMatchObject({ ok: true, autorizado: true, configurado: false, modelo: 'gemini-3.5-flash-lite' });
   });
 
+  it('em modo público com APP_TOKEN curto a conversa é recusada', async () => {
+    const { base } = await subir({ token: 'curto' });
+    const r = await fetch(base + '/conversa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Mare': 'conversa', Authorization: 'Bearer curto' },
+      body: JSON.stringify(pedidoValido),
+    });
+    expect(r.status).toBe(503);
+    expect((await r.json()).tipo).toBe('servidorConfig');
+  });
+
   it('em modo público sem APP_TOKEN ninguém é autorizado', async () => {
     const { base } = await subir({ token: undefined });
     const r = await fetch(base + '/saude', { headers: { Authorization: 'Bearer qualquer' } });
@@ -369,6 +380,8 @@ describe('funções puras', () => {
     expect(ipDoCliente('203.0.113.9')).toBe('203.0.113.9');
     expect(ipDoCliente(undefined, '127.0.0.1')).toBe('127.0.0.1');
     expect(ipDoCliente('10.0.0.5, 192.168.0.1', 'x')).toBe('10.0.0.5');
+    // Atrás da Cloudflare (o Render), vale o CF-Connecting-IP, mesmo com X-Forwarded-For inventado.
+    expect(ipDoCliente('1.1.1.1, 172.70.1.2', '10.0.0.2', '203.0.113.9')).toBe('203.0.113.9');
   });
 
   it('tipoDeStatus', () => {

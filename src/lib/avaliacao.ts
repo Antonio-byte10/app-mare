@@ -101,7 +101,7 @@ export function textoEvolucao(anterior: NivelAtencao, atual: NivelAtencao): stri
   const e = compararNiveis(anterior, atual);
   if (e === 'mais-leve') return `Da ${TEXTO_NIVEL[anterior].toLowerCase()} para a ${TEXTO_NIVEL[atual].toLowerCase()}. Isso é um passo.`;
   if (e === 'igual') return 'Segue no mesmo ponto. Mudar leva tempo, e você está aqui.';
-  return 'Está um pouco mais pesado agora. Isso muda, e você não precisa passar por isso sozinho.';
+  return 'Está um pouco mais pesado agora. Isso muda, e você não está só.';
 }
 
 /** Para cada resultado atual, o resultado anterior do mesmo hábito (se houver). */

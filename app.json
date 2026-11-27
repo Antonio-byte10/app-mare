@@ -3,7 +3,7 @@
     "name": "Maré",
     "slug": "mare",
     "scheme": "mare",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#071526",
@@ -15,7 +15,7 @@
         "backgroundColor": "#071526"
       },
       "package": "com.mare.app",
-      "versionCode": 6,
+      "versionCode": 7,
       "allowBackup": false,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
@@ -34,6 +34,7 @@
       "expo-router",
       "expo-font",
       "./plugins/with-short-cmake-paths",
+      "./plugins/with-atalhos",
       "./plugins/with-disfarce",
       "./plugins/with-assinatura",
       [
