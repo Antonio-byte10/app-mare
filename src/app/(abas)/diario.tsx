@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { BarrasSemana } from '@/components/BarrasSemana';
 import { Calendario } from '@/components/Calendario';
+import { CartaoGatilhos } from '@/components/CartaoGatilhos';
 import { SeletorHabito } from '@/components/SeletorHabito';
 import { Tela } from '@/components/Tela';
 import { Texto } from '@/components/Texto';
@@ -10,6 +11,7 @@ import { Vazio } from '@/components/Vazio';
 import { limitarMes, mesDe, totalRelatosNaJanela, type Mes } from '@/lib/calendario';
 import { resumoHabito } from '@/lib/contador';
 import { dataLocal } from '@/lib/datas';
+import { contarGatilhos } from '@/lib/gatilhos';
 import { diaDePico, vontadePorDiaDaSemana } from '@/lib/insights';
 import { useAgora } from '@/lib/useAgora';
 import { useHabitoAtivo } from '@/lib/useHabitoAtivo';
@@ -17,10 +19,13 @@ import { useMare } from '@/store';
 import { cores, linha } from '@/theme';
 
 const SEMANAS = 8;
+/** Janela do cartão "O que mais puxa a onda". */
+const DIAS_GATILHOS = 30;
 
 export default function Diario() {
   const { habitos, ativo, escolher } = useHabitoAtivo();
   const relatos = useMare((e) => e.relatos);
+  const fissuras = useMare((e) => e.fissuras);
   const router = useRouter();
   const agora = useAgora();
   // Mês que a pessoa escolheu com as setas; sem escolha, o mês de hoje.
@@ -40,6 +45,7 @@ export default function Diario() {
   const mes = limitarMes(escolhido ?? mesDe(hoje), { inicio: ativo.inicio, hoje });
   const medias = vontadePorDiaDaSemana(relatos, ativo.id, hoje, SEMANAS);
   const pico = diaDePico(medias, totalRelatosNaJanela(relatos, ativo.id, hoje, SEMANAS));
+  const gatilhos = contarGatilhos({ fissuras, relatos, hoje, dias: DIAS_GATILHOS });
 
   return (
     <Tela rolavel>
@@ -65,6 +71,15 @@ export default function Diario() {
       <View style={styles.barras}>
         <BarrasSemana medias={medias} pico={pico} />
       </View>
+
+      {gatilhos.length > 0 ? (
+        <>
+          <View style={styles.divisor} />
+          <View style={styles.barras}>
+            <CartaoGatilhos itens={gatilhos} dias={DIAS_GATILHOS} />
+          </View>
+        </>
+      ) : null}
     </Tela>
   );
 }

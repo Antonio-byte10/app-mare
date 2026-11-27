@@ -19,7 +19,7 @@ O **Maré** ajuda quem quer **parar ou diminuir** três hábitos:
 
 Muitos apps de acompanhamento cobram para funcionar de verdade. Aqui tudo é livre, porque as pessoas merecem isso.
 
-> **Status:** em desenvolvimento (versão 0.4.0, revisão de bugs rumo à 1.0: [o que falta](docs/superpowers/plans/2026-11-27-mare-rumo-1.0.md)). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Também prontos: lembretes discretos, bloqueio por PIN ou digital, disfarce de nome e ícone e backup cifrado. Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e preparar o lançamento.
+> **Status:** em desenvolvimento (versão 0.5.0, rumo à 1.0: [o que falta](docs/superpowers/plans/2026-11-27-mare-rumo-1.0.md)). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Também prontos: lembretes discretos, bloqueio por PIN ou digital, disfarce de nome e ícone e backup cifrado. Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e preparar o lançamento.
 
 ## Por que "Maré"
 
@@ -65,6 +65,7 @@ Vício costuma vir com vergonha. Por isso:
 - **Disfarce:** nome e ícone neutros, como "Diário", "Notas" ou "Calma".
 - **Nenhuma imagem de cigarro, bebida ou conteúdo sexual**, porque imagens assim despertam a vontade.
 - **Código aberto:** qualquer pessoa pode conferir o que o app faz.
+- **Política de privacidade:** o que o app guarda, o que nunca sai do celular e o que sai quando você pede, em [PRIVACY.md](PRIVACY.md).
 
 ## Baseado em evidência
 
@@ -114,7 +115,7 @@ npm run apk:teste  # gera um APK de teste em dist/ (precisa do Android SDK)
 Quem não quer a chave da IA no celular pode usar um servidor próprio no plano gratuito do [Render](https://render.com). O servidor fica em [`servidor/servidor-ia.mjs`](servidor/servidor-ia.mjs): é Node puro, sem dependências, e não guarda nem registra as conversas.
 
 1. No Render, crie um *Blueprint* a partir deste repositório (usa o [`render.yaml`](render.yaml)) ou um *Web Service* com `node servidor/servidor-ia.mjs`.
-2. Em **Environment**, preencha `IA_CHAVE` com a sua chave e `APP_TOKEN` com um código longo (24 caracteres ou mais). `IA_PROVEDOR` (`gemini`, `openai` ou `claude`) e `IA_MODELO` são opcionais.
+2. Em **Environment**, preencha `IA_CHAVE` com a sua chave e `APP_TOKEN` com um código longo (24 caracteres ou mais). `IA_PROVEDOR` (`gemini`, `openai` ou `claude`) e `IA_MODELO` são opcionais. Com o Gemini 3.5 Flash Lite (padrão), o servidor usa o 3.1 Flash Lite de reserva quando o primeiro chega ao limite do minuto ou do dia; `IA_MODELO_RESERVA` troca a reserva (ou `nenhum` desliga).
 3. No app: **Mais → Inteligência artificial → Meu servidor**, cole o endereço `https://…onrender.com` e o código, e toque em **Testar conexão**. No plano gratuito, o servidor leva até 1 minuto para acordar.
 
 ## Contribuir

@@ -56,7 +56,13 @@ describe('/saude', () => {
   it('com código válido informa provedor, modelo e se há chave', async () => {
     const { base } = await subir({ provedor: 'claude' });
     const r = await fetch(base + '/saude', { headers: { Authorization: `Bearer ${TOKEN}` } });
-    expect(await r.json()).toEqual({ ok: true, autorizado: true, configurado: true, provedor: 'claude', modelo: 'claude-opus-5-5' });
+    expect(await r.json()).toEqual({ ok: true, autorizado: true, configurado: true, provedor: 'claude', modelo: 'claude-opus-5-5', reserva: null });
+  });
+
+  it('no Gemini, informa o modelo de reserva', async () => {
+    const { base } = await subir({});
+    const r = await fetch(base + '/saude', { headers: { Authorization: `Bearer ${TOKEN}` } });
+    expect(await r.json()).toMatchObject({ modelo: 'gemini-3.5-flash-lite', reserva: 'gemini-3.1-flash-lite' });
   });
 
   it('sobe sem chave e sem token (o deploy não falha) e diz que não está configurado', async () => {
@@ -260,11 +266,43 @@ describe('erros e recusas', () => {
 
   it('desiste depois das tentativas e devolve mensagem de sobrecarga', async () => {
     const consultar = vi.fn(async () => json(503, { error: {} }));
-    const { base } = await subir({ consultar });
+    const { base } = await subir({ consultar, modeloReserva: 'nenhum' });
     const r = await conversar(base);
     expect(r.status).toBe(503);
     expect(await r.json()).toMatchObject({ tipo: 'sobrecarga' });
     expect(consultar).toHaveBeenCalledTimes(3);
+  });
+
+  it('Gemini no limite: a mesma pergunta vai para o modelo de reserva', async () => {
+    const urls = [];
+    const consultar = vi.fn(async (url) => {
+      urls.push(url);
+      return url.includes('gemini-3.5-flash-lite')
+        ? json(429, { error: { code: 429, message: 'You exceeded your current quota', status: 'RESOURCE_EXHAUSTED' } })
+        : sse(GEMINI);
+    });
+    const { base, registrar } = await subir({ consultar });
+    const r = await conversar(base);
+    expect(r.status).toBe(200);
+    expect(await r.text()).toBe('Olá, tudo bem?');
+    expect(urls.map((u) => u.match(/models\/([^:]+)/)[1])).toEqual(['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']);
+    expect(registrar.mock.calls.flat().join(' ')).not.toContain('chave-secreta');
+  });
+
+  it('chave recusada não troca de modelo (a reserva usaria a mesma chave)', async () => {
+    const consultar = vi.fn(async () => json(401, { error: { message: 'x' } }));
+    const { base } = await subir({ consultar });
+    const r = await conversar(base);
+    expect((await r.json()).tipo).toBe('chave');
+    expect(consultar).toHaveBeenCalledTimes(1);
+  });
+
+  it('com as duas no limite, devolve o erro da reserva', async () => {
+    const consultar = vi.fn(async () => json(429, { error: { code: 429, message: 'slow down' } }));
+    const { base } = await subir({ consultar });
+    const r = await conversar(base);
+    expect((await r.json()).tipo).toBe('limite');
+    expect(consultar).toHaveBeenCalledTimes(2);
   });
 
   it.each([

@@ -5,6 +5,7 @@ import { executarFluxo } from './fluxo';
 import * as gemini from './gemini';
 import { prepararHistorico } from './historico';
 import { montarSistema } from './instrucoes';
+import { modeloReserva } from './modelos';
 import * as openai from './openai';
 import { conversarServidor } from './servidor';
 import type { Buscar, Mensagem, Provedor, ResultadoConversa } from './tipos';
@@ -32,6 +33,9 @@ export type ParamsConversa = {
   /** Recebe o texto acumulado da resposta a cada novo pedaço (streaming). */
   aoTexto?: (acumulado: string) => void;
 };
+
+/** Erros em que vale tentar o modelo de reserva (antes de qualquer texto chegar). */
+const TROCA_RESERVA: readonly ErroIa['tipo'][] = ['limite', 'credito', 'modelo', 'sobrecarga'];
 
 const ADAPTADORES = {
   gemini: { montarPedido: gemini.montarPedido, interpretar: gemini.interpretar },
@@ -93,13 +97,22 @@ export async function conversarCom(params: ParamsConversa, deps: DependenciasCon
       const chave = await deps.lerChave(ajustes.provedor);
       if (!chave) throw new ErroIa('chave');
       const adaptador = ADAPTADORES[ajustes.provedor];
-      resultado = await executarFluxo({
-        buscar: deps.buscar,
-        pedido: adaptador.montarPedido({ chave, modelo: ajustes.modelo, sistema, historico }),
-        interpretar: adaptador.interpretar,
-        sinal: controle.signal,
-        aoTexto: acompanhar,
-      });
+      const tentar = (modelo: string) =>
+        executarFluxo({
+          buscar: deps.buscar,
+          pedido: adaptador.montarPedido({ chave, modelo, sistema, historico }),
+          interpretar: adaptador.interpretar,
+          sinal: controle.signal,
+          aoTexto: acompanhar,
+        });
+      try {
+        resultado = await tentar(ajustes.modelo);
+      } catch (e) {
+        const reserva = modeloReserva(ajustes.provedor, ajustes.modelo);
+        const tipo = comoErroIa(e, tempoEsgotado).tipo;
+        if (!reserva || acumulado !== '' || controle.signal.aborted || !TROCA_RESERVA.includes(tipo)) throw e;
+        resultado = await tentar(reserva);
+      }
     }
     acumulado = resultado.texto;
     if (resultado.recusa) return falha('recusa');

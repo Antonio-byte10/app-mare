@@ -8,6 +8,8 @@ import { DivisorAjuste, GrupoAjuste, LinhaAjuste } from '@/components/LinhaAjust
 import { Tela } from '@/components/Tela';
 import { Texto } from '@/components/Texto';
 import { NOME_PROVEDOR } from '@/lib/ia/modelos';
+import { textoUltimoBackup } from '@/lib/lembreteBackup';
+import { useAgora } from '@/lib/useAgora';
 import { useMare } from '@/store';
 import { cores } from '@/theme';
 
@@ -18,8 +20,10 @@ export default function Mais() {
   const ocultarNumeros = useMare((e) => e.ajustes.ocultarNumeros);
   const emergencia = useMare((e) => e.ajustes.contatosEmergencia);
   const ia = useMare((e) => e.ajustes.ia);
+  const ultimoBackupEm = useMare((e) => e.ajustes.ultimoBackupEm);
   const setAjustes = useMare((e) => e.setAjustes);
   const router = useRouter();
+  const agora = useAgora();
   const versao = Constants.expoConfig?.version ?? '0.1.0';
 
   return (
@@ -112,7 +116,7 @@ export default function Mais() {
       <DivisorAjuste />
       <LinhaAjuste
         titulo="Backup e dados"
-        subtitulo="cópia cifrada com senha, restaurar ou apagar tudo"
+        subtitulo={`${textoUltimoBackup(ultimoBackupEm, agora)}. Restaurar ou apagar tudo.`}
         icone="notas"
         onPress={() => router.push('/dados')}
       />
@@ -144,6 +148,13 @@ export default function Mais() {
       />
 
       <GrupoAjuste>Sobre</GrupoAjuste>
+      <LinhaAjuste
+        titulo="Sobre o Maré"
+        subtitulo="versão, procurar atualização e privacidade"
+        icone="folha"
+        onPress={() => router.push('/sobre')}
+      />
+      <DivisorAjuste />
       <LinhaAjuste titulo="Versão" subtitulo={versao} />
       <DivisorAjuste />
       <LinhaAjuste titulo="Licença MIT" subtitulo="software livre, use e adapte" />

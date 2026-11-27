@@ -7,6 +7,7 @@ import { Botao } from '@/components/Botao';
 import { LinhaAjuste } from '@/components/LinhaAjuste';
 import { Mar } from '@/components/Mar';
 import { Texto } from '@/components/Texto';
+import { EsperaDezMinutos } from '@/components/fissura/EsperaDezMinutos';
 import { CVV, SAMU } from '@/conteudo/apoio';
 import { formatarContagem, ONDA_SEG } from '@/lib/fissura';
 import { acoesDoPlano, frasePlano } from '@/lib/plano';
@@ -97,6 +98,8 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
             )}
           </View>
         )}
+
+        <EsperaDezMinutos />
       </ScrollView>
 
       <Mar altura={150 + Math.max(bottom, 12) - 12}>

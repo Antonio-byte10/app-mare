@@ -2,4 +2,5 @@
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
   <background android:drawable="@color/ic_disfarce_mare_bg"/>
   <foreground android:drawable="@mipmap/ic_disfarce_mare_fg"/>
+  <monochrome android:drawable="@mipmap/ic_disfarce_mare_mono"/>
 </adaptive-icon>

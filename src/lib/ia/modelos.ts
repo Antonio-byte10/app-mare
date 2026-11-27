@@ -11,6 +11,20 @@ export const MODELO_PADRAO: Record<Provedor, string> = {
   claude: 'claude-opus-5-5',
 };
 
+/**
+ * Modelo de reserva: se o escolhido estiver no limite (por minuto ou do dia) ou fora do ar, a mesma
+ * pergunta vai para o par dele. No plano gratuito do Gemini os limites são por modelo, então os dois
+ * Flash Lite juntos dão o dobro de conversas por dia.
+ */
+const RESERVAS: Record<string, string> = {
+  'gemini-3.5-flash-lite': 'gemini-3.1-flash-lite',
+  'gemini-3.1-flash-lite': 'gemini-3.5-flash-lite',
+};
+
+export function modeloReserva(provedor: Provedor, modelo: string): string | undefined {
+  return provedor === 'gemini' ? RESERVAS[modelo] : undefined;
+}
+
 export const NOME_PROVEDOR: Record<Provedor, string> = {
   gemini: 'Gemini',
   openai: 'ChatGPT',

@@ -11,6 +11,11 @@ export const MODELOS_PADRAO = {
   openai: 'gpt-5.5',
   claude: 'claude-opus-5-5',
 };
+/** Par de reserva do Gemini: limites do plano gratuito são por modelo (ver src/lib/ia/modelos.ts). */
+export const RESERVAS = {
+  'gemini-3.5-flash-lite': 'gemini-3.1-flash-lite',
+  'gemini-3.1-flash-lite': 'gemini-3.5-flash-lite',
+};
 const VERSAO_ANTHROPIC = '2026-10-21';
 /** Limite de saída. Modelos que "pensam" gastam parte dele pensando, por isso não é pequeno. */
 const MAX_TOKENS = 4096;
@@ -277,6 +282,7 @@ export function criarServico({
   chave,
   modelo,
   token,
+  modeloReserva,
   publico = false,
   consultar = fetch,
   esperar = esperarPadrao,
@@ -284,6 +290,8 @@ export function criarServico({
 } = {}) {
   const adaptador = PROVEDORES[provedor];
   const modeloFinal = modelo || MODELOS_PADRAO[provedor];
+  // IA_MODELO_RESERVA="nenhum" desliga a troca automática.
+  const reservaFinal = modeloReserva === 'nenhum' ? undefined : modeloReserva || (provedor === 'gemini' ? RESERVAS[modeloFinal] : undefined);
   const configurado = Boolean(adaptador && chave);
   let emUso = 0;
   // Tentativas com código errado por IP: depois de 10 em 15 minutos, recusa sem nem comparar.
@@ -346,7 +354,7 @@ export function criarServico({
     if (token && !liberado && enviado) falhou(ip);
     // Verificação de saúde e botão "Testar conexão". Sem código válido, só diz "estou no ar".
     if (saude) {
-      return enviar(200, liberado ? { ok: true, autorizado: true, configurado, provedor, modelo: modeloFinal } : { ok: true, autorizado: false });
+      return enviar(200, liberado ? { ok: true, autorizado: true, configurado, provedor, modelo: modeloFinal, reserva: reservaFinal ?? null } : { ok: true, autorizado: false });
     }
     if (!liberado) return enviar(401, { erro: 'Código de acesso recusado.', tipo: 'codigo' });
     if (req.method !== 'POST' || !/^application\/json/.test(req.headers['content-type'] ?? '') || req.headers['x-mare'] !== 'conversa') {
@@ -374,8 +382,11 @@ export function criarServico({
       const pedido = validarPedido(lerJson(Buffer.concat(partes).toString('utf8')));
       if (!pedido) return enviar(400, { erro: 'Pedido inválido.', tipo: 'pedido' });
 
-      const { url, cabecalhos, corpo } = adaptador.pedido({ chave, modelo: modeloFinal, ...pedido });
-      const chamar = () => consultar(url, { method: 'POST', headers: cabecalhos, body: JSON.stringify(corpo), signal: sinal });
+      const chamarCom = (m) => {
+        const { url, cabecalhos, corpo } = adaptador.pedido({ chave, modelo: m, ...pedido });
+        return consultar(url, { method: 'POST', headers: cabecalhos, body: JSON.stringify(corpo), signal: sinal });
+      };
+      const chamar = () => chamarCom(modeloFinal);
       // Provedor sobrecarregado (500/503) costuma passar em segundos: tenta de novo antes do primeiro byte.
       let resposta = await chamar();
       for (let extra = 2, espera = 1500; extra > 0 && (resposta.status === 503 || resposta.status === 500); extra--, espera *= 2) {
@@ -383,6 +394,17 @@ export function criarServico({
         await resposta.body?.cancel().catch(() => undefined);
         await esperar(espera);
         resposta = await chamar();
+      }
+      if (!resposta.ok && reservaFinal) {
+        // No limite (do minuto ou do dia) ou fora do ar: a mesma pergunta vai para o modelo de reserva.
+        const pista = (await resposta.text().catch(() => '')).slice(0, 600);
+        const tipo = tipoDeStatus(resposta.status, pista);
+        if (['limite', 'credito', 'modelo', 'sobrecarga'].includes(tipo)) {
+          registrar(`Modelo principal indisponível (${tipo}), usando o de reserva`);
+          resposta = await chamarCom(reservaFinal);
+        } else {
+          resposta = new Response(pista, { status: resposta.status });
+        }
       }
       if (!resposta.ok) {
         // Só o código e a pista do erro, nunca a chave nem o conteúdo enviado.
@@ -449,7 +471,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (token && token.length < 24) console.warn('APP_TOKEN curto: use 24 caracteres ou mais.');
   const porta = Number(PORT) || 8787;
   const host = publico ? '0.0.0.0' : '127.0.0.1';
-  criarServico({ provedor, chave, modelo: limpar('IA_MODELO') || undefined, token: token || undefined, publico }).listen(porta, host, () =>
+  criarServico({
+    provedor,
+    chave,
+    modelo: limpar('IA_MODELO') || undefined,
+    modeloReserva: limpar('IA_MODELO_RESERVA') || undefined,
+    token: token || undefined,
+    publico,
+  }).listen(porta, host, () =>
     console.log(`Maré IA disponível em ${host}:${porta}`),
   );
 }

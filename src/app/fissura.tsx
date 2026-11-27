@@ -61,10 +61,11 @@ export default function Fissura() {
   const [vontadeAntes, setVontadeAntes] = useState<number | undefined>();
   const [vontadeDepois, setVontadeDepois] = useState<number | undefined>();
   const [ajudou, setAjudou] = useState('');
+  const [gatilhos, setGatilhos] = useState<string[]>([]);
   const [duracaoFinal, setDuracaoFinal] = useState(0);
 
   // O que vale na saída (fechar, voltar do Android, gesto): lido de uma ref para não depender do render.
-  const atual = useRef({ passo, vontadeAntes, vontadeDepois, ajudou, duracaoFinal });
+  const atual = useRef({ passo, vontadeAntes, vontadeDepois, ajudou, gatilhos, duracaoFinal });
 
   const registrar = () => {
     const a = atual.current;
@@ -80,13 +81,14 @@ export default function Fissura() {
         vontadeAntes: a.vontadeAntes,
         vontadeDepois: a.vontadeDepois,
         ajudou: a.ajudou,
+        gatilhos: a.gatilhos,
       }),
     );
   };
   const registrarRef = useRef(registrar);
   // Mantém as refs em dia depois de cada render (nunca durante ele).
   useEffect(() => {
-    atual.current = { passo, vontadeAntes, vontadeDepois, ajudou, duracaoFinal };
+    atual.current = { passo, vontadeAntes, vontadeDepois, ajudou, gatilhos, duracaoFinal };
     registrarRef.current = registrar;
   });
 
@@ -145,9 +147,11 @@ export default function Fissura() {
             vontadeAntes={vontadeAntes}
             vontadeDepois={vontadeDepois}
             ajudou={ajudou}
+            gatilhos={gatilhos}
             aoMudarAntes={setVontadeAntes}
             aoMudarDepois={setVontadeDepois}
             aoMudarAjudou={setAjudou}
+            aoMudarGatilhos={setGatilhos}
             aoVoltar={() => (daTrancada ? sair() : router.dismissTo('/'))}
           />
         ) : null}

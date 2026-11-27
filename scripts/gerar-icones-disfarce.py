@@ -3,7 +3,10 @@ Gera os ícones dos disfarces (Maré, Diário, Notas, Calma) em duas formas:
   - plugins/disfarce/res/**   recursos Android que o plugin plugins/with-disfarce.js copia para o
                               projeto nativo (ícone adaptativo + reserva para Android < 8);
   - assets/disfarces/<id>.png prévia mostrada na tela "Bloqueio e disfarce";
-  - assets/notification-icon.png ícone das notificações (96x96, branco sobre transparente).
+  - assets/notification-icon.png ícone das notificações (96x96, branco sobre transparente);
+  - assets/icone*.png e assets/splash.png  ícone do app (Configurações, lista de apps), camadas do
+                              ícone adaptativo e temático (Android 13+) e o símbolo da abertura.
+Cada disfarce também ganha a camada "monochrome", usada quando o tema do Android pinta os ícones.
 Uso (Pillow): python scripts/gerar-icones-disfarce.py
 Os ícones são abstratos e neutros de propósito: nada neles lembra um app de sobriedade.
 """
@@ -174,6 +177,25 @@ def legado(id_, px):
     return base.resize((px, px), Image.LANCZOS)
 
 
+def monocromatico(id_, px):
+    """Camada do ícone temático: a silhueta da arte em uma cor só (o Android escolhe a cor)."""
+    arte = primeiro_plano(id_, px)
+    branco = Image.new('RGBA', arte.size, (255, 255, 255, 0))
+    branco.putalpha(arte.getchannel('A'))
+    return branco
+
+
+def simbolo_abertura(px=1024):
+    """Só o símbolo da Maré, recortado e sem fundo, para a tela de abertura (splash)."""
+    arte = primeiro_plano('mare', px)
+    caixa = arte.getbbox()
+    recorte = arte.crop(caixa)
+    lado = max(recorte.size)
+    quadrado = Image.new('RGBA', (lado, lado), (0, 0, 0, 0))
+    quadrado.paste(recorte, ((lado - recorte.width) // 2, (lado - recorte.height) // 2))
+    return quadrado.resize((512, 512), Image.LANCZOS)
+
+
 def icone_notificacao(px=96):
     """Ícone pequeno das notificações: só branco sobre transparente (o Android pinta com a cor do app).
     Uma onda simples, neutra: nada de lua, marca ou o que lembre o hábito."""
@@ -191,6 +213,7 @@ XML_ADAPTATIVO = """<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
   <background android:drawable="@color/ic_disfarce_{id}_bg"/>
   <foreground android:drawable="@mipmap/ic_disfarce_{id}_fg"/>
+  <monochrome android:drawable="@mipmap/ic_disfarce_{id}_mono"/>
 </adaptive-icon>
 """
 
@@ -203,6 +226,7 @@ def main():
             pasta = os.path.join(RES, f'mipmap-{dens}')
             os.makedirs(pasta, exist_ok=True)
             primeiro_plano(id_, round(108 * k)).save(os.path.join(pasta, f'ic_disfarce_{id_}_fg.png'), optimize=True)
+            monocromatico(id_, round(108 * k)).save(os.path.join(pasta, f'ic_disfarce_{id_}_mono.png'), optimize=True)
             legado(id_, round(48 * k)).save(os.path.join(pasta, f'ic_disfarce_{id_}.png'), optimize=True)
         pasta = os.path.join(RES, 'mipmap-anydpi-v26')
         os.makedirs(pasta, exist_ok=True)
@@ -216,6 +240,12 @@ def main():
     with open(os.path.join(pasta, 'ic_disfarce_cores.xml'), 'w', encoding='utf-8', newline='\n') as f:
         f.write('\n'.join(cores) + '\n')
     icone_notificacao().save(os.path.join(RAIZ, 'assets', 'notification-icon.png'), optimize=True)
+    # Ícone do app (app.json): o que aparece em Configurações > Apps e onde o launcher não usa o alias.
+    assets = os.path.join(RAIZ, 'assets')
+    legado('mare', 1024).save(os.path.join(assets, 'icone.png'), optimize=True)
+    primeiro_plano('mare', 1024).save(os.path.join(assets, 'icone-frente.png'), optimize=True)
+    monocromatico('mare', 1024).save(os.path.join(assets, 'icone-mono.png'), optimize=True)
+    simbolo_abertura().save(os.path.join(assets, 'splash.png'), optimize=True)
     print('ok:', RES, PREVIAS)
 
 

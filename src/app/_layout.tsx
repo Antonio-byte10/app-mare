@@ -73,6 +73,7 @@ export default function RootLayout() {
             <Stack.Screen name="lembretes" />
             <Stack.Screen name="privacidade" />
             <Stack.Screen name="dados" />
+            <Stack.Screen name="sobre" />
           </Stack.Protected>
         </Stack>
         <AvisoEscrita />

@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AnelAgua } from '@/components/AnelAgua';
+import { Botao } from '@/components/Botao';
 import { Icone } from '@/components/Icone';
 import { LinhaPendente } from '@/components/LinhaPendente';
 import { SeletorHabito } from '@/components/SeletorHabito';
@@ -11,6 +12,7 @@ import { Vazio } from '@/components/Vazio';
 import { resumoHabito } from '@/lib/contador';
 import { dataLocal } from '@/lib/datas';
 import { dataPorExtenso, saudacao, textoEconomia, textoFaltam, textoPendente } from '@/lib/inicio';
+import { deveSugerirBackup, primeiroUsoEm } from '@/lib/lembreteBackup';
 import { proximoMarco } from '@/lib/marcos';
 import { useAgora } from '@/lib/useAgora';
 import { useHabitoAtivo } from '@/lib/useHabitoAtivo';
@@ -23,6 +25,7 @@ export default function Inicio() {
   const ajustes = useMare((e) => e.ajustes);
   const avisoRecomeco = useMare((e) => e.avisoRecomeco);
   const dispensarAviso = useMare((e) => e.dispensarAvisoRecomeco);
+  const setAjustes = useMare((e) => e.setAjustes);
   const router = useRouter();
   const agora = useAgora();
 
@@ -41,6 +44,12 @@ export default function Inicio() {
   const pendente = textoPendente(resumo, hoje);
   const oculto = ajustes.ocultarNumeros;
   const faltam = textoFaltam(proximo);
+  const sugerirBackup = deveSugerirBackup({
+    agora,
+    primeiroUsoEm: primeiroUsoEm(habitos, relatos),
+    ultimoBackupEm: ajustes.ultimoBackupEm,
+    backupSugeridoEm: ajustes.backupSugeridoEm,
+  });
 
   return (
     <Tela rolavel>
@@ -87,7 +96,33 @@ export default function Inicio() {
           />
         </View>
       ) : null}
+
+      {sugerirBackup ? (
+        <CartaoBackup
+          aoFazer={() => router.push('/dados')}
+          aoAdiar={() => setAjustes({ backupSugeridoEm: Date.now() })}
+        />
+      ) : null}
     </Tela>
+  );
+}
+
+/** Sugestão gentil de backup: o app não guarda nada fora do celular, então trocar de aparelho apaga tudo. */
+function CartaoBackup({ aoFazer, aoAdiar }: { aoFazer: () => void; aoAdiar: () => void }) {
+  return (
+    <View style={styles.cartaoBackup}>
+      <Texto tipo="legenda" cor={cores.text}>
+        Seus registros ficam só neste celular. Que tal guardar uma cópia cifrada? Se você trocar de aparelho, ela evita começar do zero.
+      </Texto>
+      <View style={styles.cartaoBackupAcoes}>
+        <Botao onPress={aoFazer} style={styles.cartaoBackupBotao}>
+          Fazer backup
+        </Botao>
+        <Botao variante="texto" onPress={aoAdiar}>
+          Agora não
+        </Botao>
+      </View>
+    </View>
   );
 }
 
@@ -132,4 +167,15 @@ const styles = StyleSheet.create({
   },
   faixaTexto: { flex: 1, color: cores.text },
   faixaFechar: { padding: 4 },
+  cartaoBackup: {
+    gap: 10,
+    padding: 14,
+    marginTop: 22,
+    borderRadius: raio.md,
+    backgroundColor: comAlfa(cores.aqua, 0.06),
+    borderWidth: 1,
+    borderColor: comAlfa(cores.aqua, 0.22),
+  },
+  cartaoBackupAcoes: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cartaoBackupBotao: { minHeight: 44, flex: 1 },
 });

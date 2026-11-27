@@ -47,6 +47,36 @@ const deps = (buscar: Buscar, extra: Partial<DependenciasConversa> = {}): Depend
 });
 
 describe('conversarCom (modo direto)', () => {
+  it('Gemini 3.5 Flash Lite no limite: tenta o 3.1 Flash Lite com a mesma pergunta', async () => {
+    const buscar = vi.fn<Buscar>(async (url) =>
+      url.includes('gemini-3.5-flash-lite') ? resposta([], 429, '{"error":{"code":429,"message":"quota"}}') : resposta(GEMINI),
+    );
+    const ajustes = { ...direto(), modelo: 'gemini-3.5-flash-lite' };
+    const r = await conversarCom({ ajustes, historico }, deps(buscar));
+    expect(r).toEqual({ texto: 'Oi, estou aqui.', fim: 'ok' });
+    expect(buscar.mock.calls.map((c) => c[0].match(/models\/([^:]+)/)?.[1])).toEqual([
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite',
+    ]);
+  });
+
+  it('o 3.1 escolhido também tem o 3.5 de reserva; chave recusada não troca', async () => {
+    const limite = vi.fn<Buscar>(async (url) => (url.includes('gemini-3.1-flash-lite') ? resposta([], 503) : resposta(GEMINI)));
+    const r = await conversarCom({ ajustes: { ...direto(), modelo: 'gemini-3.1-flash-lite' }, historico }, deps(limite));
+    expect(r.fim).toBe('ok');
+    const chave = vi.fn<Buscar>(async () => resposta([], 401));
+    const r2 = await conversarCom({ ajustes: { ...direto(), modelo: 'gemini-3.5-flash-lite' }, historico }, deps(chave));
+    expect(r2).toMatchObject({ fim: 'erro', tipoErro: 'chave' });
+    expect(chave).toHaveBeenCalledTimes(1);
+  });
+
+  it('outros modelos não têm reserva', async () => {
+    const buscar = vi.fn<Buscar>(async () => resposta([], 429));
+    const r = await conversarCom({ ajustes: direto(), historico }, deps(buscar));
+    expect(r).toMatchObject({ fim: 'erro', tipoErro: 'limite' });
+    expect(buscar).toHaveBeenCalledTimes(1);
+  });
+
   it('devolve o texto, chama aoTexto com o acumulado e usa a instrução de sistema com o contexto', async () => {
     const buscar = vi.fn<Buscar>(async () => resposta(GEMINI));
     const vistos: string[] = [];

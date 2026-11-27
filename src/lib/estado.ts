@@ -32,6 +32,10 @@ export type Ajustes = {
   disfarce?: Disfarce;
   /** Esconde o conteúdo do app na lista de apps recentes e impede capturas de tela (FLAG_SECURE). */
   protegerTela?: boolean;
+  /** Quando foi feito o último backup cifrado (ms). Ausente = nunca. */
+  ultimoBackupEm?: number;
+  /** Quando o app sugeriu fazer backup pela última vez (ms), para não insistir. */
+  backupSugeridoEm?: number;
 };
 
 export type EstadoPersistido = {

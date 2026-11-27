@@ -22,6 +22,8 @@ import {
 import { confirmar } from '@/lib/confirmar';
 import { formatarData } from '@/lib/datas';
 import type { EstadoPersistido } from '@/lib/estado';
+import { textoUltimoBackup } from '@/lib/lembreteBackup';
+import { useAgora } from '@/lib/useAgora';
 import { useMare } from '@/store';
 import { comAlfa, cores, fontes } from '@/theme';
 
@@ -57,6 +59,9 @@ const porcentagem = (f: number) => `${Math.min(100, Math.round(f * 100))}%`;
 
 /** Backup cifrado, restaurar e apagar tudo (spec 5.2). */
 export default function Dados() {
+  const ultimoBackupEm = useMare((e) => e.ajustes.ultimoBackupEm);
+  const setAjustes = useMare((e) => e.setAjustes);
+  const agora = useAgora();
   // Backup
   const [fazendo, setFazendo] = useState(false);
   const [senha, setSenha] = useState('');
@@ -100,6 +105,8 @@ export default function Dados() {
       setSenha('');
       setRepeticao('');
       setFazendo(false);
+      // O backup foi criado e entregue ao "compartilhar" do Android: conta como feito.
+      if (compartilhou) setAjustes({ ultimoBackupEm: Date.now() });
       setStatusBackup(
         compartilhou
           ? { tipo: 'ok', texto: `Backup pronto (${nome}). Guarde o arquivo e a senha em lugares seguros: sem a senha, não dá para abrir.` }
@@ -213,6 +220,9 @@ export default function Dados() {
             </Texto>
 
             <Secao titulo="Fazer backup">
+              <Texto tipo="legenda" cor={cores.text}>
+                {textoUltimoBackup(ultimoBackupEm, agora)}
+              </Texto>
               {fazendo ? (
                 <>
                   <View style={styles.aviso}>

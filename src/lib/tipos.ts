@@ -90,6 +90,8 @@ export interface Fissura {
   habitoId?: string;
   /** "Anotar o que ajudou", texto livre opcional. */
   ajudou?: string;
+  /** O que puxou a onda, marcado com um toque no fim (pode pular). Ids de `GATILHOS_FISSURA`. */
+  gatilhos?: string[];
 }
 
 export type Halt = 'fome' | 'raiva' | 'solidao' | 'cansaco';

@@ -3,11 +3,14 @@ import { Animated, Easing, KeyboardAvoidingView, ScrollView, StyleSheet, TextInp
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Botao } from '@/components/Botao';
 import { CartaoCrise } from '@/components/CartaoCrise';
+import { Chip } from '@/components/Chip';
 import { Deslizador } from '@/components/Deslizador';
 import { Icone } from '@/components/Icone';
 import { Texto } from '@/components/Texto';
 import { detectarCrise } from '@/lib/crise';
 import { duracaoTexto } from '@/lib/fissura';
+import { GATILHOS_FISSURA } from '@/lib/gatilhos';
+import { alternarGatilho } from '@/lib/relato';
 import { RolarAoFim, useRolarAoFim } from '@/lib/rolagem';
 import { useReduzirMovimento } from '@/lib/useReduzirMovimento';
 import { cores, fontes, margemTela } from '@/theme';
@@ -19,9 +22,12 @@ type Props = {
   vontadeAntes?: number;
   vontadeDepois?: number;
   ajudou: string;
+  /** Ids marcados em "O que puxou a onda?" (ver `GATILHOS_FISSURA`). */
+  gatilhos: string[];
   aoMudarAntes: (v: number) => void;
   aoMudarDepois: (v: number) => void;
   aoMudarAjudou: (t: string) => void;
+  aoMudarGatilhos: (g: string[]) => void;
   aoVoltar: () => void;
 };
 
@@ -64,9 +70,11 @@ export function PassoPassou({
   vontadeAntes,
   vontadeDepois,
   ajudou,
+  gatilhos,
   aoMudarAntes,
   aoMudarDepois,
   aoMudarAjudou,
+  aoMudarGatilhos,
   aoVoltar,
 }: Props) {
   const reduzir = useReduzirMovimento();
@@ -135,6 +143,25 @@ export function PassoPassou({
             pontas={['nenhuma', 'muita']}
             accessibilityLabel="Vontade de agora, de 0 a 10"
           />
+        </View>
+
+        <View style={styles.gatilhos}>
+          <Texto style={styles.pergunta} accessibilityRole="header">
+            O que puxou a onda?
+          </Texto>
+          <Texto style={styles.dica}>Se quiser marcar. Pode pular.</Texto>
+          <View style={styles.chips}>
+            {GATILHOS_FISSURA.map((g) => (
+              <Chip
+                key={g.id}
+                ativo={gatilhos.includes(g.id)}
+                cor={cores.peri}
+                onPress={() => aoMudarGatilhos(alternarGatilho(gatilhos, g.id))}
+              >
+                {g.rotulo}
+              </Chip>
+            ))}
+          </View>
         </View>
 
         {anotando ? (
@@ -211,6 +238,9 @@ const styles = StyleSheet.create({
   perguntas: { marginTop: 20 },
   pergunta: { fontFamily: fontes.uiForte, fontSize: 13.5, lineHeight: 18, marginBottom: 12, color: cores.text },
   perguntaSeguinte: { marginTop: 16 },
+  gatilhos: { marginTop: 24 },
+  dica: { marginTop: -6, marginBottom: 12, fontSize: 12.5, lineHeight: 18, color: cores.muted },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   anotar: { marginTop: 22 },
   entrada: {
     minHeight: 84,

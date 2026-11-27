@@ -3,8 +3,11 @@ import {
   contarFissurasVencidas,
   deveRegistrarAoFechar,
   duracaoTexto,
+  ESPERA_SEG,
+  falarTempo,
   formatarContagem,
   montarFissura,
+  segundosRestantes,
   sortearPorque,
 } from './fissura';
 import type { Fissura, Porque } from './tipos';
@@ -67,6 +70,39 @@ describe('montarFissura', () => {
   });
   it('relógio andando para trás não gera duração negativa', () => {
     expect(montarFissura({ id: 'x', inicio: 9000, agora: 1000, venceu: false }).duracaoSeg).toBe(0);
+  });
+});
+
+describe('montarFissura com gatilhos', () => {
+  it('guarda só os ids conhecidos, sem repetir, e omite quando vazio', () => {
+    const r = montarFissura({ id: 'x', inicio: 0, agora: 0, venceu: true, gatilhos: ['celular', 'fome', 'nada', 'fome'] });
+    expect(r.gatilhos).toEqual(['fome', 'celular']);
+    expect('gatilhos' in montarFissura({ id: 'x', inicio: 0, agora: 0, venceu: true, gatilhos: [] })).toBe(false);
+    expect('gatilhos' in montarFissura({ id: 'x', inicio: 0, agora: 0, venceu: true, gatilhos: ['nada'] })).toBe(false);
+  });
+});
+
+describe('segundosRestantes', () => {
+  it('conta pelo relógio e arredonda para cima, sem passar de zero', () => {
+    expect(segundosRestantes(10_000, 0)).toBe(10);
+    expect(segundosRestantes(10_000, 400)).toBe(10);
+    expect(segundosRestantes(10_000, 9_001)).toBe(1);
+    expect(segundosRestantes(10_000, 10_000)).toBe(0);
+    expect(segundosRestantes(10_000, 90_000)).toBe(0);
+  });
+  it('voltar do segundo plano depois de 4 min com 10 min de espera mostra 6 min', () => {
+    const fim = 1_000_000 + ESPERA_SEG * 1000;
+    expect(segundosRestantes(fim, 1_000_000 + 240_000)).toBe(360);
+  });
+});
+
+describe('falarTempo', () => {
+  it('lê o tempo por extenso, no singular quando for 1', () => {
+    expect(falarTempo(432)).toBe('7 minutos e 12 segundos');
+    expect(falarTempo(61)).toBe('1 minuto e 1 segundo');
+    expect(falarTempo(600)).toBe('10 minutos');
+    expect(falarTempo(45)).toBe('45 segundos');
+    expect(falarTempo(-3)).toBe('0 segundos');
   });
 });
 
