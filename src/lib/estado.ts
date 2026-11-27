@@ -1,6 +1,9 @@
 import { normalizarRelatoHabito } from './contador';
 import type {
+  AjustesBloqueio,
   AjustesIa,
+  AjustesLembretes,
+  Disfarce,
   Avaliacao,
   Contato,
   Fissura,
@@ -21,6 +24,12 @@ export type Ajustes = {
   contatosEmergencia: boolean;
   /** IA configurada. Sem isso, a aba Conversa não aparece. */
   ia?: AjustesIa;
+  /** Plano 3. Ausente = padrão; leia sempre por `lembretesDe` / `bloqueioDe` / `disfarceDe` (src/lib/preferencias.ts). */
+  lembretes?: AjustesLembretes;
+  bloqueio?: AjustesBloqueio;
+  disfarce?: Disfarce;
+  /** Esconde o conteúdo do app na lista de apps recentes e impede capturas de tela (FLAG_SECURE). */
+  protegerTela?: boolean;
 };
 
 export type EstadoPersistido = {

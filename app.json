@@ -24,8 +24,14 @@
       "expo-router",
       "expo-font",
       "./plugins/with-short-cmake-paths",
-      ["expo-sqlite", { "useSQLCipher": true }],
-      "expo-secure-store"
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      "expo-secure-store",
+      "expo-sharing"
     ]
   }
 }

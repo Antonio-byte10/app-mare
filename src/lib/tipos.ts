@@ -134,3 +134,28 @@ export interface AjustesIa {
   /** A pessoa já viu o aviso de privacidade deste provedor. */
   avisoVisto: boolean;
 }
+
+/** "HH:MM", 24 h. */
+export type Horario = string;
+
+export interface AjustesLembretes {
+  /** Relato do dia (padrão 22:00). */
+  relato: { ligado: boolean; hora: Horario };
+  /** Bom dia com uma frase calma (padrão 08:00). */
+  bomDia: { ligado: boolean; hora: Horario };
+  /** Lembrete gentil 30 min antes do horário de maior vontade, aprendido do diário. */
+  antesDaOnda: boolean;
+  /** Aviso quando um marco chega. */
+  marcos: boolean;
+}
+
+export interface AjustesBloqueio {
+  ligado: boolean;
+  /** Usar digital/rosto do aparelho; o PIN é sempre a reserva. */
+  biometria: boolean;
+  /** Bloqueia ao voltar ao app depois de N minutos fora (0 = sempre). */
+  aposMinutos: number;
+}
+
+/** Nome e ícone que aparecem na tela do celular e nas notificações. */
+export type Disfarce = 'mare' | 'diario' | 'notas' | 'calma';

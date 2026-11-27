@@ -94,7 +94,29 @@ export default function Mais() {
         onPress={() => router.push('/ia')}
       />
 
+      <GrupoAjuste>Lembretes</GrupoAjuste>
+      <LinhaAjuste
+        titulo="Lembretes"
+        subtitulo="relato do dia, bom dia, antes da onda e marcos, com texto discreto"
+        icone="sino"
+        onPress={() => router.push('/lembretes')}
+      />
+
       <GrupoAjuste>Privacidade</GrupoAjuste>
+      <LinhaAjuste
+        titulo="Bloqueio e disfarce"
+        subtitulo="digital ou PIN, nome e ícone neutros, telas protegidas"
+        icone="cadeado"
+        onPress={() => router.push('/privacidade')}
+      />
+      <DivisorAjuste />
+      <LinhaAjuste
+        titulo="Backup e dados"
+        subtitulo="cópia cifrada com senha, restaurar ou apagar tudo"
+        icone="notas"
+        onPress={() => router.push('/dados')}
+      />
+      <DivisorAjuste />
       <LinhaAjuste
         titulo="Ocultar números"
         subtitulo="esconde dias, recorde e economia no Início"
