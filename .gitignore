@@ -46,3 +46,6 @@ yarn-error.*
 # ferramentas locais
 .omc/
 .superpowers/
+
+# Saída de build do módulo local
+modules/*/android/build/
