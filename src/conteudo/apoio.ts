@@ -2,8 +2,10 @@
  * Rede de apoio no Brasil (spec 6.6; docs/01-pesquisa-fundamentos.md, seção 5).
  *
  * ATENÇÃO: telefones e links mudam. Conferir tudo antes de cada Release (última conferência dos
- * links: 26/11/2026). O DASA não tem um site nacional confirmado: o link aponta para o site
- * internacional da irmandade (SLAA), em português; trocar quando houver um endereço oficial.
+ * links: 26/11/2026). O DASA não tem um site nacional confirmado: o link aponta para o texto de
+ * apresentação em português no site internacional da irmandade (SLAA); trocar quando houver um
+ * endereço oficial. O AA (aa.org.br) tem buscador de reuniões; o telefone nacional não foi incluído
+ * porque só aparece em diretórios de terceiros.
  */
 export type GrupoApoio = 'Ajuda agora' | 'Saúde pública (SUS)' | 'Grupos de apoio';
 
@@ -104,8 +106,8 @@ export const RECURSOS: Recurso[] = [
     grupo: 'Grupos de apoio',
     nome: 'DASA',
     descricao: 'Dependentes de Amor e Sexo Anônimos: grupos gratuitos de apoio para quem sofre com o comportamento sexual compulsivo.',
-    url: 'https://slaafws.org',
-    rotuloUrl: 'Saiba mais',
+    url: 'https://slaafws.org/lang/portuguese/Preambulo.pdf',
+    rotuloUrl: 'Ler a apresentação',
     nota: 'Busque por "DASA" e o nome da sua cidade para achar reuniões.',
   },
   {
