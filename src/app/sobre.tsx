@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
 import { Fundo } from '@/components/Fundo';
 import { Icone } from '@/components/Icone';
+import { Simbolo } from '@/components/Simbolo';
 import { DivisorAjuste, GrupoAjuste, LinhaAjuste } from '@/components/LinhaAjuste';
 import { Tela } from '@/components/Tela';
 import { Texto } from '@/components/Texto';
@@ -47,9 +48,11 @@ export default function Sobre() {
         <TopoTela titulo="Sobre o Maré" />
         <ScrollView style={styles.flex} contentContainerStyle={styles.rolagem} showsVerticalScrollIndicator={false}>
           <View style={styles.identidade}>
-            <Texto tipo="titulo">Maré</Texto>
-            <Texto tipo="legenda">Versão {versao}</Texto>
-            <Texto tipo="legenda">Feito como projeto aberto e gratuito.</Texto>
+            <Simbolo tamanho={56} />
+            <View style={styles.flex}>
+              <Texto tipo="rotulo">Versão {versao}</Texto>
+              <Texto tipo="legenda">Feito como projeto aberto e gratuito.</Texto>
+            </View>
           </View>
 
           <View style={styles.aviso} accessible accessibilityLabel="Aviso sobre a versão beta">
@@ -133,7 +136,7 @@ export default function Sobre() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   rolagem: { paddingTop: 18, paddingBottom: 48, gap: 6 },
-  identidade: { gap: 4, marginBottom: 12 },
+  identidade: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 8, marginBottom: 12 },
   bloco: { gap: 10, marginTop: 6 },
   botao: { minHeight: 48 },
   mensagem: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },

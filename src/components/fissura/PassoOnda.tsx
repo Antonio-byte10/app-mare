@@ -37,6 +37,8 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const [restante, setRestante] = useState(ONDA_SEG);
+  // Com a espera de 10 minutos ligada, um relógio só na tela: o dela.
+  const [esperando, setEsperando] = useState(false);
   const [dificil, setDificil] = useState(false);
   // Voltar do Android fecha o painel "Ainda difícil" antes de fechar a Fissura.
   useVoltarInterno(dificil, () => setDificil(false));
@@ -66,13 +68,15 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
         <Texto tipo="rotulo" style={styles.centro}>
           {acabou ? 'Você ficou até aqui' : 'A onda está descendo'}
         </Texto>
-        <Texto
-          style={styles.tempo}
-          accessible
-          accessibilityLabel={acabou ? 'Os 3 minutos terminaram' : `Faltam ${falaTempo}`}
-        >
-          {formatarContagem(restante)}
-        </Texto>
+        {esperando ? null : (
+          <Texto
+            style={styles.tempo}
+            accessible
+            accessibilityLabel={acabou ? 'Os 3 minutos terminaram' : `Faltam ${falaTempo}`}
+          >
+            {formatarContagem(restante)}
+          </Texto>
+        )}
         <Texto style={styles.frase}>{'A vontade sobe, chega ao pico\ne passa. Você só precisa ficar.'}</Texto>
 
         {porque ? (
@@ -99,7 +103,7 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
           </View>
         )}
 
-        <EsperaDezMinutos />
+        <EsperaDezMinutos aoMudar={setEsperando} />
       </ScrollView>
 
       <Mar altura={150 + Math.max(bottom, 12) - 12}>

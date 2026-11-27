@@ -12,7 +12,8 @@ import { comAlfa, cores, fontes, raio } from '@/theme';
  * soma de ticks: voltar do segundo plano mostra o tempo certo. Ao chegar a zero só convida a seguir
  * para "Passou" (não navega sozinha). Sem animação: o avanço da barra é por passo de 1 s.
  */
-export function EsperaDezMinutos() {
+/** `aoMudar` avisa quando a espera começa ou é cancelada (o passo esconde o outro relógio). */
+export function EsperaDezMinutos({ aoMudar }: { aoMudar?: (esperando: boolean) => void } = {}) {
   // Início da espera, em ms; `null` = ainda não começou (ou foi cancelada).
   const [fim, setFim] = useState<number | null>(null);
   const [restante, setRestante] = useState(ESPERA_SEG);
@@ -45,6 +46,7 @@ export function EsperaDezMinutos() {
     avisou.current = false;
     setRestante(ESPERA_SEG);
     setFim(Date.now() + ESPERA_SEG * 1000);
+    aoMudar?.(true);
   };
 
   if (fim === null) {
@@ -84,7 +86,10 @@ export function EsperaDezMinutos() {
       </Texto>
       <Botao
         variante="texto"
-        onPress={() => setFim(null)}
+        onPress={() => {
+          setFim(null);
+          aoMudar?.(false);
+        }}
         accessibilityLabel={acabou ? 'Fechar a contagem de 10 minutos' : 'Cancelar a espera de 10 minutos'}
       >
         {acabou ? 'Fechar' : 'Cancelar'}
