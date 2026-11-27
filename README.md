@@ -19,7 +19,7 @@ O **Maré** ajuda quem quer **parar ou diminuir** três hábitos:
 
 Muitos apps de acompanhamento cobram para funcionar de verdade. Aqui tudo é livre, porque as pessoas merecem isso.
 
-> **Status:** em desenvolvimento (versão 0.2.0). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e entregar os lembretes, o bloqueio e o disfarce.
+> **Status:** em desenvolvimento (versão 0.3.0). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Também prontos: lembretes discretos, bloqueio por PIN ou digital, disfarce de nome e ícone e backup cifrado. Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e preparar o lançamento.
 
 ## Por que "Maré"
 
@@ -92,7 +92,7 @@ O app **informa e incentiva a procurar ajuda**, mas **não diagnostica, não pre
 |---|---|---|
 | ✓ | [1 · Núcleo diário](docs/superpowers/plans/2026-11-26-mare-plano-1-nucleo.md) | Hábitos, relato diário, contador, início, calendário, marcos, dados criptografados |
 | ✓ | 2 · Primeiro uso e cuidado | Avaliação "Como você está", fissura em 3 passos, porquês, biblioteca |
-| ○ | 3 · Lembretes e privacidade | Notificações discretas, "antes da onda", bloqueio, disfarce, backup cifrado |
+| ✓ | 3 · Lembretes e privacidade | Notificações discretas, "antes da onda", bloqueio, disfarce, backup cifrado |
 | ✓ | 4 · IA de cada um | Conversa com Gemini, ChatGPT ou Claude, servidor opcional no Render |
 | ○ | 5 · Lançamento | APK no GitHub, primeira versão beta |
 

@@ -3,13 +3,13 @@
     "name": "Maré",
     "slug": "mare",
     "scheme": "mare",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#071526",
     "android": {
       "package": "com.mare.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "allowBackup": false,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
