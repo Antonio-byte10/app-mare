@@ -67,4 +67,26 @@ describe('protegerArmazenamento', () => {
     expect(base.dados).toEqual({ a: '1' });
     expect(tentativas).toBe(2);
   });
+
+  it('escrita que falha não vira erro solto: avisa, e avisa de novo quando volta a dar certo', async () => {
+    const base = interno();
+    let cheio = true;
+    const setOriginal = base.setItem;
+    base.setItem = async (nome, valor) => {
+      if (cheio) throw new Error('SQLITE_FULL');
+      return setOriginal(nome, valor);
+    };
+    const { storage, escritaFalhou, aoMudarEscrita, falhou } = protegerArmazenamento(async () => base);
+    const avisos: boolean[] = [];
+    aoMudarEscrita((f) => avisos.push(f));
+    await expect(storage.setItem('a', '1')).resolves.toBeUndefined();
+    await storage.setItem('a', '2');
+    expect(escritaFalhou()).toBe(true);
+    expect(falhou()).toBe(false);
+    cheio = false;
+    await storage.setItem('a', '3');
+    expect(escritaFalhou()).toBe(false);
+    expect(avisos).toEqual([true, false]);
+    expect(base.dados).toEqual({ a: '3' });
+  });
 });

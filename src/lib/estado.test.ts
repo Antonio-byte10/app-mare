@@ -10,6 +10,8 @@ import {
   paraPersistir,
   VERSAO_ESTADO,
 } from './estado';
+import { resumoHabito } from './contador';
+import { economia } from './marcos';
 import type { Habito, Relato } from './tipos';
 
 const habito = (id: string): Habito => ({
@@ -71,6 +73,81 @@ describe('aplicarRemocaoHabito', () => {
     expect(depois.relatos).toHaveLength(1);
     expect(depois.relatos[0].dia).toBe('2026-02-02');
     expect(depois.relatos[0].habitos.map((x) => x.habitoId)).toEqual(['b']);
+  });
+
+  it('mantém o dia que tem humor, gatilhos ou nota, e solta planos e fissuras do hábito', () => {
+    let e = aplicarHabito(aplicarHabito(estadoInicial(), habito('a')), habito('b'));
+    e = aplicarRelato(e, { ...relato('2026-02-01', 'a'), nota: 'dia difícil' });
+    e = aplicarRelato(e, { ...relato('2026-02-02', 'a'), gatilhos: ['Tédio'] });
+    e = aplicarRelato(e, { ...relato('2026-02-03', 'a'), humor: 2 });
+    e = aplicarRelato(e, relato('2026-02-04', 'a'));
+    e = {
+      ...e,
+      planos: [
+        { id: 'p1', se: 'x', entao: 'y', habitoId: 'a', criadoEm: 1 },
+        { id: 'p2', se: 'x', entao: 'y', habitoId: 'b', criadoEm: 1 },
+      ],
+      fissuras: [{ id: 'f1', inicio: 1, duracaoSeg: 60, venceu: true, habitoId: 'a' }],
+    };
+    const depois = aplicarRemocaoHabito(e, 'a');
+    expect(depois.relatos.map((r) => r.dia)).toEqual(['2026-02-01', '2026-02-02', '2026-02-03']);
+    expect(depois.relatos.every((r) => r.habitos.length === 0)).toBe(true);
+    expect(depois.planos.map((p) => p.habitoId)).toEqual([undefined, 'b']);
+    expect(depois.fissuras[0].habitoId).toBeUndefined();
+  });
+});
+
+describe('mudar a meta não reescreve o passado', () => {
+  const reduzir: Habito = {
+    ...habito('r'),
+    meta: { tipo: 'reduzir', maxPorDia: 3, unidade: 'cigarros' },
+    unidadesPorDia: 10,
+    custoPorDiaCentavos: 1000,
+  };
+  const comQuantidade = (dia: string, quantidade: number): Relato => ({
+    dia,
+    habitos: [{ habitoId: 'r', vontade: 3, usou: true, quantidade }],
+    gatilhos: [],
+    salvoEm: 1,
+  });
+  const dias = ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04', '2026-01-05'];
+
+  it('relatos novos guardam o estado do dia', () => {
+    const e = aplicarRelato(aplicarHabito(estadoInicial(), reduzir), comQuantidade('2026-01-01', 2));
+    expect(e.relatos[0].habitos[0].estado).toBe('dentroDaMeta');
+  });
+
+  it('sequência e economia continuam iguais depois de trocar para "parar" ou baixar o limite', () => {
+    let e = aplicarHabito(estadoInicial(), reduzir);
+    for (const d of dias) e = aplicarRelato(e, comQuantidade(d, 2));
+    const antes = resumoHabito(reduzir, e.relatos, '2026-01-05');
+    const economiaAntes = economia(reduzir, e.relatos, '2026-01-05');
+    expect(antes.sequenciaAtual).toBe(5);
+
+    for (const nova of [{ tipo: 'parar' } as const, { tipo: 'reduzir', maxPorDia: 1, unidade: 'cigarros' } as const]) {
+      const editado = { ...reduzir, meta: nova };
+      const depois = aplicarHabito(e, editado);
+      expect(resumoHabito(editado, depois.relatos, '2026-01-05').sequenciaAtual).toBe(5);
+      expect(resumoHabito(editado, depois.relatos, '2026-01-05').recorde).toBe(antes.recorde);
+      if (nova.tipo === 'reduzir') expect(economia(editado, depois.relatos, '2026-01-05')).toEqual(economiaAntes);
+    }
+  });
+
+  it('relatos antigos sem estado gravado são congelados com a meta antiga ao trocar a meta', () => {
+    let e = aplicarHabito(estadoInicial(), reduzir);
+    e = { ...e, relatos: dias.map((d) => comQuantidade(d, 2)) }; // como vinham de versões antigas
+    const editado = { ...reduzir, meta: { tipo: 'parar' } as const };
+    const depois = aplicarHabito(e, editado);
+    expect(depois.relatos.every((r) => r.habitos[0].estado === 'dentroDaMeta')).toBe(true);
+    expect(resumoHabito(editado, depois.relatos, '2026-01-05').sequenciaAtual).toBe(5);
+  });
+
+  it('depois da troca, um dia novo é avaliado com a meta nova', () => {
+    let e = aplicarHabito(estadoInicial(), reduzir);
+    e = aplicarRelato(e, comQuantidade('2026-01-01', 2));
+    const editado = { ...reduzir, meta: { tipo: 'parar' } as const };
+    e = aplicarRelato(aplicarHabito(e, editado), comQuantidade('2026-01-02', 2));
+    expect(e.relatos.map((r) => r.habitos[0].estado)).toEqual(['dentroDaMeta', 'deslize']);
   });
 });
 

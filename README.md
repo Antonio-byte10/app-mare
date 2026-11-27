@@ -19,7 +19,7 @@ O **Maré** ajuda quem quer **parar ou diminuir** três hábitos:
 
 Muitos apps de acompanhamento cobram para funcionar de verdade. Aqui tudo é livre, porque as pessoas merecem isso.
 
-> **Status:** em desenvolvimento (versão 0.3.0). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Também prontos: lembretes discretos, bloqueio por PIN ou digital, disfarce de nome e ícone e backup cifrado. Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e preparar o lançamento.
+> **Status:** em desenvolvimento (versão 0.4.0, revisão de bugs rumo à 1.0: [o que falta](docs/superpowers/plans/2026-11-27-mare-rumo-1.0.md)). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Também prontos: lembretes discretos, bloqueio por PIN ou digital, disfarce de nome e ícone e backup cifrado. Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e preparar o lançamento.
 
 ## Por que "Maré"
 

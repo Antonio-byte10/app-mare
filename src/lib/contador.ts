@@ -25,6 +25,13 @@ export function estadoDoDia(meta: Meta, r: RelatoHabito): EstadoDia {
   return r.quantidade <= meta.maxPorDia ? 'dentroDaMeta' : 'deslize';
 }
 
+const ESTADOS: readonly EstadoDia[] = ['livre', 'dentroDaMeta', 'deslize'];
+
+/** O estado gravado no relato (com a meta daquele dia) ou, nos relatos antigos, o da meta atual. */
+export function estadoDaEntrada(meta: Meta, r: RelatoHabito): EstadoDia {
+  return r.estado !== undefined && ESTADOS.includes(r.estado) ? r.estado : estadoDoDia(meta, r);
+}
+
 /** Vontade inteira de 0 a 10 (NaN vira 0); quantidade nunca negativa. */
 export function normalizarRelatoHabito(r: RelatoHabito): RelatoHabito {
   const vontade = Number.isFinite(r.vontade) ? Math.min(10, Math.max(0, Math.round(r.vontade))) : 0;
@@ -46,7 +53,7 @@ export function resumoHabito(h: Habito, relatos: Relato[], hoje: string): Resumo
     if (relato.dia < h.inicio || relato.dia > hoje) continue;
     const entrada = relato.habitos.find((x) => x.habitoId === h.id);
     if (!entrada) continue;
-    estados[relato.dia] = estadoDoDia(h.meta, normalizarRelatoHabito(entrada));
+    estados[relato.dia] = estadoDaEntrada(h.meta, normalizarRelatoHabito(entrada));
   }
 
   // "Já estou há N dias": os dias de antes do início entram na sequência (até o primeiro deslize),

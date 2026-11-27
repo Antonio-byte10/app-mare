@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AjustesIa } from '../tipos';
 import { mensagemDoErro } from './erros';
-import { prepararHistorico } from './historico';
+import { MAX_CARACTERES_HISTORICO, MAX_CARACTERES_MENSAGEM, prepararHistorico } from './historico';
 import { INSTRUCAO_SISTEMA, montarSistema } from './instrucoes';
 import { conversarCom, type DependenciasConversa } from './nucleo';
 import { enderecoValido, normalizarEndereco, testarServidor } from './servidor';
@@ -255,6 +255,14 @@ describe('prepararHistorico', () => {
       { papel: 'usuario', texto: 'a\n\nb' },
       { papel: 'ia', texto: 'c' },
     ]);
+  });
+  it('corta mensagens enormes e larga as mais antigas para caber no limite do servidor', () => {
+    const longa = (p: 'usuario' | 'ia', letra: string) => ({ papel: p, texto: letra.repeat(9000) });
+    const h = prepararHistorico([longa('usuario', 'a'), longa('ia', 'b'), longa('usuario', 'c'), longa('ia', 'd'), longa('usuario', 'e')]);
+    for (const m of h) expect(m.texto.length).toBeLessThanOrEqual(MAX_CARACTERES_MENSAGEM + 1);
+    expect(h.reduce((s, m) => s + m.texto.length, 0)).toBeLessThanOrEqual(MAX_CARACTERES_HISTORICO + h.length);
+    expect(h[0]!.papel).toBe('usuario');
+    expect(h[h.length - 1]!.texto.endsWith('e')).toBe(true);
   });
 });
 

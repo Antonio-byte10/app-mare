@@ -28,9 +28,21 @@ export function PedirPin({ titulo, descricao, aoConfirmar, aoCancelar }: Props) 
   const [verificando, setVerificando] = useState(false);
   const [agora, setAgora] = useState(() => Date.now());
 
+  // Lê o PIN guardado (e de novo quando a pessoa pede "Tentar de novo").
+  const [leitura, setLeitura] = useState(0);
   useEffect(() => {
-    lerPin().then(setRegistro);
-  }, []);
+    let ativo = true;
+    lerPin().then((r) => ativo && setRegistro(r));
+    return () => {
+      ativo = false;
+    };
+  }, [leitura]);
+  const tentarDeNovo = () => {
+    setRegistro(undefined);
+    setLeitura((n) => n + 1);
+  };
+  // Cofre sem resposta ou sem PIN: o teclado não tem o que conferir, então oferece tentar de novo.
+  const semPin = registro === 'erro' || registro === null;
 
   const objeto = registro && registro !== 'erro' ? registro : null;
   const restante = objeto ? restanteDaEspera(objeto, agora) : 0;
@@ -62,7 +74,7 @@ export function PedirPin({ titulo, descricao, aoConfirmar, aoCancelar }: Props) 
   };
 
   const mensagem =
-    registro === 'erro'
+    semPin
       ? 'Não consegui acessar o cofre deste aparelho. Tente de novo.'
       : restante > 0
         ? `Muitas tentativas. Tente de novo em ${formatarEspera(restante)}.`
@@ -95,6 +107,11 @@ export function PedirPin({ titulo, descricao, aoConfirmar, aoCancelar }: Props) 
           </Texto>
         ) : null}
       </View>
+      {semPin ? (
+        <Botao variante="texto" onPress={tentarDeNovo}>
+          Tentar de novo
+        </Botao>
+      ) : null}
       <Botao variante="texto" onPress={aoCancelar}>
         Voltar
       </Botao>

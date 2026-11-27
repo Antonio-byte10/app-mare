@@ -30,11 +30,19 @@ export function brParaIso(texto: string): Resultado<string> {
 /** "2026-11-24" -> "24/11/2026". */
 export const isoParaBr = (iso: string) => iso.split('-').reverse().join('/');
 
-/** Data de início: formato válido e não futura (`hoje` é "AAAA-MM-DD"). */
+/** Quantos anos para trás o início pode ir. Mais que isso é quase sempre erro de digitação. */
+export const MAX_ANOS_INICIO = 20;
+
+/**
+ * Data de início: formato válido, não futura e de no máximo `MAX_ANOS_INICIO` anos atrás (`hoje` é
+ * "AAAA-MM-DD"). O contador percorre dia a dia desde o início: "01/01/1900" travaria as telas.
+ */
 export function validarInicio(texto: string, hoje = dataLocal(new Date())): Resultado<string> {
   const r = brParaIso(texto);
   if (r.erro !== undefined) return r;
   if (r.valor > hoje) return { erro: 'A data não pode ser no futuro.' };
+  const limite = `${Number(hoje.slice(0, 4)) - MAX_ANOS_INICIO}${hoje.slice(4)}`;
+  if (r.valor < limite) return { erro: `Use uma data dos últimos ${MAX_ANOS_INICIO} anos.` };
   return r;
 }
 
@@ -47,13 +55,11 @@ export function inteiroPositivo(texto: string, obrigatorio = false): Resultado<n
 }
 
 /**
- * `true` se a edição muda como os relatos já salvos são lidos (tipo, tipo de meta, limite por dia
- * ou início): os dias anteriores são recalculados com a nova regra.
+ * `true` se a edição muda quais relatos contam: só a data de início faz isso. Mudar a meta não
+ * reescreve o passado (cada relato guarda o estado do dia com a meta de então).
  */
 export function recalculaHistorico(antigo: Habito, novo: Habito): boolean {
-  if (antigo.tipo !== novo.tipo || antigo.inicio !== novo.inicio) return true;
-  if (antigo.meta.tipo !== novo.meta.tipo) return true;
-  return antigo.meta.tipo === 'reduzir' && novo.meta.tipo === 'reduzir' && antigo.meta.maxPorDia !== novo.meta.maxPorDia;
+  return antigo.inicio !== novo.inicio;
 }
 
 /** Limite de "Já estou há N dias": dez anos bastam e evitam números absurdos. */

@@ -6,6 +6,8 @@ import { Texto } from './Texto';
 
 const RAIO_BOLA = 14;
 const ALTURA_TRILHA = 4;
+/** Quanto o dedo anda (dp) antes de decidir se é arrasto do deslizador ou rolagem da tela. */
+const LIMITE_ARRASTO = 8;
 
 type Props = {
   valor: number;
@@ -26,8 +28,9 @@ type Props = {
 export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessibilityLabel, style }: Props) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const [largura, setLargura] = useState(0);
-  // Ponto do toque no início do arrasto (só lido nos eventos).
-  const toque = useRef({ x: 0, pagina: 0 });
+  // Ponto do toque no início do arrasto e em que fase o gesto está (só lidos nos eventos):
+  // 'pendente' (ainda não se sabe se é toque, arrasto ou rolagem), 'arrastando' (horizontal) ou 'cancelado' (rolagem).
+  const toque = useRef({ x: 0, pagina: 0, paginaY: 0, ultimoX: 0, fase: 'pendente' as 'pendente' | 'arrastando' | 'cancelado' });
 
   const util = Math.max(0, largura - 2 * RAIO_BOLA);
   const passoEm = (x: number) => {
@@ -47,14 +50,41 @@ export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessi
       <View
         onStartShouldSetResponder={() => true}
         onMoveShouldSetResponder={() => true}
-        // Dentro de uma lista rolável, o arrasto fica com o deslizador.
-        onResponderTerminationRequest={() => false}
+        // Enquanto não é um arrasto horizontal, a lista rolável pode tomar o gesto (rolagem vertical que
+        // começou em cima do deslizador não muda a resposta); depois de reconhecido, o arrasto fica com ele.
+        onResponderTerminationRequest={() => toque.current.fase !== 'arrastando'}
         onResponderGrant={(e) => {
-          toque.current = { x: e.nativeEvent.locationX, pagina: e.nativeEvent.pageX };
-          // Tocar conta como resposta mesmo no valor que já estava (ex.: confirmar 0).
-          onChange(passoEm(toque.current.x));
+          const { locationX, pageX, pageY } = e.nativeEvent;
+          // Nada é gravado ao encostar: o valor só muda quando o gesto se define.
+          toque.current = { x: locationX, pagina: pageX, paginaY: pageY, ultimoX: locationX, fase: 'pendente' };
         }}
-        onResponderMove={(e) => mudar(passoEm(toque.current.x + e.nativeEvent.pageX - toque.current.pagina))}
+        onResponderMove={(e) => {
+          const t = toque.current;
+          if (t.fase === 'cancelado') return;
+          const dx = e.nativeEvent.pageX - t.pagina;
+          const dy = e.nativeEvent.pageY - t.paginaY;
+          t.ultimoX = t.x + dx;
+          if (t.fase === 'pendente') {
+            if (Math.abs(dx) > LIMITE_ARRASTO && Math.abs(dx) >= Math.abs(dy)) {
+              t.fase = 'arrastando';
+            } else if (Math.abs(dy) > LIMITE_ARRASTO) {
+              t.fase = 'cancelado';
+              return;
+            } else {
+              return;
+            }
+          }
+          mudar(passoEm(t.ultimoX));
+        }}
+        onResponderRelease={() => {
+          const t = toque.current;
+          // Toque (sem arrasto nem rolagem): conta como resposta mesmo no valor que já estava (ex.: confirmar 0).
+          if (t.fase === 'pendente') onChange(passoEm(t.x));
+          t.fase = 'cancelado';
+        }}
+        onResponderTerminate={() => {
+          toque.current.fase = 'cancelado';
+        }}
         onLayout={(e) => setLargura(e.nativeEvent.layout.width)}
         accessible
         accessibilityRole="adjustable"

@@ -11,12 +11,15 @@ import { CVV, SAMU } from '@/conteudo/apoio';
 import { formatarContagem, ONDA_SEG } from '@/lib/fissura';
 import { acoesDoPlano, frasePlano } from '@/lib/plano';
 import type { Porque } from '@/lib/tipos';
+import { useVoltarInterno } from '@/lib/useVoltarInterno';
 import { useMare } from '@/store';
 import { cores, fontes, margemTela } from '@/theme';
 
 type Props = {
   porque?: Porque;
   habitoId?: string;
+  /** Aberta pela tela de bloqueio: sem links para telas privadas (Meu plano, Conversa). */
+  daTrancada?: boolean;
   aoPassou: () => void;
   aoRespirarDeNovo: () => void;
 };
@@ -29,11 +32,13 @@ const ligar = (numero: string) => {
  * Passo 2, "Surfe a onda": contagem de 3 minutos, a frase da onda, o porquê da pessoa e o mar com
  * "Ainda difícil" / "Passou". "Ainda difícil" abre as saídas: respirar de novo, o plano, a IA e CVV/SAMU.
  */
-export function PassoOnda({ porque, habitoId, aoPassou, aoRespirarDeNovo }: Props) {
+export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRespirarDeNovo }: Props) {
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const [restante, setRestante] = useState(ONDA_SEG);
   const [dificil, setDificil] = useState(false);
+  // Voltar do Android fecha o painel "Ainda difícil" antes de fechar a Fissura.
+  useVoltarInterno(dificil, () => setDificil(false));
 
   useEffect(() => {
     const fim = Date.now() + ONDA_SEG * 1000;
@@ -55,6 +60,7 @@ export function PassoOnda({ porque, habitoId, aoPassou, aoRespirarDeNovo }: Prop
         showsVerticalScrollIndicator={false}
         // Esconde o conteúdo de trás para quem usa leitor de tela enquanto o painel está aberto.
         importantForAccessibility={dificil ? 'no-hide-descendants' : 'auto'}
+        accessibilityElementsHidden={dificil}
       >
         <Texto tipo="rotulo" style={styles.centro}>
           {acabou ? 'Você ficou até aqui' : 'A onda está descendo'}
@@ -79,20 +85,27 @@ export function PassoOnda({ porque, habitoId, aoPassou, aoRespirarDeNovo }: Prop
             <Texto style={styles.semPorque}>
               Ainda não há um porquê por aqui. Escrever um pode ajudar nas próximas ondas.
             </Texto>
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel="Escrever meu porquê, abre Meu plano"
-              onPress={() => router.push('/plano')}
-              style={styles.linkPlano}
-            >
-              <Texto style={styles.linkTexto}>Escrever em Meu plano</Texto>
-            </Pressable>
+            {daTrancada ? null : (
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Escrever meu porquê, abre Meu plano"
+                onPress={() => router.push('/plano')}
+                style={styles.linkPlano}
+              >
+                <Texto style={styles.linkTexto}>Escrever em Meu plano</Texto>
+              </Pressable>
+            )}
           </View>
         )}
       </ScrollView>
 
       <Mar altura={150 + Math.max(bottom, 12) - 12}>
-        <View style={[styles.botoes, { bottom: Math.max(bottom, 12) + 10 }]}>
+        <View
+          style={[styles.botoes, { bottom: Math.max(bottom, 12) + 10 }]}
+          // Com o painel aberto, "Passou" e "Ainda difícil" ficam fora do alcance do leitor de tela.
+          importantForAccessibility={dificil ? 'no-hide-descendants' : 'auto'}
+          accessibilityElementsHidden={dificil}
+        >
           <Botao variante="secundario" onPress={() => setDificil(true)} style={styles.ainda}>
             Ainda difícil
           </Botao>
@@ -105,6 +118,7 @@ export function PassoOnda({ porque, habitoId, aoPassou, aoRespirarDeNovo }: Prop
       {dificil ? (
         <PainelDificil
           habitoId={habitoId}
+          daTrancada={daTrancada}
           aoFechar={() => setDificil(false)}
           aoRespirarDeNovo={() => {
             setDificil(false);
@@ -116,10 +130,10 @@ export function PassoOnda({ porque, habitoId, aoPassou, aoRespirarDeNovo }: Prop
   );
 }
 
-type PainelProps = { habitoId?: string; aoFechar: () => void; aoRespirarDeNovo: () => void };
+type PainelProps = { habitoId?: string; daTrancada: boolean; aoFechar: () => void; aoRespirarDeNovo: () => void };
 
 /** "Ainda difícil": o que fazer agora, uma saída por linha. */
-function PainelDificil({ habitoId, aoFechar, aoRespirarDeNovo }: PainelProps) {
+function PainelDificil({ habitoId, daTrancada, aoFechar, aoRespirarDeNovo }: PainelProps) {
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const planos = useMare((e) => e.planos);
@@ -127,6 +141,8 @@ function PainelDificil({ habitoId, aoFechar, aoRespirarDeNovo }: PainelProps) {
   const emergencia = useMare((e) => e.ajustes.contatosEmergencia);
   const [verPlano, setVerPlano] = useState(false);
   const acoes = acoesDoPlano(planos, habitoId).slice(0, 4);
+  // Pela tela de bloqueio: "Meu plano" só mostra as ações já escritas (sem abrir a tela) e a IA some.
+  const mostrarPlano = !daTrancada || acoes.length > 0;
 
   return (
     <View style={styles.painelFundo} accessibilityViewIsModal>
@@ -142,22 +158,26 @@ function PainelDificil({ habitoId, aoFechar, aoRespirarDeNovo }: PainelProps) {
             icone="folego"
             onPress={aoRespirarDeNovo}
           />
-          <View style={styles.divisor} />
-          <LinhaAjuste
-            titulo="As ações do meu plano"
-            subtitulo={acoes.length > 0 ? 'o que você combinou com você mesmo' : 'você ainda não tem ações no plano'}
-            icone="notas"
-            onPress={() => (acoes.length > 0 ? setVerPlano((v) => !v) : (aoFechar(), router.push('/plano')))}
-            accessibilityLabel={acoes.length > 0 ? 'As ações do meu plano, mostrar ou esconder' : 'Criar ações no Meu plano'}
-          />
-          {verPlano
-            ? acoes.map((p) => (
-                <Texto key={p.id} style={styles.acao}>
-                  {frasePlano(p)}
-                </Texto>
-              ))
-            : null}
-          {temIa ? (
+          {mostrarPlano ? (
+            <>
+              <View style={styles.divisor} />
+              <LinhaAjuste
+                titulo="As ações do meu plano"
+                subtitulo={acoes.length > 0 ? 'o que você combinou com você mesmo' : 'você ainda não tem ações no plano'}
+                icone="notas"
+                onPress={() => (acoes.length > 0 ? setVerPlano((v) => !v) : (aoFechar(), router.push('/plano')))}
+                accessibilityLabel={acoes.length > 0 ? 'As ações do meu plano, mostrar ou esconder' : 'Criar ações no Meu plano'}
+              />
+              {verPlano
+                ? acoes.map((p) => (
+                    <Texto key={p.id} style={styles.acao}>
+                      {frasePlano(p)}
+                    </Texto>
+                  ))
+                : null}
+            </>
+          ) : null}
+          {temIa && !daTrancada ? (
             <>
               <View style={styles.divisor} />
               <LinhaAjuste
@@ -166,7 +186,8 @@ function PainelDificil({ habitoId, aoFechar, aoRespirarDeNovo }: PainelProps) {
                 icone="conversa"
                 onPress={() => {
                   aoFechar();
-                  router.push('/conversa');
+                  // Volta às abas que já estão abaixo e abre a Conversa (não monta um segundo conjunto de abas).
+                  router.dismissTo('/conversa');
                 }}
               />
             </>

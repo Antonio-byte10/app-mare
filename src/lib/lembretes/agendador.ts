@@ -4,7 +4,7 @@
  * API conferida em https://docs.expo.dev/versions/v58.0.0/sdk/notifications/
  */
 import * as Notifications from 'expo-notifications';
-import { AndroidImportance } from 'expo-notifications';
+import { AndroidImportance, AndroidNotificationVisibility } from 'expo-notifications';
 import { Platform } from 'react-native';
 import { cores } from '@/theme';
 import type { Notificacao } from './plano';
@@ -30,6 +30,8 @@ function garantirCanal(): Promise<void> {
     vibrationPattern: [0, 150],
     lightColor: cores.aqua,
     showBadge: false,
+    // Na tela bloqueada aparece só "conteúdo oculto", mesmo que o texto já seja discreto.
+    lockscreenVisibility: AndroidNotificationVisibility.PRIVATE,
   }).then(() => undefined);
   return canalPronto.catch(() => {
     canalPronto = null;

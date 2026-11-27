@@ -1,29 +1,62 @@
 import { randomUUID } from 'expo-crypto';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { useRef, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
 import { Campo } from '@/components/Campo';
 import { Icone } from '@/components/Icone';
 import { TelaPasso } from '@/components/TelaPasso';
 import { Texto } from '@/components/Texto';
 import { montarAvaliacao } from '@/lib/avaliacao';
+import { aplicarHabito } from '@/lib/estado';
+import { lembretesDisponiveis, lerPermissao, pedirPermissao } from '@/lib/lembretes/agendador';
 import { MAX_PORQUE, validarPorque } from '@/lib/plano';
 import { useRascunhoPrimeiroUso } from '@/lib/rascunhoPrimeiroUso';
+import { semBloquear } from '@/lib/useBloqueio';
 import { useVoltar } from '@/lib/useVoltar';
 import { useMare } from '@/store';
 import { cores, fontes } from '@/theme';
 
-/** Grava tudo o que foi montado no primeiro uso e libera o app. Chamado uma vez, no fim. */
+/**
+ * Grava tudo o que foi montado no primeiro uso e libera o app. Chamado uma vez, no fim.
+ * Uma única gravação: se o app for fechado no meio, ou fica tudo ou não fica nada (antes dava
+ * para perder o "concluído" e criar os hábitos de novo, em dobro).
+ */
 function concluirPrimeiroUso() {
-  const loja = useMare.getState();
   const rascunho = useRascunhoPrimeiroUso.getState();
   const agora = Date.now();
-  rascunho.habitos.forEach((h) => loja.salvarHabito(h));
-  if (rascunho.resultados.length > 0) loja.salvarAvaliacao(montarAvaliacao(randomUUID(), agora, rascunho.resultados));
-  rascunho.porques.forEach((texto, i) => loja.salvarPorque({ id: randomUUID(), texto, criadoEm: agora + i }));
-  // Com `onboardingConcluido` verdadeiro, o layout raiz troca o primeiro uso pelas abas (Início).
-  loja.setAjustes({ habitoAtivo: rascunho.habitos[0]?.id, onboardingConcluido: true });
+  useMare.setState((e) => {
+    const comHabitos = rascunho.habitos.reduce(aplicarHabito, e);
+    const avaliacoes =
+      rascunho.resultados.length > 0
+        ? [...e.avaliacoes, montarAvaliacao(randomUUID(), agora, rascunho.resultados)]
+        : e.avaliacoes;
+    const porques = [...e.porques, ...rascunho.porques.map((texto, i) => ({ id: randomUUID(), texto, criadoEm: agora + i }))];
+    // Com `onboardingConcluido` verdadeiro, o layout raiz troca o primeiro uso pelas abas (Início).
+    const ajustes = { ...e.ajustes, habitoAtivo: rascunho.habitos[0]?.id, onboardingConcluido: true };
+    return { habitos: comHabitos.habitos, avaliacoes, porques, ajustes };
+  });
   rascunho.reiniciar();
+}
+
+/**
+ * Os lembretes já vêm ligados, mas sem a permissão do sistema nenhum chega. Pergunta uma vez aqui,
+ * com a explicação antes. Recusar não muda nada no resto do app.
+ */
+async function oferecerLembretes(): Promise<void> {
+  if (!lembretesDisponiveis || (await lerPermissao()) !== 'pendente') return;
+  const aceitou = await new Promise<boolean>((resolver) =>
+    Alert.alert(
+      'Quer receber lembretes?',
+      'Um aviso por dia para o relato e outro antes dos seus horários difíceis. O texto é discreto e nunca cita o hábito. Dá para mudar tudo em Mais, Lembretes.',
+      [
+        { text: 'Agora não', style: 'cancel', onPress: () => resolver(false) },
+        { text: 'Quero', onPress: () => resolver(true) },
+      ],
+      { cancelable: true, onDismiss: () => resolver(false) },
+    ),
+  );
+  if (aceitou) await semBloquear(pedirPermissao);
 }
 
 /** "Meus porquês" (pode pular) e fim do primeiro uso. */
@@ -47,9 +80,22 @@ export default function PorquesPrimeiroUso() {
   };
 
   // Quem digitou e esqueceu de tocar em "Adicionar" não perde o texto ao concluir.
-  const concluir = () => {
+  const concluindo = useRef(false);
+  const concluir = async () => {
+    if (concluindo.current) return;
+    // Chegou aqui sem hábitos (link direto): volta ao começo em vez de liberar o app vazio.
+    if (useRascunhoPrimeiroUso.getState().habitos.length === 0) {
+      router.replace('/boas-vindas');
+      return;
+    }
+    concluindo.current = true;
     const pendente = validarPorque(texto);
     if (pendente.erro === undefined) adicionar(pendente.valor);
+    try {
+      await oferecerLembretes();
+    } catch {
+      // Sem a permissão o app segue igual; dá para ligar depois em Lembretes.
+    }
     concluirPrimeiroUso();
   };
   const temAlgo = porques.length > 0 || validarPorque(texto).erro === undefined;

@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
 import { Campo } from '@/components/Campo';
@@ -48,6 +48,10 @@ export default function EditarHabito() {
   const removerHabito = useMare((e) => e.removerHabito);
   const edicao = id !== 'novo';
   const voltar = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  // O id nasce uma vez: dois toques seguidos em "Salvar" regravam o mesmo hábito, não criam outro.
+  const [novoId] = useState(() => randomUUID());
+  // Já salvou (ou removeu) e está saindo: ignora toques repetidos até a tela fechar.
+  const salvando = useRef(false);
 
   const [tipo, setTipo] = useState<TipoHabito>(existente?.tipo ?? 'tabaco');
   const [apelido, setApelido] = useState(existente?.apelido ?? '');
@@ -102,9 +106,9 @@ export default function EditarHabito() {
   });
 
   const salvar = () => {
-    if (temErro) return;
+    if (temErro || salvando.current) return;
     const habito: Habito = {
-      id: existente?.id ?? randomUUID(),
+      id: existente?.id ?? novoId,
       tipo,
       apelido: apelido.trim(),
       cor,
@@ -118,15 +122,17 @@ export default function EditarHabito() {
       criadoEm: existente?.criadoEm ?? Date.now(),
     };
     const gravar = () => {
+      if (salvando.current) return;
+      salvando.current = true;
       salvarHabito(habito);
       voltar();
     };
-    // Os dias anteriores são lidos com a meta e o início atuais: avisa antes de recalcular.
+    // Mudar o início muda quais relatos contam: avisa antes. A meta nova vale só daqui em diante.
     if (existente && recalculaHistorico(existente, habito)) {
       confirmar(
-        'Recalcular seus dias?',
-        'Isso recalcula seus dias anteriores com a nova meta.',
-        'Salvar e recalcular',
+        'Mudar a data de início?',
+        'Os dias contados passam a ser só os a partir da nova data. Os relatos não são apagados.',
+        'Salvar',
         gravar,
         false,
       );
@@ -141,7 +147,8 @@ export default function EditarHabito() {
       'O hábito e os relatos dele serão apagados. Isso não pode ser desfeito.',
       'Remover',
       () => {
-        if (!existente) return;
+        if (!existente || salvando.current) return;
+        salvando.current = true;
         removerHabito(existente.id);
         voltar();
       },

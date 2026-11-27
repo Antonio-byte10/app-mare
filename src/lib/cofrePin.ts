@@ -10,7 +10,10 @@ const NOME = 'mare.bloqueio.pin';
 /** `null` = não há PIN guardado; `'erro'` = o cofre não respondeu (não é o mesmo que não ter PIN). */
 export async function lerPin(): Promise<RegistroPin | null | 'erro'> {
   try {
-    return lerRegistroPin(await SecureStore.getItemAsync(NOME));
+    const bruto = await SecureStore.getItemAsync(NOME);
+    if (!bruto) return null;
+    // Existe registro, mas ilegível: é erro, não "sem PIN". `null` aqui desligaria o bloqueio sozinho.
+    return lerRegistroPin(bruto) ?? 'erro';
   } catch {
     return 'erro';
   }

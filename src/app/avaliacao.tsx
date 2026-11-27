@@ -1,5 +1,5 @@
 import { randomUUID } from 'expo-crypto';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { FluxoAvaliacao } from '@/components/avaliacao/FluxoAvaliacao';
 import { ResultadoView } from '@/components/avaliacao/ResultadoView';
@@ -31,6 +31,14 @@ export default function ComoVoceEsta() {
   // A avaliação de antes do que acabou de ser feito, para comparar.
   const [anterior, setAnterior] = useState<AvaliacaoSalva | undefined>();
   const [nova, setNova] = useState<AvaliacaoSalva | undefined>();
+  // Toques repetidos em "Concluir" (ou no último "Seguir") não salvam duas vezes nem fecham duas telas.
+  const concluindo = useRef(false);
+  const saindo = useRef(false);
+  const sair = () => {
+    if (saindo.current) return;
+    saindo.current = true;
+    voltar();
+  };
 
   const ultima = ultimaAvaliacao(avaliacoes);
 
@@ -51,6 +59,8 @@ export default function ComoVoceEsta() {
           aoResponder={(chave, indice) => setRespostas((r) => ({ ...r, [chave]: indice }))}
           aoSair={() => setEtapa('resumo')}
           aoConcluir={() => {
+            if (concluindo.current) return;
+            concluindo.current = true;
             const resultados = calcularResultados(habitos, respostas);
             const feita = montarAvaliacao(randomUUID(), Date.now(), resultados);
             setAnterior(ultima);
@@ -65,7 +75,7 @@ export default function ComoVoceEsta() {
 
   if (etapa === 'resultado' && nova) {
     return (
-      <TelaPasso aoVoltar={voltar} rodape={<Botao onPress={voltar}>Concluir</Botao>}>
+      <TelaPasso aoVoltar={voltar} rodape={<Botao onPress={sair}>Concluir</Botao>}>
         <Texto tipo="rotulo" accessibilityRole="header">
           Como você está agora
         </Texto>
@@ -86,6 +96,7 @@ export default function ComoVoceEsta() {
       rodape={
         <Botao
           onPress={() => {
+            concluindo.current = false;
             setRespostas({});
             setEtapa('fluxo');
           }}

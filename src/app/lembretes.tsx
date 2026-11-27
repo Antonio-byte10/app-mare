@@ -214,7 +214,7 @@ export default function Lembretes() {
         aoMudar={(v) => setAjustes({ contatosEmergencia: v })}
       />
       <Texto tipo="legenda" style={styles.dica}>
-        {`Os avisos aparecem com o nome “${nomeDisfarce(ajustes)}”, o mesmo do disfarce escolhido em Bloqueio e disfarce.`}
+        {`O título dos avisos usa o nome “${nomeDisfarce(ajustes)}”, o do disfarce escolhido em Bloqueio e disfarce. O Android ainda mostra o nome “Maré” no topo da notificação e nas configurações do celular, e isso o app não consegue trocar. Na tela bloqueada, o conteúdo fica oculto.`}
       </Texto>
     </TelaPasso>
   );

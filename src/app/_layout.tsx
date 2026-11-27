@@ -12,6 +12,7 @@ import { Fundo } from '@/components/Fundo';
 import { GerenciadorLembretes } from '@/components/GerenciadorLembretes';
 import { GuardaPrivacidade } from '@/components/GuardaPrivacidade';
 import { Tela } from '@/components/Tela';
+import { AvisoEscrita } from '@/components/AvisoEscrita';
 import { useHydrated, useMare } from '@/store';
 import { cores } from '@/theme';
 
@@ -74,6 +75,7 @@ export default function RootLayout() {
             <Stack.Screen name="dados" />
           </Stack.Protected>
         </Stack>
+        <AvisoEscrita />
       </GuardaPrivacidade>
     </>
   );

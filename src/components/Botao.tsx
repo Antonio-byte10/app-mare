@@ -56,20 +56,22 @@ export function Botao({
 }
 
 const styles = StyleSheet.create({
+  // minHeight (e não height): com a fonte do sistema grande o rótulo quebra em linhas e o botão cresce, sem cortar.
   base: {
-    height: 54,
+    minHeight: 54,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   secundario: {
     backgroundColor: 'rgba(255,255,255,.04)',
     borderWidth: 1,
     borderColor: cores.line2,
   },
-  texto: { height: 40, borderRadius: raio.sm },
+  texto: { minHeight: 40, borderRadius: raio.sm, paddingVertical: 4 },
   desabilitado: { opacity: 0.45 },
   // Realce interno no topo (inset 0 1px 0 rgba(255,255,255,.45)).
   brilho: {
@@ -81,6 +83,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,.45)',
   },
   // zIndex: o texto fica acima do degradê e do realce, que são absolutos.
-  rotulo: { fontFamily: fontes.uiForte, fontSize: 15.5, lineHeight: 20, letterSpacing: -0.08, zIndex: 1 },
-  rotuloTexto: { fontFamily: fontes.uiForte, fontSize: 14, lineHeight: 18, zIndex: 1 },
+  rotulo: { fontFamily: fontes.uiForte, fontSize: 15.5, lineHeight: 20, letterSpacing: -0.08, textAlign: 'center', zIndex: 1 },
+  rotuloTexto: { fontFamily: fontes.uiForte, fontSize: 14, lineHeight: 18, textAlign: 'center', zIndex: 1 },
 });

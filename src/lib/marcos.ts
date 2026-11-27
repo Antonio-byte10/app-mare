@@ -1,4 +1,4 @@
-import { estadoDoDia, normalizarRelatoHabito } from './contador';
+import { estadoDaEntrada, normalizarRelatoHabito } from './contador';
 import type { Habito, Relato } from './tipos';
 
 export const MARCOS: readonly number[] = [1, 3, 7, 14, 30, 90, 180, 365];
@@ -55,7 +55,7 @@ export function economia(h: Habito, relatos: Relato[], hoje: string): Economia |
     const entrada = relato.habitos.find((x) => x.habitoId === h.id);
     if (!entrada) continue;
     const normalizada = normalizarRelatoHabito(entrada);
-    const estado = estadoDoDia(h.meta, normalizada);
+    const estado = estadoDaEntrada(h.meta, normalizada);
     if (estado === 'livre') {
       livres += 1;
       unidadesReduzir += porDia ?? 0;

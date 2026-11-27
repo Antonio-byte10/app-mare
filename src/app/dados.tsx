@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
 import { Fundo } from '@/components/Fundo';
 import { IaCampo } from '@/components/IaCampo';
@@ -198,7 +198,7 @@ export default function Dados() {
 
   return (
     <Fundo>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <Tela>
           <TopoTela titulo="Backup e dados" />
           <ScrollView

@@ -40,6 +40,11 @@ describe('datas do formulário', () => {
     expect(validarInicio('26/11/2026', '2026-11-26').valor).toBe('2026-11-26');
     expect(validarInicio('01/01/2020', '2026-11-26').valor).toBe('2020-01-01');
   });
+  it('rejeita início de mais de 20 anos atrás (travaria o contador)', () => {
+    expect(validarInicio('01/01/1900', '2026-11-26').erro).toBeTruthy();
+    expect(validarInicio('25/11/2006', '2026-11-26').erro).toBeTruthy();
+    expect(validarInicio('26/11/2006', '2026-11-26').valor).toBe('2006-11-26');
+  });
 });
 
 describe('inteiroPositivo', () => {
@@ -76,11 +81,12 @@ describe('recalculaHistorico', () => {
       }),
     ).toBe(false);
   });
-  it('mudar o limite, o tipo de meta, o tipo ou o início recalcula', () => {
-    expect(recalculaHistorico(base, { ...base, meta: { tipo: 'reduzir', maxPorDia: 3, unidade: 'cigarros' } })).toBe(true);
-    expect(recalculaHistorico(base, { ...base, meta: { tipo: 'parar' } })).toBe(true);
-    expect(recalculaHistorico({ ...base, meta: { tipo: 'parar' } }, base)).toBe(true);
-    expect(recalculaHistorico(base, { ...base, tipo: 'alcool' })).toBe(true);
+  it('mudar a meta ou o tipo não reescreve o passado', () => {
+    expect(recalculaHistorico(base, { ...base, meta: { tipo: 'reduzir', maxPorDia: 3, unidade: 'cigarros' } })).toBe(false);
+    expect(recalculaHistorico(base, { ...base, meta: { tipo: 'parar' } })).toBe(false);
+    expect(recalculaHistorico(base, { ...base, tipo: 'alcool' })).toBe(false);
+  });
+  it('só mudar o início muda quais dias contam', () => {
     expect(recalculaHistorico(base, { ...base, inicio: '2026-10-01' })).toBe(true);
   });
 });

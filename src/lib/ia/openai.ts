@@ -44,7 +44,8 @@ export function interpretar(evento: EventoSse): Interpretacao {
   if (tipo === 'response.refusal.delta' || tipo === 'response.refusal.done') return { recusa: true };
   if (tipo === 'response.incomplete' && dados.response?.incomplete_details?.reason === 'content_filter') return { recusa: true };
   if (tipo === 'error' || tipo === 'response.failed') {
-    const erro = dados.error ?? dados.response?.error ?? {};
+    // No evento "error" da Responses API, `code` e `message` vêm no próprio evento, não em `.error`.
+    const erro = dados.error ?? dados.response?.error ?? (dados as { code?: unknown; type?: unknown });
     const codigo = String(erro.code ?? erro.type ?? '');
     if (/invalid_api_key|authentication/.test(codigo)) throw new ErroIa('chave');
     if (/insufficient_quota|billing/.test(codigo)) throw new ErroIa('credito');

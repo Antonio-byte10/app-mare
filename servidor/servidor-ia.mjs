@@ -13,7 +13,7 @@ export const MODELOS_PADRAO = {
 };
 const VERSAO_ANTHROPIC = '2026-10-21';
 /** Limite de saída. Modelos que "pensam" gastam parte dele pensando, por isso não é pequeno. */
-const MAX_TOKENS = 2048;
+const MAX_TOKENS = 4096;
 
 const LIMITE_CORPO = 64 * 1024;
 const LIMITE_MENSAGENS = 60;
@@ -56,7 +56,10 @@ const erroDoTipo = (tipo) => new ErroProvedor(tipo, MENSAGENS[tipo][0], MENSAGEN
 export function tipoDeStatus(status, corpo = '') {
   // O Gemini responde 400 (e não 401) para chave inválida.
   if (/api[ _-]?key not valid|API_KEY_INVALID|invalid[ _-]?(x-)?api[ _-]?key/i.test(corpo)) return 'chave';
-  if (/credit|quota|billing|insufficient|exceeded your current/i.test(corpo) && status !== 401) return 'credito';
+  // 429 é quase sempre "devagar" (o Gemini gratuito tem limite por minuto e diz "quota" na mensagem).
+  // Só é falta de crédito quando o provedor diz isso: sem saldo (OpenAI) ou limite do dia esgotado.
+  if (status === 429) return /insufficient_quota|credit balance|PerDay|per day|daily/i.test(corpo) ? 'credito' : 'limite';
+  if (status !== 401 && /credit|quota|billing|insufficient|exceeded your current/i.test(corpo)) return 'credito';
   if (status === 401 || status === 403) return 'chave';
   if (status === 404) return 'modelo';
   if (status === 429) return 'limite';
@@ -232,6 +235,22 @@ export const PROVEDORES = {
   },
 };
 
+const IP_PRIVADO = /^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|f[cd][0-9a-f]{2}:|fe80:)/i;
+
+/**
+ * IP de quem chamou, para contar tentativas com código errado. O começo de X-Forwarded-For é
+ * escrito pelo próprio cliente (dá para inventar um a cada pedido); o fim é escrito pelos proxies.
+ * Por isso vale o último endereço público da lista, lido da direita para a esquerda.
+ */
+export function ipDoCliente(encaminhado, remoto = '') {
+  const lista = String(encaminhado ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  for (let i = lista.length - 1; i >= 0; i--) if (!IP_PRIVADO.test(lista[i])) return lista[i];
+  return lista[0] || remoto || '';
+}
+
 /** Valida o corpo de /conversa. Devolve `{ sistema, historico }` ou `null`. */
 export function validarPedido(dados) {
   if (!dados || typeof dados !== 'object' || Array.isArray(dados)) return null;
@@ -277,7 +296,15 @@ export function criarServico({
     const e = erros.get(ip);
     if (!e || Date.now() - e.inicio >= JANELA_MS) erros.set(ip, { inicio: Date.now(), vezes: 1 });
     else e.vezes++;
-    if (erros.size > 5000) erros.clear();
+    // Limite de memória sem apagar o bloqueio de todo mundo: tira primeiro o que já venceu,
+    // depois os registros mais antigos (o Map guarda a ordem de inserção).
+    if (erros.size > 5000) {
+      for (const [chaveIp, registro] of erros) if (Date.now() - registro.inicio >= JANELA_MS) erros.delete(chaveIp);
+      for (const chaveIp of erros.keys()) {
+        if (erros.size <= 4000) break;
+        erros.delete(chaveIp);
+      }
+    }
   };
 
   const servidor = createServer(async (req, res) => {
@@ -290,8 +317,7 @@ export function criarServico({
       });
       return res.end(JSON.stringify(dados));
     };
-    // No Render o IP real vem do proxy, no primeiro item de X-Forwarded-For.
-    const ip = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || req.socket.remoteAddress || '';
+    const ip = ipDoCliente(req.headers['x-forwarded-for'], req.socket.remoteAddress);
     // Fora do Render, só o próprio computador.
     if (!publico && !/^(127\.0\.0\.1|localhost|\[::1\]):\d+$/.test(req.headers.host ?? '')) return enviar(403, {});
     // Navegadores só podem chamar a partir do app aberto em localhost; o app nativo não manda Origin.
@@ -354,6 +380,7 @@ export function criarServico({
       let resposta = await chamar();
       for (let extra = 2, espera = 1500; extra > 0 && (resposta.status === 503 || resposta.status === 500); extra--, espera *= 2) {
         registrar(`Provedor ocupado (HTTP ${resposta.status}), tentando de novo`);
+        await resposta.body?.cancel().catch(() => undefined);
         await esperar(espera);
         resposta = await chamar();
       }
@@ -401,6 +428,9 @@ export function criarServico({
   // Conexões lentas de propósito não prendem o servidor.
   servidor.headersTimeout = 15_000;
   servidor.requestTimeout = 120_000;
+  // O proxy do Render reaproveita conexões por mais tempo que os 5 s padrão do Node: com o padrão,
+  // o primeiro pedido depois de uma pausa às vezes cai numa conexão já fechada (502 esporádico).
+  servidor.keepAliveTimeout = 120_000;
   return servidor;
 }
 

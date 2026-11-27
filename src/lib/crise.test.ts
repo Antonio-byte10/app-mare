@@ -93,6 +93,78 @@ describe('detectarCrise: suicídio e autolesão', () => {
   });
 });
 
+describe('detectarCrise: casos achados na revisão da 1.0', () => {
+  it('pega tentativas, primeira pessoa, meios e remédio em excesso', () => {
+    todas(
+      [
+        'tentei me matar',
+        'já tentei me matar ano passado',
+        'me mato se continuar assim',
+        'estou me cortando de novo',
+        'me corto quando fico assim',
+        'me cortei ontem',
+        'voltei a me cortar',
+        'pensei em cortar os pulsos',
+        'vou me enforcar',
+        'cogitando me envenenar',
+        'vou pular da ponte',
+        'quero me jogar da janela',
+        'vou acabar comigo',
+        'tomei uma cartela inteira de remédio',
+        'tomei todos os comprimidos',
+        'vou tomar todos os remédios',
+      ],
+      'suicidio',
+    );
+  });
+
+  it('pega ideação passiva e gírias', () => {
+    todas(
+      [
+        'quero sumir',
+        'queria sumir do mundo',
+        'quero desaparecer',
+        'não aguento mais a vida',
+        'não aguento mais sofrer',
+        'cansei da vida',
+        'não quero mais existir',
+        'queria não existir',
+        'a vida não vale a pena',
+        'não vale a pena viver',
+        'pra que viver',
+        'sou um fardo pra todo mundo',
+        'ninguém ia sentir minha falta',
+        'queria dormir pra sempre',
+        'não vejo saída',
+      ],
+      'suicidio',
+    );
+  });
+
+  it('NÃO dispara com o jeito comum de falar de parar ou de vontade', () => {
+    todas(
+      [
+        'quero cortar o cigarro',
+        'vou cortar o álcool',
+        'quero cortar a bebida',
+        'vou cortar gastos',
+        'preciso cortar o açúcar',
+        'não consigo viver sem cigarro',
+        'não aguento viver sem beber',
+        'hoje não aguento mais viver sem fumar',
+        'preciso matar a vontade',
+        'quero matar a saudade',
+        'vou matar o tempo vendo série',
+        'tomei todos os remédios do dia',
+        'me cortei cozinhando',
+        'me cortei sem querer',
+        'esse cigarro vai me matar de tanto tossir'.replace(' de tanto tossir', ' de rir'),
+      ],
+      null,
+    );
+  });
+});
+
 describe('detectarCrise: intoxicação', () => {
   it('detecta overdose e intoxicação grave', () => {
     todas(

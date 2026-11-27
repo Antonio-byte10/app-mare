@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, KeyboardAvoidingView, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Botao } from '@/components/Botao';
 import { CartaoCrise } from '@/components/CartaoCrise';
@@ -79,7 +79,7 @@ export function PassoPassou({
   const miolo = Math.round(tamanho * 0.42);
 
   return (
-    <KeyboardAvoidingView style={styles.raiz} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.raiz} behavior="padding">
       <ScrollView
         ref={ref}
         style={styles.flex}

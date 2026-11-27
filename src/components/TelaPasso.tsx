@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RolarAoFim, useRolarAoFim } from '@/lib/rolagem';
 import { margemTela } from '@/theme';
@@ -25,7 +25,7 @@ export function TelaPasso({ aoVoltar, topo, children, rodape }: Props) {
   const { ref, rolar } = useRolarAoFim();
   return (
     <Fundo>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <View style={[styles.flex, { paddingTop: top + 14 }]}>
           {aoVoltar || topo ? (
             <View style={styles.topo}>

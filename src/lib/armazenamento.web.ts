@@ -18,6 +18,10 @@ export function falhaAoAbrir(): boolean {
   return false;
 }
 
+export function observarEscrita(_fn: (falhou: boolean) => void): () => void {
+  return () => undefined;
+}
+
 /** Mesmo `name` do persist em store.ts. */
 export async function recomecarDoZero(): Promise<void> {
   localStorage.removeItem('mare');

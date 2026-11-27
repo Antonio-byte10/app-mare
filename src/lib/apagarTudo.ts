@@ -9,7 +9,7 @@ import { useMare } from '@/store';
 
 /**
  * Apaga tudo o que o Maré guarda neste aparelho: o banco cifrado e a chave dele, o PIN, a chave
- * e o código da IA, os lembretes agendados e o disfarce do ícone. Depois disso o app volta ao
+ * e o código da IA, os lembretes agendados e o disfarce do ícone (este por último). Depois disso o app volta ao
  * primeiro uso, sem bloqueio. Só chamar depois de a pessoa confirmar duas vezes.
  *
  * Cada etapa é tentada mesmo que a anterior falhe, para apagar o máximo possível; devolve o nome
@@ -28,7 +28,6 @@ export async function apagarTudo(): Promise<string[]> {
   await tentar('PIN', apagarPin);
   await tentar('chaves da IA', apagarTodosSegredos);
   await tentar('lembretes', cancelarTodasNotificacoes);
-  await tentar('disfarce', () => trocarDisfarce('mare'));
   limparArquivosTemporarios();
   await tentar('banco de dados', async () => {
     await recomecarDoZero();
@@ -36,5 +35,8 @@ export async function apagarTudo(): Promise<string[]> {
     await useMare.persist.rehydrate();
   });
   useBloqueio.getState().destravar();
+  // O ícone por último: alguns launchers fecham o app ao trocar o ícone, e isso não pode
+  // interromper a limpeza (com o app morto no meio, sobraria dado no aparelho).
+  await tentar('disfarce', () => trocarDisfarce('mare'));
   return falhas;
 }

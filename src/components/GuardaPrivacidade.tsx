@@ -105,7 +105,10 @@ export function GuardaPrivacidade({ children, desbloqueado }: Props) {
 
   if (!pronto) return <View style={{ flex: 1, backgroundColor: cores.bg }} />;
 
-  const trancado = bloqueado && !ondaAtiva;
+  // Saiu da `/fissura` com a onda liberada: tranca já nesta renderização (o efeito acima só tranca no
+  // seguinte), para a tela privada que está por baixo não aparecer nem por um quadro.
+  const saiuDaOnda = ondaAtiva && pathname !== '/fissura';
+  const trancado = (bloqueado && !ondaAtiva) || saiuDaOnda;
   const escondido = trancado || coberto;
   return (
     <View style={{ flex: 1, backgroundColor: cores.bg }}>

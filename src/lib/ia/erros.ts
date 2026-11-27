@@ -66,6 +66,9 @@ export function oferecerRespiro(tipo: TipoErroIa): boolean {
 export function tipoDeStatus(status: number, corpo = ''): TipoErroIa {
   // O Gemini responde 400 (e não 401) para chave inválida.
   if (/api[ _-]?key not valid|API_KEY_INVALID|invalid[ _-]?(x-)?api[ _-]?key/i.test(corpo)) return 'chave';
+  // 429 é quase sempre "devagar" (o Gemini gratuito tem limite por minuto e diz "quota" na mensagem).
+  // Só é falta de crédito quando o provedor diz isso: sem saldo (OpenAI) ou limite do dia esgotado.
+  if (status === 429) return /insufficient_quota|credit balance|PerDay|per day|daily/i.test(corpo) ? 'credito' : 'limite';
   if (status !== 401 && /credit|quota|billing|insufficient|exceeded your current/i.test(corpo)) return 'credito';
   if (status === 401 || status === 403) return 'chave';
   if (status === 404) return 'modelo';

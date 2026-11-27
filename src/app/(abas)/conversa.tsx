@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -28,6 +28,7 @@ import { montarContexto } from '@/lib/ia/contexto';
 import type { TipoErroIa } from '@/lib/ia/erros';
 import { NOME_PROVEDOR } from '@/lib/ia/modelos';
 import { habitoAtivoDe } from '@/lib/inicio';
+import type { MensagemConversa } from '@/lib/tipos';
 import { useMare } from '@/store';
 import { comAlfa, cores, fontes } from '@/theme';
 
@@ -42,11 +43,63 @@ const ERROS_DE_AJUSTE: TipoErroIa[] = ['chave', 'credito', 'modelo', 'codigo', '
 
 const ESPERA_SERVIDOR_MS = 5000;
 
+/** Referência estável para mensagens sem extras (não invalida o `memo`). */
+const SEM_EXTRAS: Extra[] = [];
+
 const COMECOS = [
   'Estou com muita vontade agora.',
   'Tive um deslize e quero entender o que aconteceu.',
   'Quero lembrar por que comecei.',
 ];
+
+type ItemProps = {
+  mensagem: MensagemConversa;
+  /** Cartões de crise e avisos que vêm logo depois desta mensagem. */
+  extras: Extra[];
+  /** A última mensagem é da pessoa: um aviso de erro pode oferecer "Tentar de novo". */
+  podeTentar: boolean;
+  aoFecharExtra: (id: string) => void;
+  aoTentar: () => void;
+  aoRespirar: () => void;
+  aoAjustesIa: () => void;
+};
+
+/** Extras (crise e avisos) que seguem uma mensagem, ou o começo da conversa. */
+function ExtrasDaConversa({ extras, podeTentar, aoFecharExtra, aoTentar, aoRespirar, aoAjustesIa }: Omit<ItemProps, 'mensagem'>) {
+  return extras.map((x) =>
+    x.tipo === 'crise' ? (
+      <CartaoCrise key={x.id} tipo={x.crise} aoFechar={() => aoFecharExtra(x.id)} />
+    ) : (
+      <NotaMare key={x.id} texto={x.texto}>
+        <View style={styles.acoes}>
+          {x.respiro ? (
+            <Chip ativo onPress={aoRespirar}>
+              Respirar agora
+            </Chip>
+          ) : null}
+          {x.tipoErro && ERROS_DE_AJUSTE.includes(x.tipoErro) ? (
+            <Chip onPress={aoAjustesIa}>Ajustes de IA</Chip>
+          ) : podeTentar ? (
+            <Chip onPress={aoTentar}>Tentar de novo</Chip>
+          ) : null}
+        </View>
+      </NotaMare>
+    ),
+  );
+}
+
+/**
+ * Uma mensagem salva. Memoizada: a cada pedaço da resposta que chega só o balão em transmissão
+ * muda, então as até 200 mensagens anteriores não precisam ser renderizadas de novo.
+ */
+const ItemMensagem = memo(function ItemMensagem({ mensagem: m, ...resto }: ItemProps) {
+  return (
+    <View style={styles.item}>
+      {m.papel === 'usuario' ? <MensagemPessoa texto={m.texto} /> : <MensagemMare texto={m.texto} />}
+      <ExtrasDaConversa {...resto} />
+    </View>
+  );
+});
 
 export default function Conversa() {
   const router = useRouter();
@@ -71,9 +124,12 @@ export default function Conversa() {
   const controle = useRef<AbortController | null>(null);
   const relogio = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // Ao sair da tela, cancela o pedido em andamento (e invalida o que ainda chegar) para não gastar a chave à toa.
   useEffect(
     () => () => {
       clearTimeout(relogio.current);
+      geracao.current++;
+      controle.current?.abort();
     },
     [],
   );
@@ -190,8 +246,22 @@ export default function Conversa() {
     noFim.current = contentSize.height - (contentOffset.y + layoutMeasurement.height) < 80;
   };
   const rolarAoFim = () => {
-    if (noFim.current) rolagem.current?.scrollToEnd({ animated: true });
+    // Sem animação enquanto a resposta chega: uma animação nova a cada pedaço de texto trava a rolagem.
+    if (noFim.current) rolagem.current?.scrollToEnd({ animated: stream === null });
   };
+
+  // Agrupados por mensagem; só muda quando os extras mudam (não a cada pedaço da resposta).
+  const extrasPorMensagem = useMemo(() => {
+    const mapa = new Map<string | null, Extra[]>();
+    for (const x of extras) mapa.set(x.aposId, [...(mapa.get(x.aposId) ?? []), x]);
+    return mapa;
+  }, [extras]);
+  const podeTentar = ultima?.papel === 'usuario';
+  const fecharExtra = useCallback((id: string) => setExtras((atual) => atual.filter((y) => y.id !== id)), []);
+  const tentarDeNovo = useCallback(() => void pedirResposta(), [pedirResposta]);
+  const respirar = useCallback(() => router.push('/fissura'), [router]);
+  const ajustesIa = useCallback(() => router.push('/ia'), [router]);
+  const propsExtras = { podeTentar, aoFecharExtra: fecharExtra, aoTentar: tentarDeNovo, aoRespirar: respirar, aoAjustesIa: ajustesIa };
 
   const rotulo = useMemo(() => (ia ? `${NOME_PROVEDOR[ia.provedor]} · ${ia.modo === 'direto' ? 'sua chave' : 'seu servidor'}` : ''), [ia]);
 
@@ -210,29 +280,6 @@ export default function Conversa() {
       </Tela>
     );
   }
-
-  const crisesApos = (id: string | null) => extras.filter((x) => x.aposId === id);
-  const renderExtras = (id: string | null) =>
-    crisesApos(id).map((x) =>
-      x.tipo === 'crise' ? (
-        <CartaoCrise key={x.id} tipo={x.crise} aoFechar={() => setExtras((atual) => atual.filter((y) => y.id !== x.id))} />
-      ) : (
-        <NotaMare key={x.id} texto={x.texto}>
-          <View style={styles.acoes}>
-            {x.respiro ? (
-              <Chip ativo onPress={() => router.push('/fissura')}>
-                Respirar agora
-              </Chip>
-            ) : null}
-            {x.tipoErro && ERROS_DE_AJUSTE.includes(x.tipoErro) ? (
-              <Chip onPress={() => router.push('/ia')}>Ajustes de IA</Chip>
-            ) : ultima?.papel === 'usuario' ? (
-              <Chip onPress={() => void pedirResposta()}>Tentar de novo</Chip>
-            ) : null}
-          </View>
-        </NotaMare>
-      ),
-    );
 
   const vazio = mensagens.length === 0 && extras.length === 0 && stream === null;
   const podeEnviar = texto.trim() !== '' && !enviando;
@@ -302,12 +349,9 @@ export default function Conversa() {
             </View>
           ) : (
             <>
-              {renderExtras(null)}
+              <ExtrasDaConversa extras={extrasPorMensagem.get(null) ?? SEM_EXTRAS} {...propsExtras} />
               {mensagens.map((m) => (
-                <View key={m.id} style={styles.item}>
-                  {m.papel === 'usuario' ? <MensagemPessoa texto={m.texto} /> : <MensagemMare texto={m.texto} />}
-                  {renderExtras(m.id)}
-                </View>
+                <ItemMensagem key={m.id} mensagem={m} extras={extrasPorMensagem.get(m.id) ?? SEM_EXTRAS} {...propsExtras} />
               ))}
               {stream !== null ? (
                 stream === '' ? (

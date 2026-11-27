@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Botao } from '@/components/Botao';
 import { CartaoCrise } from '@/components/CartaoCrise';
@@ -32,6 +32,7 @@ import {
   type Rascunho,
 } from '@/lib/relato';
 import type { Habito } from '@/lib/tipos';
+import { useAgora } from '@/lib/useAgora';
 import { useMare } from '@/store';
 import { comAlfa, cores, fontes, margemTela } from '@/theme';
 
@@ -43,7 +44,8 @@ const SIM_NAO = [
 export default function RelatoDoDia() {
   const { dia: param } = useLocalSearchParams<{ dia: string | string[] }>();
   const dia = Array.isArray(param) ? param[0] : param;
-  const [hoje] = useState(() => dataLocal(Date.now()));
+  // Acompanha a virada do dia com a tela aberta.
+  const hoje = dataLocal(useAgora());
   // Data inválida ou futura: volta para o Início.
   if (!dia || !dataValida(dia) || dia > hoje) return <Redirect href="/" />;
   return <Formulario dia={dia} hoje={hoje} />;
@@ -58,6 +60,8 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   const existente = useMare((e) => e.relatos.find((r) => r.dia === dia));
   const salvarRelato = useMare((e) => e.salvarRelato);
   const voltar = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  // Já salvou e está saindo: um segundo toque em "Salvar relato" não grava nem navega de novo.
+  const salvando = useRef(false);
 
   const ativos = habitosDoDia(habitos, dia);
   const [inicial] = useState(() => {
@@ -90,7 +94,8 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
   };
 
   const salvar = () => {
-    if (temErro || ativos.length === 0) return;
+    if (temErro || ativos.length === 0 || salvando.current) return;
+    salvando.current = true;
     salvarRelato(montarRelato({ dia, ativos, rascunhos, humor, gatilhos, nota, agora: Date.now(), existente }));
     // Deslizes conferidos com o que acabou de ser salvo.
     const { relatos } = useMare.getState();
@@ -116,7 +121,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
 
   return (
     <Fundo>
-      <View style={[styles.tela, { paddingTop: top + 14 }]}>
+      <KeyboardAvoidingView behavior="padding" style={[styles.tela, { paddingTop: top + 14 }]}>
         <View style={styles.cabecalho}>
           <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar" hitSlop={4} style={styles.voltar}>
             <Icone nome="voltar" />
@@ -260,7 +265,7 @@ function Formulario({ dia, hoje }: { dia: string; hoje: string }) {
             </View>
           </>
         )}
-      </View>
+      </KeyboardAvoidingView>
     </Fundo>
   );
 }

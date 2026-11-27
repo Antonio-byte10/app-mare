@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
 import { Campo } from '@/components/Campo';
@@ -39,8 +39,9 @@ export default function RecomecarComCuidado() {
   const dia = param(diaParam);
   const habitoId = param(habitoParam);
   const habito = useMare((e) => e.habitos.find((h) => h.id === habitoId));
-  // Link inválido: volta para o Início sem barulho.
-  if (!dia || !dataValida(dia) || !habito) return <Redirect href="/" />;
+  const hoje = dataLocal(useAgora());
+  // Link inválido (ou de um dia que ainda não chegou): volta para o Início sem barulho.
+  if (!dia || !dataValida(dia) || dia > hoje || !habito) return <Redirect href="/" />;
   return <Fluxo dia={dia} habito={habito} restantes={(param(restantes) ?? '').split(',').filter(Boolean)} />;
 }
 
@@ -67,6 +68,20 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
   const [oQue, setOQue] = useState(existente?.oQueAcontecia ?? '');
   const [proxima, setProxima] = useState(existente?.proximaVez ?? '');
 
+  // Já está saindo (ou foi para o plano): toques repetidos não gravam nem navegam de novo.
+  // Volta a valer quando a tela recupera o foco (por exemplo, depois de "Transformar em plano").
+  const saindo = useRef<string | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      saindo.current = null;
+    }, []),
+  );
+  const iniciarSaida = () => {
+    if (saindo.current === habito.id) return false;
+    saindo.current = habito.id;
+    return true;
+  };
+
   const voltarPasso = () => (passo > 1 ? setPasso((passo - 1) as 1 | 2) : voltar());
   useVoltarInterno(passo > 1, voltarPasso);
 
@@ -90,6 +105,7 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
 
   /** Depois de salvar: o próximo deslize da lista, ou volta de onde a pessoa estava. */
   const terminar = () => {
+    if (!iniciarSaida()) return;
     const [proximo, ...resto] = restantes;
     if (proximo) {
       router.replace({ pathname: '/recomecar/[dia]', params: { dia, habito: proximo, restantes: resto.join(',') } });
@@ -99,19 +115,26 @@ function Fluxo({ dia, habito, restantes }: { dia: string; habito: Habito; restan
   };
 
   const salvarEFechar = () => {
+    if (saindo.current === habito.id) return;
     gravar();
     terminar();
   };
 
   const virarPlano = () => {
+    if (!iniciarSaida()) return;
     gravar();
     const { se, entao } = sugestaoPlano({ gatilhos, halt, proximaVez: proxima });
-    router.replace({ pathname: '/plano', params: { se, entao } });
+    // Com mais deslizes na fila, abre o plano por cima (empilhando) e esta tela continua por baixo:
+    // ao voltar, "Salvar" segue para o próximo hábito. Sem fila, o plano substitui esta tela.
+    if (restantes.length > 0) router.push({ pathname: '/plano', params: { se, entao } });
+    else router.replace({ pathname: '/plano', params: { se, entao } });
   };
 
   const conversarComIa = () => {
+    if (!iniciarSaida()) return;
     gravar();
-    router.replace({ pathname: '/conversa', params: { inicio: INICIO_CONVERSA_RECOMECO } });
+    // Reaproveita as abas que já estão na pilha (em vez de montar outras): fecha esta tela e abre a Conversa.
+    router.dismissTo({ pathname: '/conversa', params: { inicio: INICIO_CONVERSA_RECOMECO } });
   };
 
   return (

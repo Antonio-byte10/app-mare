@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { criarArmazenamento, falhaAoAbrir, recomecouDoZero } from './lib/armazenamento';
+import { criarArmazenamento, falhaAoAbrir, observarEscrita, recomecouDoZero } from './lib/armazenamento';
 import { protegerVersao } from './lib/guardaVersao';
 import {
   aplicarHabito,
@@ -37,6 +37,8 @@ type Mare = EstadoPersistido & {
   avisoRecomeco: boolean;
   /** Não é persistido: `true` se o banco não abriu; nada é lido nem gravado até recomeçar. */
   erroArmazenamento: boolean;
+  /** Não é persistido: `true` enquanto as gravações estiverem falhando (ex.: armazenamento cheio). */
+  erroEscrita: boolean;
   salvarHabito: (h: Habito) => void;
   removerHabito: (id: string) => void;
   salvarRelato: (r: Relato) => void;
@@ -63,7 +65,7 @@ type Mare = EstadoPersistido & {
 const guardaVersao = protegerVersao(criarArmazenamento());
 
 /** Campos que só existem na sessão e nunca vão para o disco. */
-const EFEMEROS = ['avisoRecomeco', 'erroArmazenamento'] as const;
+const EFEMEROS = ['avisoRecomeco', 'erroArmazenamento', 'erroEscrita'] as const;
 
 export const useMare = create<Mare>()(
   persist(
@@ -71,6 +73,7 @@ export const useMare = create<Mare>()(
       ...estadoInicial(),
       avisoRecomeco: false,
       erroArmazenamento: false,
+      erroEscrita: false,
       salvarHabito: (h) => set((e) => aplicarHabito(e, h)),
       removerHabito: (id) => set((e) => aplicarRemocaoHabito(e, id)),
       salvarRelato: (r) => set((e) => aplicarRelato(e, r)),
@@ -108,6 +111,8 @@ export const useMare = create<Mare>()(
     },
   ),
 );
+
+observarEscrita((falhou) => useMare.setState({ erroEscrita: falhou }));
 
 const hidratado = () => useMare.persist.hasHydrated();
 const aoHidratar = (fn: () => void) => useMare.persist.onFinishHydration(fn);

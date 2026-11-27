@@ -1,7 +1,7 @@
 import { randomUUID } from 'expo-crypto';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { BackHandler, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BotaoIcone } from '@/components/BotaoIcone';
 import { Fundo } from '@/components/Fundo';
@@ -13,6 +13,7 @@ import { Texto } from '@/components/Texto';
 import { contarFissurasVencidas, deveRegistrarAoFechar, montarFissura, sortearPorque } from '@/lib/fissura';
 import { vibrarSucesso } from '@/lib/haptica';
 import { habitoAtivoDe } from '@/lib/inicio';
+import { useBloqueio } from '@/lib/useBloqueio';
 import { useVoltar } from '@/lib/useVoltar';
 import { useMare } from '@/store';
 import { cores, margemTela } from '@/theme';
@@ -29,6 +30,28 @@ export default function Fissura() {
   const { top } = useSafeAreaInsets();
   const fissuras = useMare((e) => e.fissuras);
   const habitoId = useMare((e) => habitoAtivoDe(e.habitos, e.ajustes.habitoAtivo)?.id);
+
+  // Aberta pela tela de bloqueio ("Abrir a onda"): só a Fissura está liberada. Lido uma vez, ao abrir.
+  const [daTrancada] = useState(() => {
+    const e = useBloqueio.getState();
+    return e.ondaPedida || e.ondaAtiva;
+  });
+  // Toda saída nesse modo tranca o app antes de navegar, para nenhuma tela privada aparecer por baixo.
+  const sair = () => {
+    if (daTrancada) useBloqueio.getState().travar();
+    voltar();
+  };
+  useEffect(() => {
+    if (!daTrancada) return undefined;
+    // Voltar do Android: o painel "Ainda difícil" registra o dele depois e tem prioridade quando está aberto.
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      sair();
+      return true;
+    });
+    return () => sub.remove();
+    // `sair` só usa valores fixos desta abertura (`daTrancada`) e o `voltar` do roteador.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [daTrancada]);
 
   const [passo, setPasso] = useState<Passo>(1);
   const [inicio] = useState(() => Date.now());
@@ -87,7 +110,7 @@ export default function Fissura() {
     <Fundo variante="mar">
       <View style={[styles.tela, { paddingTop: top + 14 }]}>
         <View style={styles.topo}>
-          <BotaoIcone icone="fechar" onPress={voltar} accessibilityLabel="Fechar" />
+          <BotaoIcone icone="fechar" onPress={sair} accessibilityLabel="Fechar" />
           <TracosPasso passo={passo} />
           <View style={styles.direita}>
             {passo === 1 ? (
@@ -110,6 +133,7 @@ export default function Fissura() {
           <PassoOnda
             porque={porque}
             habitoId={habitoId}
+            daTrancada={daTrancada}
             aoPassou={chegarAoPasso3}
             aoRespirarDeNovo={() => setPasso(1)}
           />
@@ -124,7 +148,7 @@ export default function Fissura() {
             aoMudarAntes={setVontadeAntes}
             aoMudarDepois={setVontadeDepois}
             aoMudarAjudou={setAjudou}
-            aoVoltar={() => router.dismissTo('/')}
+            aoVoltar={() => (daTrancada ? sair() : router.dismissTo('/'))}
           />
         ) : null}
       </View>
@@ -141,5 +165,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: margemTela,
   },
   direita: { width: 48, alignItems: 'flex-end', justifyContent: 'center' },
-  pular: { fontSize: 13.5, lineHeight: 18, color: cores.muted, paddingVertical: 15, paddingLeft: 8 },
+  pular: { minWidth: 48, textAlign: 'right', fontSize: 13.5, lineHeight: 18, color: cores.muted, paddingVertical: 15, paddingLeft: 8 },
 });

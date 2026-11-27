@@ -225,6 +225,8 @@ describe('erros HTTP (todos os provedores)', () => {
     [404, '{"error":{"message":"model not found"}}', 'modelo'],
     [429, '{"error":{"message":"Too many requests"}}', 'limite'],
     [429, '{"error":{"code":"insufficient_quota","message":"You exceeded your current quota"}}', 'credito'],
+    [429, '{"error":{"code":429,"message":"You exceeded your current quota","status":"RESOURCE_EXHAUSTED","details":[{"quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier"}]}}', 'limite'],
+    [429, '{"error":{"code":429,"message":"You exceeded your current quota","details":[{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}}', 'credito'],
     [400, '{"error":{"message":"Your credit balance is too low to access the API"}}', 'credito'],
     [400, '{"error":{"code":400,"message":"API key not valid. Please pass a valid API key.","status":"INVALID_ARGUMENT"}}', 'chave'],
     [400, '{"error":{"message":"bad request"}}', 'pedido'],
@@ -264,5 +266,19 @@ describe('erros HTTP (todos os provedores)', () => {
     expect(gemini.interpretar({ evento: '', dados: '{quebrado' })).toEqual({});
     expect(openai.interpretar({ evento: '', dados: 'nope' })).toEqual({});
     expect(claude.interpretar({ evento: '', dados: '' })).toEqual({});
+  });
+
+  it('OpenAI: evento "error" com o código no próprio evento (Responses API)', () => {
+    const erro = (dados: string) => {
+      try {
+        openai.interpretar({ evento: 'error', dados });
+      } catch (e) {
+        return (e as ErroIa).tipo;
+      }
+      return null;
+    };
+    expect(erro('{"type":"error","code":"rate_limit_exceeded","message":"x"}')).toBe('limite');
+    expect(erro('{"type":"error","code":"insufficient_quota","message":"x"}')).toBe('credito');
+    expect(erro('{"type":"error","code":"server_error","message":"x"}')).toBe('sobrecarga');
   });
 });

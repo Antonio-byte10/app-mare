@@ -1,6 +1,6 @@
 // Testes do servidor da conversa, com um `fetch` falso no lugar do provedor (sem rede).
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { criarServico, eventosSse, tipoDeStatus, validarPedido } from './servidor-ia.mjs';
+import { criarServico, eventosSse, ipDoCliente, tipoDeStatus, validarPedido } from './servidor-ia.mjs';
 
 const TOKEN = 'codigo-de-acesso-com-mais-de-24-caracteres';
 const abertos = [];
@@ -325,9 +325,20 @@ describe('erros e recusas', () => {
 });
 
 describe('funções puras', () => {
+  it('ipDoCliente: o cliente não escolhe o próprio IP mandando X-Forwarded-For', () => {
+    expect(ipDoCliente('1.1.1.1, 203.0.113.9', '10.0.0.2')).toBe('203.0.113.9');
+    expect(ipDoCliente('9.9.9.9, 203.0.113.9, 10.1.2.3', '10.0.0.2')).toBe('203.0.113.9');
+    expect(ipDoCliente('203.0.113.9')).toBe('203.0.113.9');
+    expect(ipDoCliente(undefined, '127.0.0.1')).toBe('127.0.0.1');
+    expect(ipDoCliente('10.0.0.5, 192.168.0.1', 'x')).toBe('10.0.0.5');
+  });
+
   it('tipoDeStatus', () => {
     expect(tipoDeStatus(401)).toBe('chave');
-    expect(tipoDeStatus(429, 'You exceeded your current quota')).toBe('credito');
+    expect(tipoDeStatus(429, '{"error":{"code":"insufficient_quota","message":"You exceeded your current quota"}}')).toBe('credito');
+    // Gemini gratuito: limite por minuto também diz "quota", mas é só esperar.
+    expect(tipoDeStatus(429, 'You exceeded your current quota. quotaId: GenerateRequestsPerMinutePerProjectPerModel-FreeTier')).toBe('limite');
+    expect(tipoDeStatus(429, 'You exceeded your current quota. quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier')).toBe('credito');
     expect(tipoDeStatus(529)).toBe('sobrecarga');
     expect(tipoDeStatus(400)).toBe('pedido');
     expect(tipoDeStatus(400, '{"error":{"message":"API key not valid. Please pass a valid API key."}}')).toBe('chave');

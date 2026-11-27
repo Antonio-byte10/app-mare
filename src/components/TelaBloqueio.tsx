@@ -118,8 +118,9 @@ export function TelaBloqueio() {
   useEffect(() => {
     biometriaDisponivel().then(setBioOk);
   }, []);
-  // Oferece a digital ao abrir a tela (uma vez por trancada, assim que o PIN foi lido).
-  const pinLido = objeto !== null;
+  // Oferece a digital ao abrir a tela (uma vez por trancada, assim que o cofre respondeu). Também com o
+  // cofre em 'erro' (registro ilegível): a digital não depende de ler o PIN e é a saída de quem a ativou.
+  const pinLido = registro !== undefined && registro !== null;
   useEffect(() => {
     if (usarBiometria && pinLido) entrarComBiometria();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -207,7 +208,7 @@ export function TelaBloqueio() {
             Esqueci o PIN
           </Texto>
           <Texto style={styles.paragrafo}>
-            Por segurança, o PIN não pode ser recuperado nem trocado: ele é a chave que mantém seus registros fechados neste aparelho.
+            Por segurança, se você esquecer o PIN, ele não pode ser recuperado: ele é a chave que mantém seus registros fechados neste aparelho. (Com o app aberto, dá para trocá-lo em Privacidade.)
           </Texto>
           <Texto style={styles.paragrafo}>
             A única saída é apagar os dados deste aparelho e começar do zero. Se você tem um backup, depois é só restaurá-lo em Mais, Backup e dados.

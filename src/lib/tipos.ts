@@ -26,6 +26,11 @@ export interface RelatoHabito {
   vontade: number;
   usou: boolean;
   quantidade?: number;
+  /**
+   * Como o dia ficou com a meta que valia quando foi relatado. Mudar a meta depois não reescreve
+   * o passado. Ausente nos relatos antigos: aí vale a meta atual do hábito.
+   */
+  estado?: EstadoDia;
 }
 
 export interface Relato {

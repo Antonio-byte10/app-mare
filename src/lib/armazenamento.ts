@@ -85,6 +85,11 @@ export function criarArmazenamento(): StateStorage {
   return protegido.storage;
 }
 
+/** Avisa quando a última gravação falhou (`true`) ou voltou a dar certo (`false`). */
+export function observarEscrita(fn: (falhou: boolean) => void): () => void {
+  return protegido.aoMudarEscrita(fn);
+}
+
 /** `true` se o banco existe mas não abriu com a chave atual. Os dados antigos não foram tocados. */
 export function falhaAoAbrir(): boolean {
   return protegido.falhou();

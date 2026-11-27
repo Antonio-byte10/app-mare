@@ -1,4 +1,4 @@
-import { normalizarRelatoHabito } from './contador';
+import { estadoDoDia, normalizarRelatoHabito } from './contador';
 import type {
   AjustesBloqueio,
   AjustesIa,
@@ -8,11 +8,13 @@ import type {
   Contato,
   Fissura,
   Habito,
+  Meta,
   MensagemConversa,
   PlanoSeEntao,
   Porque,
   Recomeco,
   Relato,
+  RelatoHabito,
 } from './tipos';
 
 export type Ajustes = {
@@ -77,7 +79,13 @@ export const MAX_CONVERSA = 200;
 
 /** Um relato por dia: salvar de novo no mesmo dia substitui o anterior. */
 export function aplicarRelato(e: EstadoPersistido, r: Relato): EstadoPersistido {
-  const normalizado: Relato = { ...r, habitos: r.habitos.map(normalizarRelatoHabito) };
+  // Grava o estado do dia com a meta de agora: mudar a meta depois não reescreve este dia.
+  const comEstado = (x: RelatoHabito): RelatoHabito => {
+    const n = normalizarRelatoHabito(x);
+    const habito = e.habitos.find((h) => h.id === n.habitoId);
+    return habito ? { ...n, estado: estadoDoDia(habito.meta, n) } : n;
+  };
+  const normalizado: Relato = { ...r, habitos: r.habitos.map(comEstado) };
   const existe = e.relatos.some((x) => x.dia === r.dia);
   const relatos = existe
     ? e.relatos.map((x) => (x.dia === r.dia ? normalizado : x))
@@ -85,21 +93,49 @@ export function aplicarRelato(e: EstadoPersistido, r: Relato): EstadoPersistido 
   return { ...e, relatos };
 }
 
+const mesmaMeta = (a: Meta, b: Meta) =>
+  a.tipo === b.tipo && (a.tipo === 'parar' || (b.tipo === 'reduzir' && a.maxPorDia === b.maxPorDia));
+
 export function aplicarHabito(e: EstadoPersistido, h: Habito): EstadoPersistido {
-  const existe = e.habitos.some((x) => x.id === h.id);
-  const habitos = existe ? e.habitos.map((x) => (x.id === h.id ? h : x)) : [...e.habitos, h];
-  return { ...e, habitos };
+  const antigo = e.habitos.find((x) => x.id === h.id);
+  const habitos = antigo ? e.habitos.map((x) => (x.id === h.id ? h : x)) : [...e.habitos, h];
+  if (!antigo || mesmaMeta(antigo.meta, h.meta)) return { ...e, habitos };
+  // A meta mudou: os dias já relatados ficam como estavam (congela os antigos, sem estado gravado).
+  const relatos = e.relatos.map((r) =>
+    r.habitos.some((x) => x.habitoId === h.id && x.estado === undefined)
+      ? {
+          ...r,
+          habitos: r.habitos.map((x) =>
+            x.habitoId === h.id && x.estado === undefined
+              ? { ...x, estado: estadoDoDia(antigo.meta, normalizarRelatoHabito(x)) }
+              : x,
+          ),
+        }
+      : r,
+  );
+  return { ...e, habitos, relatos };
 }
 
-/** Remove o hábito e as entradas dele em todos os relatos; relatos que ficam vazios somem. */
+const temConteudoDoDia = (r: Relato) => r.humor !== undefined || (r.gatilhos?.length ?? 0) > 0 || !!r.nota?.trim();
+
+/**
+ * Remove o hábito e as entradas dele em todos os relatos. O relato do dia só some quando não
+ * guarda mais nada (humor, gatilhos ou nota continuam). Planos e fissuras do hábito passam a
+ * valer para todos, em vez de ficarem escondidos para sempre.
+ */
 export function aplicarRemocaoHabito(e: EstadoPersistido, id: string): EstadoPersistido {
   const relatos = e.relatos
     .map((r) => ({ ...r, habitos: r.habitos.filter((x) => x.habitoId !== id) }))
-    .filter((r) => r.habitos.length > 0);
+    .filter((r) => r.habitos.length > 0 || temConteudoDoDia(r));
   const habitos = e.habitos.filter((h) => h.id !== id);
   const ajustes =
     e.ajustes.habitoAtivo === id ? { ...e.ajustes, habitoAtivo: undefined } : e.ajustes;
-  return { ...e, habitos, relatos, ajustes };
+  const semHabito = <T extends { habitoId?: string }>(x: T): T => {
+    if (x.habitoId !== id) return x;
+    const { habitoId: _removido, ...resto } = x;
+    return resto as T;
+  };
+  return { ...e, habitos, relatos, ajustes, planos: e.planos.map(semHabito), fissuras: e.fissuras.map(semHabito) };
 }
 
 const ehObjeto = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;

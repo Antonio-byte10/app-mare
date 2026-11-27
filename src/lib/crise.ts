@@ -40,29 +40,49 @@ const SUICIDIO: RegExp[] = compilar([
   /\bqueria (estar )?mort[oa]\b/,
   // "vou me matar", "quero me matar", "pensando em me enforcar" (menos "me matar de trabalhar").
   new RegExp(
-    `\\b(quero|queria|vou|vontade de|penso em|pensando em|pensei em|decidi)\\s+(me\\s+)?(mata|matar|suicidar|enforcar)\\b(?!\\s+de\\s+${EXAGERO})`,
+    `\\b(quero|queria|vou|vontade de|penso em|pensando em|pensei em|decidi)\\s+(me\\s+)?(mata|matar|suicidar|enforcar)\\b(?!\\s+de\\s+${EXAGERO})(?!\\s+(a|o|essa|esta|minha|meu)\\s+(vontade|saudade|fome|sede|tempo|fissura|tedio|aula|trabalho|curiosidade))`,
   ),
+  // "tentei me matar", "já tentei me matar", "cogitando me envenenar": aqui o "me" é obrigatório.
+  new RegExp(
+    `\\b(tentei|tento|tentando|tentar|cogitei|cogitando|planejando|preciso|ia|quero|queria|vou|penso em|pensando em)\\s+me\\s+(matar|suicidar|enforcar|envenenar|afogar)\\b(?!\\s+de\\s+${EXAGERO})`,
+  ),
+  // Primeira pessoa sem verbo antes: "me mato", "me matei", "me enforquei" (menos "me matei de trabalhar").
+  new RegExp(`\\bme (mato|matei|enforco|enforquei|envenenei)\\b(?!\\s+de\\s+${EXAGERO})`),
+  /\b(vou|quero|queria|vontade de|penso em|pensando em|pensei em) (pular|me jogar|me atirar) (da|do|de|na|no|pela|pelo) (ponte|predio|janela|viaduto|sacada|laje|varanda|trem|metro)\b/,
+  /\b(vou|quero|queria|vontade de) acabar comigo\b/,
   // Autolesão.
   /\b(quero|queria|vou|vontade de|penso em|pensando em)\s+(me\s+)?(machucar|automutilar|ferir)\b/,
-  /\b(quero|queria|vou|vontade de|penso em|pensando em)\s+(me\s+)?cortar\b(?!\s+(o|a|os|as)\s+(cabelo|unha|unhas|barba|fila|grama|gastos|custos|despesas|doce|doces))/,
+  // "Cortar" sozinho é como muita gente diz "parar" ("quero cortar o cigarro"): só conta com "me" ou parte do corpo.
+  /\b(quero|queria|vou|vontade de|penso em|pensando em|voltei a|voltando a)\s+me\s+cortar\b/,
+  /\bcortar (os |o |meus |meu |a |minha |as |minhas )?(pulsos|pulso|braco|bracos|pele|pernas|coxa|coxas)\b/,
+  /\bme (corto|cortando)\b|\bme cortei\b(?!\s+(sem querer|cozinhando|fazendo|com (a |o )?(faca|papel|vidro|lamina)))/,
   /\bautomutila(cao|r|ndo)\b|\bme cortar de proposito\b/,
   /\bsuicid(io|ar|arme|ando)\b|\bsucid(io|ar)\b|\bsuisid(io|ar)\b/,
   /\b(pensamentos?|ideias?) suicidas?\b/,
   // Desistir de viver.
-  /\bnao (aguento|suporto|quero|consigo)( mais)? viver\b|\bnao quero viver mais\b|\bnao aguento mais (essa |esta )?vida\b/,
+  // "não consigo viver sem cigarro" fala da vontade, não de desistir da vida.
+  /\bnao (aguento|suporto|quero|consigo)( mais)? viver\b(?!\s+sem\b)|\bnao quero viver mais\b|\bnao aguento mais (a |essa |esta )?vida\b/,
+  /\bnao aguento mais (sofrer|existir|essa dor|esta dor|tudo isso|tanta dor)\b/,
+  /\bnao (quero|queria) mais existir\b|\bqueria nao existir\b|\bnao queria existir\b/,
+  /\b(quero|queria|vontade de) (sumir|desaparecer)\b/,
+  /\bnao vale (mais )?a pena (viver|continuar)\b|\ba vida nao vale (mais )?a pena\b/,
+  /\bpra que (viver|continuar vivo|continuar viva)\b|\bcansei da vida\b|\bsou um (fardo|peso) (pra|para) (todos|todo mundo|minha familia|eles)\b/,
+  /\bqueria dormir (pra|para) sempre\b|\bnao vejo (mais )?saida\b/,
   /\b(cansei|cansad[oa]|farto|farta) de viver\b/,
   /\bnao (vejo|tenho) (mais )?(sentido|motivo|razao|saida)\b.{0,20}\b(viver|vida|existir)\b/,
   /\bnao (tenho|ha) (mais )?(motivo|razao|porque|por que|nada) (pra|para|de) (viver|continuar vivo|continuar viva|seguir vivendo)\b/,
   /\b(acabar|acabo|acabei|vou acabar) (com )?(tudo|a minha vida|minha vida|com minha vida|com a minha vida|com a propria vida)\b/,
   /\b(tirar|tiro|tirei|tirando) (a )?(minha|propria) (propria )?vida\b/,
   /\bdar fim (a|na) (minha )?(propria )?vida\b|\bdar um fim em tudo\b/,
-  /\b(todos|todo mundo|ninguem|as pessoas) (ficaria|ficariam|estaria|estariam|sentiria|sentiriam|iria sentir|iam sentir)( melhor| bem| a)?.{0,25}(sem mim|minha falta|falta de mim)\b/,
+  /\b(todos|todo mundo|ninguem|as pessoas) (ficaria|ficariam|estaria|estariam|sentiria|sentiriam|iria sentir|iam sentir|ia sentir|vai sentir)( melhor| bem| a)?.{0,25}(sem mim|minha falta|falta de mim)\b/,
   /\b(seria|ficaria|era|estaria) melhor sem mim\b/,
   /\bseria melhor se eu (morese|nao existise|nao estivese aqui|desaparecese)\b/,
   /\bqueria (nunca ter nascido|sumir pra sempre|desaparecer pra sempre|nao acordar mais|dormir e nao acordar)\b/,
   /\bnao (queria|quero) (mais )?acordar\b|\bdormir e nao acordar (nunca )?mais\b/,
   // Meios.
   /\b(tomar|tomei|vou tomar|engolir)\s+(todos|todas|tudo|a cartela|a caixa|um monte de|uma cartela).{0,25}(para|pra) (morer|me matar|acabar)\b/,
+  // Overdose de remédio (menos a rotina: "tomei todos os remédios do dia").
+  /\b(tomei|engoli|vou tomar|vou engolir|quero tomar|quero engolir)\s+(todos|todas|tudo|a cartela|uma cartela|a caixa|uma caixa|um monte de|varios|varias)\b.{0,25}\b(remedios?|comprimidos?|pilulas?|cartela|caixa|medicamentos?|calmantes?)\b(?!\s+(do dia|de hoje|da manha|da noite|certinho|no horario|direitinho))/,
   /\bme (jogar|atirar) (da|do|de|na|no|em) (ponte|predio|janela|viaduto|trem|metro|frente de um|frente do)\b/,
   /\bme dar um tiro\b(?! no pe)/,
 ]);

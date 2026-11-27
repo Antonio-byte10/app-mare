@@ -56,12 +56,15 @@ const styles = StyleSheet.create({
   },
   item: {
     flex: 1,
-    height: 40,
+    // minHeight: rótulos longos (ou fonte grande do sistema) quebram em linhas sem serem cortados.
+    minHeight: 40,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 11,
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  texto: { fontFamily: fontes.uiForte, fontSize: 14, lineHeight: 18 },
+  texto: { fontFamily: fontes.uiForte, fontSize: 14, lineHeight: 18, textAlign: 'center' },
 });
