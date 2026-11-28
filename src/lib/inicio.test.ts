@@ -79,6 +79,10 @@ describe('textoFaltam', () => {
   it('singular', () => {
     expect(textoFaltam({ dias: 7, faltam: 1 })).toEqual({ antes: 'falta ', destaque: '1 dia', depois: ' para 1 semana' });
   });
+  it('primeiro marco: só o nome, sem "falta 1 dia para 24 horas"', () => {
+    const t = textoFaltam({ dias: 1, faltam: 1 });
+    expect(t.antes + t.destaque + t.depois).toBe('próximo marco: 24 horas');
+  });
   it('sem próximo marco', () => {
     const t = textoFaltam(null);
     expect(t.antes + t.destaque + t.depois).toBe('Todos os marcos alcançados');

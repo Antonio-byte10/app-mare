@@ -41,7 +41,7 @@ export default function EscolherHabitos() {
         <Botao
           desabilitado={!podeSeguir}
           onPress={() => router.push('/boas-vindas/configurar')}
-          accessibilityLabel={rascunhos.length === 0 ? 'Continuar. Escolha pelo menos um hábito.' : undefined}
+          accessibilityLabel={rascunhos.length === 0 ? 'Continuar. Escolha pelo menos um hábito.' : 'Continuar'}
         >
           Continuar
         </Botao>

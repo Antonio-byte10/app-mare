@@ -6,6 +6,7 @@ const exigir = createRequire(import.meta.url);
 const plugin = exigir('../../plugins/with-atalhos.js') as {
   aplicarAtalho: (m: any) => any;
   xmlDosAtalhos: (pacote: string) => string;
+  DESENHOS_ICONE: Record<string, string>;
 };
 const disfarce = exigir('../../plugins/with-disfarce.js') as {
   aplicarAliases: (m: any) => any;
@@ -46,5 +47,14 @@ describe('plugin do atalho "Onda agora"', () => {
     expect(xml).toContain('android:data="mare:///fissura"');
     expect(xml).toContain('android:targetClass="com.mare.app.MainActivity"');
     expect(xml).toContain('android:shortcutId="onda_agora"');
+    expect(xml).toContain('android:icon="@drawable/atalho_onda"');
+  });
+
+  it('o ícone do atalho existe: adaptativo no Android 8+ e vetor antes disso', () => {
+    const arquivos = Object.keys(plugin.DESENHOS_ICONE);
+    expect(arquivos).toEqual(
+      expect.arrayContaining(['drawable/atalho_onda.xml', 'drawable/atalho_onda_glifo.xml', 'drawable-anydpi-v26/atalho_onda.xml']),
+    );
+    expect(plugin.DESENHOS_ICONE['drawable-anydpi-v26/atalho_onda.xml']).toContain('@drawable/atalho_onda_glifo');
   });
 });

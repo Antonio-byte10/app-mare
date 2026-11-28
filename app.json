@@ -3,7 +3,7 @@
     "name": "Maré",
     "slug": "mare",
     "scheme": "mare",
-    "version": "0.7.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#071526",
@@ -11,11 +11,12 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icone-frente.png",
+        "backgroundImage": "./assets/icone-fundo.png",
         "monochromeImage": "./assets/icone-mono.png",
         "backgroundColor": "#071526"
       },
       "package": "com.mare.app",
-      "versionCode": 7,
+      "versionCode": 8,
       "allowBackup": false,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",

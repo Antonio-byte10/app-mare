@@ -23,7 +23,7 @@ const PRIVACIDADE = [
   'Os lembretes são locais, agendados no próprio celular.',
 ];
 
-/** Sobre o Maré: versão, procurar atualização (só ao tocar), privacidade e aviso de beta. */
+/** Sobre o Maré: versão, procurar atualização (só ao tocar), privacidade e aviso sobre os textos de saúde. */
 export default function Sobre() {
   const versao = Constants.expoConfig?.version ?? '0.0.0';
   const [procurando, setProcurando] = useState(false);
@@ -55,7 +55,7 @@ export default function Sobre() {
             </View>
           </View>
 
-          <View style={styles.aviso} accessible accessibilityLabel="Aviso sobre a versão beta">
+          <View style={styles.aviso} accessible accessibilityLabel="Aviso sobre os textos de saúde">
             <Icone nome="folha" tamanho={18} cor={cores.sand} />
             <Texto tipo="legenda" cor={cores.text} style={styles.flex}>
               Os textos de saúde do Maré ainda não foram revisados por um profissional. Eles informam, mas não substituem atendimento.

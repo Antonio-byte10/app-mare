@@ -19,7 +19,7 @@ O **Maré** ajuda quem quer **parar ou diminuir** três hábitos:
 
 Muitos apps de acompanhamento cobram para funcionar de verdade. Aqui tudo é livre, porque as pessoas merecem isso.
 
-> **Status:** em desenvolvimento (versão 0.7.0, rumo à 1.0: [o que falta](docs/superpowers/plans/2026-11-27-mare-rumo-1.0.md)). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Também prontos: lembretes discretos, bloqueio por PIN ou digital, disfarce de nome e ícone e backup cifrado. Ainda não há APK público: falta conferir no celular ([roteiro](docs/verificacao-android.md)) e preparar o lançamento.
+> **Status:** versão 1.0.0 ([o que mudou e o que falta](docs/superpowers/plans/2026-11-27-mare-rumo-1.0.md)). Prontos: núcleo diário, primeiro uso com a avaliação "Como você está", Fissura em 3 passos, "Recomeçar com cuidado", Meu plano, Aprender, Apoio e a conversa com IA (Gemini, ChatGPT ou Claude). Também prontos: lembretes discretos, bloqueio por PIN ou digital, disfarce de nome e ícone e backup cifrado. O APK público sai na página de Releases assim que a chave de lançamento estiver criada ([como](docs/assinatura.md)); até lá, há o APK de teste ([roteiro de conferência](docs/verificacao-android.md)).
 
 ## Por que "Maré"
 
@@ -95,7 +95,7 @@ O app **informa e incentiva a procurar ajuda**, mas **não diagnostica, não pre
 | ✓ | 2 · Primeiro uso e cuidado | Avaliação "Como você está", fissura em 3 passos, porquês, biblioteca |
 | ✓ | 3 · Lembretes e privacidade | Notificações discretas, "antes da onda", bloqueio, disfarce, backup cifrado |
 | ✓ | 4 · IA de cada um | Conversa com Gemini, ChatGPT ou Claude, servidor opcional no Render |
-| ○ | 5 · Lançamento | APK no GitHub, primeira versão beta |
+| ○ | 5 · Lançamento | Versão 1.0.0 pronta; falta o APK assinado na página de Releases |
 
 Detalhes em [docs/superpowers/plans/2026-11-26-mare-roteiro.md](docs/superpowers/plans/2026-11-26-mare-roteiro.md).
 

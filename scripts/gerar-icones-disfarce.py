@@ -16,6 +16,9 @@ import sys
 
 from PIL import Image, ImageChops, ImageDraw
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import icone_mare  # noqa: E402  (arte da Maré: céu, lua e ondas)
+
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RES = os.path.join(RAIZ, 'plugins', 'disfarce', 'res')
 PREVIAS = os.path.join(RAIZ, 'assets', 'disfarces')
@@ -92,7 +95,7 @@ class Tela:
         return self.img.resize((self.px, self.px), Image.LANCZOS)
 
 
-# --- Maré: o símbolo do app (lua e onda dentro de um aro) -------------------------------------
+# --- Maré: o símbolo antigo (lua e onda dentro de um aro). O ícone usa icone_mare.py. ---------
 def desenhar_mare(t):
     cx = cy = 54
     k = 26 / 24.0  # raio do aro no símbolo (24) -> 26 na grade
@@ -153,6 +156,8 @@ DESENHOS = {'mare': desenhar_mare, 'diario': desenhar_diario, 'notas': desenhar_
 
 
 def primeiro_plano(id_, px):
+    if id_ == 'mare':
+        return icone_mare.frente(px)
     t = Tela(px)
     DESENHOS[id_](t)
     return t.pronta()
@@ -160,6 +165,8 @@ def primeiro_plano(id_, px):
 
 def legado(id_, px):
     """Ícone para Android < 8 e prévia: quadrado arredondado com a arte maior (o adaptativo corta mais)."""
+    if id_ == 'mare':
+        return arredondar(recortar_centro(icone_mare.completo(round(px * 108 / 80)), px))
     grande = px * SS
     base = Image.new('RGBA', (grande, grande), (0, 0, 0, 0))
     ImageDraw.Draw(base).rounded_rectangle([0, 0, grande - 1, grande - 1], radius=grande * 0.22, fill=rgba(FUNDOS[id_]))
@@ -177,8 +184,24 @@ def legado(id_, px):
     return base.resize((px, px), Image.LANCZOS)
 
 
+def recortar_centro(img, px):
+    """O miolo de `px` x `px` de uma imagem maior (o que o launcher mostra de um ícone de 108)."""
+    off = (img.width - px) // 2
+    return img.crop((off, off, off + px, off + px))
+
+
+def arredondar(img, raio=0.22):
+    forma = Image.new('L', (img.width * SS, img.height * SS), 0)
+    ImageDraw.Draw(forma).rounded_rectangle([0, 0, forma.width - 1, forma.height - 1], radius=forma.width * raio, fill=255)
+    img = img.copy()
+    img.putalpha(ImageChops.multiply(img.getchannel('A'), forma.resize(img.size, Image.LANCZOS)))
+    return img
+
+
 def monocromatico(id_, px):
     """Camada do ícone temático: a silhueta da arte em uma cor só (o Android escolhe a cor)."""
+    if id_ == 'mare':
+        return icone_mare.mono(px)
     arte = primeiro_plano(id_, px)
     branco = Image.new('RGBA', arte.size, (255, 255, 255, 0))
     branco.putalpha(arte.getchannel('A'))
@@ -186,14 +209,12 @@ def monocromatico(id_, px):
 
 
 def simbolo_abertura(px=1024):
-    """Só o símbolo da Maré, recortado e sem fundo, para a tela de abertura (splash)."""
-    arte = primeiro_plano('mare', px)
-    caixa = arte.getbbox()
-    recorte = arte.crop(caixa)
-    lado = max(recorte.size)
-    quadrado = Image.new('RGBA', (lado, lado), (0, 0, 0, 0))
-    quadrado.paste(recorte, ((lado - recorte.width) // 2, (lado - recorte.height) // 2))
-    return quadrado.resize((512, 512), Image.LANCZOS)
+    """A arte da Maré num círculo, para a tela de abertura (splash)."""
+    arte = recortar_centro(icone_mare.completo(round(px * 108 / 76)), px)
+    forma = Image.new('L', (px * SS, px * SS), 0)
+    ImageDraw.Draw(forma).ellipse([0, 0, px * SS - 1, px * SS - 1], fill=255)
+    arte.putalpha(forma.resize((px, px), Image.LANCZOS))
+    return arte.resize((512, 512), Image.LANCZOS)
 
 
 def icone_notificacao(px=96):
@@ -211,7 +232,7 @@ def icone_notificacao(px=96):
 
 XML_ADAPTATIVO = """<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-  <background android:drawable="@color/ic_disfarce_{id}_bg"/>
+  <background android:drawable="{fundo}"/>
   <foreground android:drawable="@mipmap/ic_disfarce_{id}_fg"/>
   <monochrome android:drawable="@mipmap/ic_disfarce_{id}_mono"/>
 </adaptive-icon>
@@ -228,10 +249,13 @@ def main():
             primeiro_plano(id_, round(108 * k)).save(os.path.join(pasta, f'ic_disfarce_{id_}_fg.png'), optimize=True)
             monocromatico(id_, round(108 * k)).save(os.path.join(pasta, f'ic_disfarce_{id_}_mono.png'), optimize=True)
             legado(id_, round(48 * k)).save(os.path.join(pasta, f'ic_disfarce_{id_}.png'), optimize=True)
+            if id_ == 'mare':
+                icone_mare.fundo(round(108 * k)).save(os.path.join(pasta, 'ic_disfarce_mare_bg.png'), optimize=True)
         pasta = os.path.join(RES, 'mipmap-anydpi-v26')
         os.makedirs(pasta, exist_ok=True)
         with open(os.path.join(pasta, f'ic_disfarce_{id_}.xml'), 'w', encoding='utf-8', newline='\n') as f:
-            f.write(XML_ADAPTATIVO.format(id=id_))
+            fundo_xml = '@mipmap/ic_disfarce_mare_bg' if id_ == 'mare' else f'@color/ic_disfarce_{id_}_bg'
+            f.write(XML_ADAPTATIVO.format(id=id_, fundo=fundo_xml))
         cores.append(f'  <color name="ic_disfarce_{id_}_bg">{fundo}</color>')
         legado(id_, 192).save(os.path.join(PREVIAS, f'{id_}.png'), optimize=True)
     cores.append('</resources>')
@@ -244,6 +268,7 @@ def main():
     assets = os.path.join(RAIZ, 'assets')
     legado('mare', 1024).save(os.path.join(assets, 'icone.png'), optimize=True)
     primeiro_plano('mare', 1024).save(os.path.join(assets, 'icone-frente.png'), optimize=True)
+    icone_mare.fundo(1024).save(os.path.join(assets, 'icone-fundo.png'), optimize=True)
     monocromatico('mare', 1024).save(os.path.join(assets, 'icone-mono.png'), optimize=True)
     simbolo_abertura().save(os.path.join(assets, 'splash.png'), optimize=True)
     print('ok:', RES, PREVIAS)

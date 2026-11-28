@@ -65,6 +65,8 @@ export function textoFaltam(proximo: { dias: number; faltam: number } | null): {
 } {
   if (!proximo) return { antes: '', destaque: 'Todos os marcos', depois: ' alcançados' };
   const { faltam } = proximo;
+  // "falta 1 dia para 24 horas" diria a mesma coisa duas vezes.
+  if (proximo.dias === 1) return { antes: 'próximo marco: ', destaque: nomeMarco(1), depois: '' };
   return {
     antes: faltam === 1 ? 'falta ' : 'faltam ',
     destaque: faltam === 1 ? '1 dia' : `${faltam} dias`,

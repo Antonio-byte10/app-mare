@@ -3,13 +3,19 @@ package expo.modules.disfarce
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.view.WindowManager
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
 /**
- * Troca o nome e o ícone do app na tela inicial. O plugin `plugins/with-disfarce.js` declara um
+ * Privacidade do app no lado nativo:
+ * - tela protegida: liga ou desliga o FLAG_SECURE da janela (bloqueia captura e gravação de tela e
+ *   esconde o conteúdo na lista de apps recentes). Feito aqui, e não com o expo-screen-capture,
+ *   porque aquele módulo registra um observador de capturas ao iniciar que exige a permissão
+ *   DETECT_SCREEN_CAPTURE no Android 14+; sem ela (o Maré não pede), o app fechava ao abrir;
+ * - disfarce: troca o nome e o ícone do app na tela inicial. O plugin `plugins/with-disfarce.js` declara um
  * `activity-alias` por disfarce no AndroidManifest (só um fica habilitado por vez, e é ele que
  * aparece no launcher). Aqui apenas ligamos um alias e desligamos os outros.
  *
@@ -22,8 +28,29 @@ class DisfarceModule : Module() {
 
   private fun alias(id: String) = ComponentName(context.packageName, "${context.packageName}.Disfarce${id.replaceFirstChar { it.uppercase() }}")
 
+  // Último pedido de tela protegida, reaplicado se a janela for recriada ao voltar para o app.
+  @Volatile private var telaProtegida: Boolean? = null
+
+  private fun aplicarTelaProtegida() {
+    val ligado = telaProtegida ?: return
+    val atividade = appContext.currentActivity ?: return
+    atividade.runOnUiThread {
+      if (ligado) atividade.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+      else atividade.window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    }
+  }
+
   override fun definition() = ModuleDefinition {
     Name("Disfarce")
+
+    Function("protegerTela") { ligado: Boolean ->
+      telaProtegida = ligado
+      aplicarTelaProtegida()
+    }
+
+    OnActivityEntersForeground {
+      aplicarTelaProtegida()
+    }
 
     // Id do disfarce que está habilitado agora ("mare" se nenhum tiver sido trocado ainda).
     Function("atual") {

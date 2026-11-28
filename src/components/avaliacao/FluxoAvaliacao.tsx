@@ -97,7 +97,7 @@ export function FluxoAvaliacao({ habitos, respostas, aoResponder, aoConcluir, ao
         <Botao
           desabilitado={escolhida === undefined}
           onPress={() => (ultima ? aoConcluir() : setIndice(indice + 1))}
-          accessibilityLabel={escolhida === undefined ? 'Continuar. Escolha uma resposta primeiro.' : undefined}
+          accessibilityLabel={escolhida === undefined ? 'Continuar. Escolha uma resposta primeiro.' : ultima ? 'Ver meu resultado' : 'Continuar'}
         >
           {ultima ? 'Ver meu resultado' : 'Continuar'}
         </Botao>

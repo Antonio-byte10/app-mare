@@ -1,6 +1,6 @@
 # Política de privacidade do Maré
 
-*Versão beta. Esta política descreve o que o app faz de fato; o código está aberto neste repositório para quem quiser conferir.*
+*Versão 1.0. Esta política descreve o que o app faz de fato; o código está aberto neste repositório para quem quiser conferir.*
 
 O Maré foi feito para quem quer parar ou diminuir um hábito, e isso é um assunto íntimo. Por isso o princípio é simples: **o que você registra fica no seu celular, e só sai dele quando você pede.**
 
@@ -89,7 +89,7 @@ Em **Mais → Backup e dados → Apagar tudo** (com duas confirmações), o app 
 
 ## Saúde
 
-O Maré informa e incentiva a procurar ajuda, mas não diagnostica, não prescreve e não substitui atendimento profissional. Na versão beta, os textos de saúde ainda não foram revisados por um profissional. Em sofrimento, procure o CVV (188) ou, em emergência, o SAMU (192).
+O Maré informa e incentiva a procurar ajuda, mas não diagnostica, não prescreve e não substitui atendimento profissional. Os textos de saúde ainda não foram revisados por um profissional. Em sofrimento, procure o CVV (188) ou, em emergência, o SAMU (192).
 
 ## Mudanças e contato
 

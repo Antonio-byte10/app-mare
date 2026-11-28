@@ -1,9 +1,10 @@
 import { Platform, requireOptionalNativeModule } from 'expo';
 
-/** Lado nativo (Kotlin, `DisfarceModule.kt`): liga um `activity-alias` e desliga os outros. */
+/** Lado nativo (Kotlin, `DisfarceModule.kt`): disfarce (activity-alias) e tela protegida (FLAG_SECURE). */
 interface DisfarceNativo {
   atual(): string;
   definir(id: string): Promise<void>;
+  protegerTela(ligado: boolean): void;
 }
 
 /** `null` no navegador, no Expo Go e em builds sem o módulo: aí a escolha só é guardada. */
@@ -24,4 +25,16 @@ export function disfarceAtivo(): string | null {
 /** Troca o ícone e o nome. Lança se o sistema recusar; sem o módulo nativo, não faz nada. */
 export async function trocarDisfarce(id: string): Promise<void> {
   if (nativo) await nativo.definir(id);
+}
+
+/**
+ * Liga ou desliga a tela protegida (FLAG_SECURE): sem captura nem gravação de tela, e o app aparece
+ * em branco na lista de recentes. Sem o módulo nativo (navegador, Expo Go), não faz nada.
+ */
+export function protegerTela(ligado: boolean): void {
+  try {
+    nativo?.protegerTela(ligado);
+  } catch {
+    // Sem suporte neste aparelho.
+  }
 }
