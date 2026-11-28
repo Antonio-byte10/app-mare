@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { vibrarSelecao } from '@/lib/haptica';
 import { comAlfa, cores, fontes } from '@/theme';
 import { Icone } from './Icone';
 import { Texto } from './Texto';
@@ -63,10 +64,16 @@ export function TecladoPin({
 }: Props) {
   const limite = total ?? maximo;
   const digitar = (d: string) => {
-    if (!desabilitado && valor.length < limite) aoMudar(valor + d);
+    if (!desabilitado && valor.length < limite) {
+      vibrarSelecao();
+      aoMudar(valor + d);
+    }
   };
   const apagar = () => {
-    if (!desabilitado && valor.length > 0) aoMudar(valor.slice(0, -1));
+    if (!desabilitado && valor.length > 0) {
+      vibrarSelecao();
+      aoMudar(valor.slice(0, -1));
+    }
   };
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AnelAgua } from '@/components/AnelAgua';
 import { Botao } from '@/components/Botao';
@@ -40,7 +41,16 @@ export default function Inicio() {
   const router = useRouter();
   const agora = useAgora();
 
-  if (!ativo) {
+  const hoje = dataLocal(agora);
+  const resumo = useMemo(() => (ativo ? resumoHabito(ativo, relatos, hoje) : null), [ativo, relatos, hoje]);
+  const mostrarReflexao = useMemo(
+    () =>
+      ehDiaDaReflexao(hoje) &&
+      deveMostrarCartaoReflexao(hoje, ajustes.reflexaoVistaEm, resumoDaSemana(habitos, relatos, fissuras, recomecos, hoje)),
+    [hoje, ajustes.reflexaoVistaEm, habitos, relatos, fissuras, recomecos],
+  );
+
+  if (!ativo || !resumo) {
     return (
       <Tela>
         {avisoRecomeco ? <FaixaRecomeco aoDispensar={dispensarAviso} /> : null}
@@ -49,16 +59,10 @@ export default function Inicio() {
     );
   }
 
-  const hoje = dataLocal(agora);
-  const resumo = resumoHabito(ativo, relatos, hoje);
   const proximo = proximoMarco(resumo.sequenciaAtual);
   const pendente = textoPendente(resumo, hoje);
   const oculto = ajustes.ocultarNumeros;
   const faltam = textoFaltam(proximo);
-  // Só calcula a semana nos dias em que o cartão pode aparecer.
-  const mostrarReflexao =
-    ehDiaDaReflexao(hoje) &&
-    deveMostrarCartaoReflexao(hoje, ajustes.reflexaoVistaEm, resumoDaSemana(habitos, relatos, fissuras, recomecos, hoje));
   const sugerirBackup = deveSugerirBackup({
     agora,
     primeiroUsoEm: primeiroUsoEm(habitos, relatos),
@@ -91,7 +95,13 @@ export default function Inicio() {
 
       <SeletorHabito habitos={habitos} ativoId={ativo.id} onEscolher={escolher} style={styles.chips} />
 
-      <AnelAgua sequencia={resumo.sequenciaAtual} totalLivres={resumo.totalLivres} proximo={proximo} oculto={oculto} />
+      <AnelAgua
+        sequencia={resumo.sequenciaAtual}
+        totalLivres={resumo.totalLivres}
+        proximo={proximo}
+        oculto={oculto}
+        onPress={() => router.push('/marcos')}
+      />
 
       {oculto ? null : (
         <>

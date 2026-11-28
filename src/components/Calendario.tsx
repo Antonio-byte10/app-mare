@@ -1,7 +1,9 @@
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { useRef, useState } from 'react';
+import { Animated, Pressable, StyleSheet, View, type GestureResponderEvent, type ViewStyle } from 'react-native';
 import {
   celulaTocavel,
   deslocarMes,
+  direcaoSwipeMes,
   estadoCelula,
   gradeDoMes,
   limitarMes,
@@ -11,7 +13,9 @@ import {
   type Mes,
 } from '@/lib/calendario';
 import { formatarData } from '@/lib/datas';
+import { vibrarSelecao } from '@/lib/haptica';
 import type { EstadoDia } from '@/lib/tipos';
+import { useReduzirMovimento } from '@/lib/useReduzirMovimento';
 import { comAlfa, cores, fontes, linha } from '@/theme';
 import { Icone } from './Icone';
 import { Texto } from './Texto';
@@ -41,8 +45,9 @@ const ROTULO_ESTADO: Record<EstadoCelula, string> = {
   antes: 'antes do início',
 };
 
-/** Calendário do mês (`.cal` do mockup 6): semana começa no domingo. */
+/** Calendário do mês (`.cal` do mockup 6): semana começa no domingo; aceita deslizar para o lado. */
 export function Calendario({ mes, estados, hoje, inicio, onMes, onDia }: Props) {
+  const reduzir = useReduzirMovimento();
   const limites = { inicio, hoje };
   const celulas = gradeDoMes(mes);
   while (celulas.length % 7 !== 0) celulas.push(null);
@@ -50,6 +55,35 @@ export function Calendario({ mes, estados, hoje, inicio, onMes, onDia }: Props) 
   for (let i = 0; i < celulas.length; i += 7) semanas.push(celulas.slice(i, i + 7));
 
   const ir = (delta: number) => onMes(limitarMes(deslocarMes(mes, delta), limites));
+
+  const [deslize] = useState(() => new Animated.Value(0));
+  const gesto = useRef({ x: 0, y: 0, t: 0 });
+
+  const soltar = () => {
+    Animated.spring(deslize, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 24 }).start();
+  };
+
+  const aoMover = (e: GestureResponderEvent) => {
+    if (reduzir) return;
+    const dx = e.nativeEvent.pageX - gesto.current.x;
+    const delta = dx < 0 ? 1 : -1;
+    const liberado = podeIrParaMes(mes, delta, limites);
+    const limite = liberado ? 36 : 12;
+    const valor = Math.max(-limite, Math.min(limite, dx * (liberado ? 0.35 : 0.15)));
+    deslize.setValue(valor);
+  };
+
+  const aoSoltar = (e: GestureResponderEvent) => {
+    const dx = e.nativeEvent.pageX - gesto.current.x;
+    const dy = e.nativeEvent.pageY - gesto.current.y;
+    const dt = Math.max(16, e.nativeEvent.timestamp - gesto.current.t);
+    const delta = direcaoSwipeMes(dx, dy, dx / dt);
+    if (delta !== 0 && podeIrParaMes(mes, delta, limites)) {
+      vibrarSelecao();
+      ir(delta);
+    }
+    soltar();
+  };
 
   return (
     <View>
@@ -71,7 +105,21 @@ export function Calendario({ mes, estados, hoje, inicio, onMes, onDia }: Props) 
         />
       </View>
 
-      <View style={styles.grade}>
+      <Animated.View
+        style={[styles.grade, reduzir ? null : { transform: [{ translateX: deslize }] }]}
+        onTouchStart={(e) => {
+          gesto.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, t: e.nativeEvent.timestamp };
+        }}
+        onMoveShouldSetResponderCapture={(e) => {
+          const dx = e.nativeEvent.pageX - gesto.current.x;
+          const dy = e.nativeEvent.pageY - gesto.current.y;
+          return Math.abs(dx) > 14 && Math.abs(dx) > Math.abs(dy) * 1.4;
+        }}
+        onResponderTerminationRequest={() => false}
+        onResponderMove={aoMover}
+        onResponderRelease={aoSoltar}
+        onResponderTerminate={soltar}
+      >
         <View style={styles.semana}>
           {SEMANA.map((letra, i) => (
             <View key={i} style={styles.celula}>
@@ -98,7 +146,7 @@ export function Calendario({ mes, estados, hoje, inicio, onMes, onDia }: Props) 
             )}
           </View>
         ))}
-      </View>
+      </Animated.View>
 
       <View style={styles.legenda}>
         {/* Cada estado tem uma forma própria, para não depender só da cor: cheio, anel duplo, tracejado e ponto. */}

@@ -113,6 +113,8 @@ type Entrada = {
   dias?: number;
   /** Quantos mostrar. */
   limite?: number;
+  /** Filtra fissuras e relatos pelo hábito (fissuras sem hábito contam para todos). */
+  habitoId?: string;
 };
 
 /**
@@ -121,7 +123,7 @@ type Entrada = {
  * gatilho. O texto livre do relato que bate com um gatilho de um toque (sem ligar para maiúsculas
  * e acentos) soma com ele; o resto é contado pelo próprio texto. Empate: ordem alfabética.
  */
-export function contarGatilhos({ fissuras, relatos, hoje, dias = 30, limite = 3 }: Entrada): GatilhoContado[] {
+export function contarGatilhos({ fissuras, relatos, hoje, dias = 30, limite = 3, habitoId }: Entrada): GatilhoContado[] {
   const primeiro = deslocarDia(hoje, -(dias - 1));
   const noPeriodo = (dia: string) => dia >= primeiro && dia <= hoje;
   const contagem = new Map<string, GatilhoContado>();
@@ -133,11 +135,13 @@ export function contarGatilhos({ fissuras, relatos, hoje, dias = 30, limite = 3 
   };
 
   for (const f of fissuras) {
+    if (habitoId && f.habitoId && f.habitoId !== habitoId) continue;
     if (!f.gatilhos?.length || !noPeriodo(dataLocal(f.inicio))) continue;
     for (const id of limparGatilhosFissura(f.gatilhos)) somar(id, rotuloGatilho(id));
   }
 
   for (const r of relatos) {
+    if (habitoId && !r.habitos.some((x) => x.habitoId === habitoId)) continue;
     if (!r.gatilhos?.length || !noPeriodo(r.dia)) continue;
     const vistos = new Set<string>();
     for (const texto of r.gatilhos) {

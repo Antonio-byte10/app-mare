@@ -8,6 +8,9 @@ import { FotoPorque } from '@/components/FotoPorque';
 import { LinhaAjuste } from '@/components/LinhaAjuste';
 import { Mar } from '@/components/Mar';
 import { Texto } from '@/components/Texto';
+import { AncoraOnda } from '@/components/fissura/AncoraOnda';
+import { AterramentoCinco } from '@/components/fissura/AterramentoCinco';
+import { DeslizarAgua } from '@/components/fissura/DeslizarAgua';
 import { EsperaDezMinutos } from '@/components/fissura/EsperaDezMinutos';
 import { saidasDeApoio } from '@/lib/ajudaAgora';
 import { urlLigar } from '@/lib/contatos';
@@ -42,7 +45,10 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
   // Com a espera de 10 minutos ligada, um relógio só na tela: o dela.
   const [esperando, setEsperando] = useState(false);
   const [dificil, setDificil] = useState(false);
-  // Voltar do Android fecha o painel "Ainda difícil" antes de fechar a Fissura.
+  const [segurando, setSegurando] = useState(false);
+  const [modo, setModo] = useState<'onda' | 'aterramento' | 'deslizar'>('onda');
+  // Voltar do Android fecha o exercício tátil ou o painel "Ainda difícil" antes de fechar a Fissura.
+  useVoltarInterno(modo !== 'onda', () => setModo('onda'));
   useVoltarInterno(dificil, () => setDificil(false));
 
   useEffect(() => {
@@ -61,12 +67,21 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
   const segundos = restante % 60;
   const falaTempo = `${minutos} ${minutos === 1 ? 'minuto' : 'minutos'} e ${segundos} ${segundos === 1 ? 'segundo' : 'segundos'}`;
 
+  if (modo === 'aterramento') {
+    return <AterramentoCinco aoVoltar={() => setModo('onda')} aoPassou={aoPassou} />;
+  }
+  if (modo === 'deslizar') {
+    return <DeslizarAgua aoVoltar={() => setModo('onda')} aoPassou={aoPassou} />;
+  }
+
   return (
     <View style={styles.raiz}>
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.corpo}
         showsVerticalScrollIndicator={false}
+        // Com o dedo na âncora, a rolagem não rouba o toque.
+        scrollEnabled={!segurando}
         // Esconde o conteúdo de trás para quem usa leitor de tela enquanto o painel está aberto.
         importantForAccessibility={dificil ? 'no-hide-descendants' : 'auto'}
         accessibilityElementsHidden={dificil}
@@ -84,6 +99,8 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
           </Texto>
         )}
         <Texto style={styles.frase}>{'A vontade sobe, chega ao pico\ne passa. Você só precisa ficar.'}</Texto>
+
+        <AncoraOnda aoMudarSegurando={setSegurando} />
 
         {porque ? (
           <View style={styles.citacao}>
@@ -135,6 +152,14 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
           habitoId={habitoId}
           daTrancada={daTrancada}
           aoFechar={() => setDificil(false)}
+          aoAterramento={() => {
+            setDificil(false);
+            setModo('aterramento');
+          }}
+          aoDeslizar={() => {
+            setDificil(false);
+            setModo('deslizar');
+          }}
           aoRespirarDeNovo={() => {
             setDificil(false);
             aoRespirarDeNovo();
@@ -145,10 +170,17 @@ export function PassoOnda({ porque, habitoId, daTrancada = false, aoPassou, aoRe
   );
 }
 
-type PainelProps = { habitoId?: string; daTrancada: boolean; aoFechar: () => void; aoRespirarDeNovo: () => void };
+type PainelProps = {
+  habitoId?: string;
+  daTrancada: boolean;
+  aoFechar: () => void;
+  aoAterramento: () => void;
+  aoDeslizar: () => void;
+  aoRespirarDeNovo: () => void;
+};
 
 /** "Ainda difícil": o que fazer agora, uma saída por linha. */
-function PainelDificil({ habitoId, daTrancada, aoFechar, aoRespirarDeNovo }: PainelProps) {
+function PainelDificil({ habitoId, daTrancada, aoFechar, aoAterramento, aoDeslizar, aoRespirarDeNovo }: PainelProps) {
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const planos = useMare((e) => e.planos);
@@ -176,6 +208,20 @@ function PainelDificil({ habitoId, daTrancada, aoFechar, aoRespirarDeNovo }: Pai
             subtitulo="soltar o ar devagar, por 1 minuto"
             icone="folego"
             onPress={aoRespirarDeNovo}
+          />
+          <View style={styles.divisor} />
+          <LinhaAjuste
+            titulo="Aterramento 5-4-3-2-1"
+            subtitulo="tocar no que vê, sente e ouve agora"
+            icone="foco"
+            onPress={aoAterramento}
+          />
+          <View style={styles.divisor} />
+          <LinhaAjuste
+            titulo="Deslizar devagar na água"
+            subtitulo="mover o dedo sem pressa para acalmar"
+            icone="calmaria"
+            onPress={aoDeslizar}
           />
           {mostrarPlano ? (
             <>

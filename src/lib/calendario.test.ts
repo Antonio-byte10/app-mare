@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   celulaTocavel,
   deslocarMes,
+  direcaoSwipeMes,
   estadoCelula,
   gradeDoMes,
   limitarMes,
@@ -147,5 +148,17 @@ describe('textoPico', () => {
     expect(textoPico(1)?.antes).toBe('Suas vontades sobem às ');
     expect(textoPico(0)).toEqual({ antes: 'Suas vontades sobem aos ', destaque: 'domingos', depois: '.' });
     expect(textoPico(6)?.antes).toBe('Suas vontades sobem aos ');
+  });
+});
+
+describe('direcaoSwipeMes', () => {
+  it('arrastar para a esquerda avança um mês e para a direita volta', () => {
+    expect(direcaoSwipeMes(-60, 5, -0.2)).toBe(1);
+    expect(direcaoSwipeMes(60, -10, 0.2)).toBe(-1);
+    expect(direcaoSwipeMes(-28, 0, -0.6)).toBe(1);
+  });
+  it('ignora rolagem vertical ou toque curto', () => {
+    expect(direcaoSwipeMes(10, 2, 0.1)).toBe(0);
+    expect(direcaoSwipeMes(40, 45, 0.5)).toBe(0);
   });
 });

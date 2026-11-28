@@ -119,3 +119,16 @@ export function textoPico(pico: number | null): { antes: string; destaque: strin
   const aos = pico === 0 || pico === 6;
   return { antes: `Suas vontades sobem ${aos ? 'aos' : 'às'} `, destaque: NOMES_DIAS[pico], depois: '.' };
 }
+
+/**
+ * Direção do gesto horizontal no calendário:
+ * arrastar o dedo para a esquerda (`dx < 0`) avança para o próximo mês (`+1`);
+ * arrastar para a direita (`dx > 0`) volta ao mês anterior (`-1`).
+ */
+export function direcaoSwipeMes(dx: number, dy: number, vx: number): -1 | 0 | 1 {
+  if (Math.abs(dx) <= Math.abs(dy) * 1.2) return 0;
+  const passouDistancia = Math.abs(dx) > 45;
+  const passouImpulso = Math.abs(dx) > 20 && Math.abs(vx) > 0.35;
+  if (!passouDistancia && !passouImpulso) return 0;
+  return dx < 0 ? 1 : -1;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROTA_REFLEXAO, rotaDaNotificacao, rotaRelato } from './toque';
+import { ACAO_ABRIR_ONDA, ROTA_FISSURA, ROTA_REFLEXAO, rotaDaNotificacao, rotaDaResposta, rotaRelato } from './toque';
 
 describe('rotaDaNotificacao', () => {
   it('aceita as rotas do app', () => {
@@ -21,5 +21,16 @@ describe('rotaDaNotificacao', () => {
     expect(rotaDaNotificacao({ rota: 'https://exemplo.com' })).toBeNull();
     expect(rotaDaNotificacao({ rota: '/relato/2026-13-45' })).toBeNull();
     expect(rotaDaNotificacao({ rota: '/relato/../ia' })).toBeNull();
+  });
+});
+
+describe('rotaDaResposta', () => {
+  it('ação "Abrir um respiro" abre direto /fissura', () => {
+    expect(rotaDaResposta(ACAO_ABRIR_ONDA, 'default', { rota: '/' })).toBe(ROTA_FISSURA);
+  });
+
+  it('toque normal usa a rota do data e ignora ações desconhecidas', () => {
+    expect(rotaDaResposta('default', 'default', { rota: '/reflexao' })).toBe('/reflexao');
+    expect(rotaDaResposta('outra', 'default', { rota: '/fissura' })).toBeNull();
   });
 });

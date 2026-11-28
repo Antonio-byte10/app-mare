@@ -465,7 +465,7 @@ export const ARTIGOS: Artigo[] = [
       {
         tipo: 'paragrafo',
         texto:
-          'É a porta de entrada mais perto de casa. Diga à equipe que você quer parar de fumar, beber ou que está sofrendo com um hábito. A UBS oferece o programa de tabagismo, acompanha o seu caso e encaminha para outros serviços quando precisa. Leve documento com foto e o cartão do SUS, se tiver.',
+          'É a porta de entrada mais perto de casa. Diga à equipe que você quer parar de fumar, beber ou que está sofrendo com um hábito. No programa de tabagismo, a UBS oferece grupos gratuitos e avaliação de saúde para apoio como adesivo ou goma de nicotina, quando indicado. Também acompanha outros hábitos e encaminha para o CAPS AD quando precisa. Leve documento com foto e o cartão do SUS, se tiver.',
       },
       { tipo: 'subtitulo', texto: 'CAPS AD (Centro de Atenção Psicossocial Álcool e Drogas)' },
       {

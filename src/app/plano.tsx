@@ -59,9 +59,9 @@ export default function MeuPlano() {
     if (!erroArmazenamento) void apagarFotosSemDono(nomesDeFotos(useMare.getState().porques));
   }, [erroArmazenamento]);
 
-  // Plano: se veio do "Recomeçar com cuidado", o formulário já abre preenchido.
+  // Plano: se veio do "Recomeçar com cuidado", o formulário já abre preenchido. 'novo' = adicionando, id = editando, null = só a lista.
   const veioPronto = param(seParam) !== '' || param(entaoParam) !== '';
-  const [novoPlano, setNovoPlano] = useState(veioPronto);
+  const [editandoPlano, setEditandoPlano] = useState<string | 'novo' | null>(veioPronto ? 'novo' : null);
   const [se, setSe] = useState(param(seParam));
   const [entao, setEntao] = useState(param(entaoParam));
   const [erroPlano, setErroPlano] = useState<string | undefined>();
@@ -115,20 +115,41 @@ export default function MeuPlano() {
     setFotoPorque(undefined);
   };
 
-  const salvarNovoPlano = () => {
-    const r = validarPlano(se, entao);
-    if ('erro' in r) {
-      setErroPlano(r.erro);
-      return;
-    }
-    salvarPlano({ id: randomUUID(), se: r.se, entao: r.entao, criadoEm: Date.now() });
-    setNovoPlano(false);
+  const abrirPlano = (id: string | 'novo', seVal = '', entaoVal = '') => {
+    setEditandoPlano(id);
+    setSe(seVal);
+    setEntao(entaoVal);
+    setErroPlano(undefined);
+  };
+
+  const fecharPlano = () => {
+    setEditandoPlano(null);
     setSe('');
     setEntao('');
     setErroPlano(undefined);
   };
 
-  const sugestoesEntao = sugestoesLivres(SUGESTOES_ENTAO, planos.map((p) => p.entao));
+  const salvarFormularioPlano = () => {
+    const r = validarPlano(se, entao);
+    if ('erro' in r) {
+      setErroPlano(r.erro);
+      return;
+    }
+    const existente = planos.find((p) => p.id === editandoPlano);
+    salvarPlano({
+      id: existente?.id ?? randomUUID(),
+      se: r.se,
+      entao: r.entao,
+      ...(existente?.habitoId ? { habitoId: existente.habitoId } : {}),
+      criadoEm: existente?.criadoEm ?? Date.now(),
+    });
+    fecharPlano();
+  };
+
+  const sugestoesEntao = sugestoesLivres(
+    SUGESTOES_ENTAO,
+    planos.filter((p) => p.id !== editandoPlano).map((p) => p.entao),
+  );
 
   return (
     <TelaPasso
@@ -213,25 +234,32 @@ export default function MeuPlano() {
       <Texto tipo="legenda" style={styles.legenda}>
         Combine consigo o que fazer numa situação difícil. Ações prontas são mais fáceis de seguir.
       </Texto>
-      {planos.length === 0 && !novoPlano ? (
+      {planos.length === 0 && editandoPlano === null ? (
         <Texto style={styles.vazio}>
           Nenhum plano ainda. Por exemplo: “Se eu sentir ansiedade à noite, então respirar fundo e beber água”.
         </Texto>
       ) : null}
-      {maisNovosPrimeiro(planos).map((p, i) => (
-        <View key={p.id} style={[styles.item, i > 0 && styles.itemSeparado]}>
-          <View style={styles.itemTexto}>
-            <Texto style={styles.plano}>{frasePlano(p)}</Texto>
+      {maisNovosPrimeiro(planos).map((p, i) =>
+        editandoPlano === p.id ? null : (
+          <View key={p.id} style={[styles.item, i > 0 && styles.itemSeparado]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Editar o plano: ${frasePlano(p)}`}
+              onPress={() => abrirPlano(p.id, p.se, p.entao)}
+              style={styles.itemTexto}
+            >
+              <Texto style={styles.plano}>{frasePlano(p)}</Texto>
+            </Pressable>
+            <BotaoIcone
+              icone="lixeira"
+              accessibilityLabel={`Remover o plano: ${frasePlano(p)}`}
+              onPress={() => confirmar('Remover este plano?', frasePlano(p), 'Remover', () => removerPlano(p.id))}
+              style={styles.botaoPequeno}
+            />
           </View>
-          <BotaoIcone
-            icone="lixeira"
-            accessibilityLabel={`Remover o plano: ${frasePlano(p)}`}
-            onPress={() => confirmar('Remover este plano?', frasePlano(p), 'Remover', () => removerPlano(p.id))}
-            style={styles.botaoPequeno}
-          />
-        </View>
-      ))}
-      {novoPlano ? (
+        ),
+      )}
+      {editandoPlano !== null ? (
         <View style={styles.formulario}>
           <Campo
             rotulo="Se..."
@@ -243,6 +271,7 @@ export default function MeuPlano() {
             maxLength={MAX_PLANO}
             placeholder="eu sentir vontade logo depois do café"
             ajuda="Em que situação isso vale?"
+            autoFoco={editandoPlano !== 'novo'}
           />
           <View style={styles.sugestoes}>
             {SUGESTOES_SE.map((s) => (
@@ -272,22 +301,14 @@ export default function MeuPlano() {
             ))}
           </View>
           <View style={[styles.acoes, styles.espaco]}>
-            <Botao onPress={salvarNovoPlano}>Adicionar plano</Botao>
-            <Botao
-              variante="texto"
-              onPress={() => {
-                setNovoPlano(false);
-                setSe('');
-                setEntao('');
-                setErroPlano(undefined);
-              }}
-            >
+            <Botao onPress={salvarFormularioPlano}>{editandoPlano === 'novo' ? 'Adicionar plano' : 'Salvar'}</Botao>
+            <Botao variante="texto" onPress={fecharPlano}>
               Cancelar
             </Botao>
           </View>
         </View>
       ) : (
-        <Botao variante="secundario" onPress={() => setNovoPlano(true)} style={styles.adicionar}>
+        <Botao variante="secundario" onPress={() => abrirPlano('novo')} style={styles.adicionar}>
           Adicionar um plano
         </Botao>
       )}

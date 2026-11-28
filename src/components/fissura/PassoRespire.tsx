@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Botao } from '@/components/Botao';
 import { Esfera } from '@/components/Esfera';
 import { Texto } from '@/components/Texto';
 import { CICLOS, EXPIRA_MS, INSPIRA_MS } from '@/lib/fissura';
-import { vibrarLeve } from '@/lib/haptica';
+import { vibrarLeve, vibrarSuave } from '@/lib/haptica';
 import { useReduzirMovimento } from '@/lib/useReduzirMovimento';
 import { cores, fontes, margemTela } from '@/theme';
 
@@ -33,6 +33,7 @@ export function PassoRespire({ aoSeguir }: Props) {
   const [escala] = useState(() => new Animated.Value(ESCALA_REPOUSO));
   const [fase, setFase] = useState<Fase>('inspire');
   const [ciclo, setCiclo] = useState(1);
+  const [segurando, setSegurando] = useState(false);
 
   useEffect(() => {
     let cancelado = false;
@@ -61,7 +62,7 @@ export function PassoRespire({ aoSeguir }: Props) {
         setTimeout(() => {
           if (cancelado) return;
           setFase('solte');
-          vibrarLeve();
+          vibrarSuave();
           mover(ESCALA_MIN, EXPIRA_MS);
           timers.push(setTimeout(() => rodar(n + 1), EXPIRA_MS));
         }, INSPIRA_MS),
@@ -83,9 +84,23 @@ export function PassoRespire({ aoSeguir }: Props) {
   return (
     <View style={styles.raiz}>
       <View style={styles.centro}>
-        <View style={[styles.esfera, { width: tamanho, height: tamanho }]}>
-          <Esfera escala={escala} tamanho={tamanho} />
-        </View>
+        <Pressable
+          onPressIn={() => {
+            setSegurando(true);
+            vibrarSuave();
+          }}
+          onPressOut={() => setSegurando(false)}
+          pressRetentionOffset={{ top: 80, bottom: 80, left: 80, right: 80 }}
+          accessibilityRole="button"
+          accessibilityLabel="Esfera de respiração"
+          accessibilityHint="Toque e mantenha o dedo se quiser sentir o ritmo da respiração na mão."
+          accessibilityState={{ selected: segurando }}
+          style={[styles.esfera, { width: tamanho, height: tamanho }]}
+        >
+          <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+            <Esfera escala={escala} tamanho={tamanho} tocada={segurando} />
+          </View>
+        </Pressable>
         <Texto style={styles.fase} accessibilityLiveRegion="polite">
           {TEXTO_FASE[fase]}
         </Texto>
@@ -93,6 +108,9 @@ export function PassoRespire({ aoSeguir }: Props) {
           {fase === 'fim'
             ? 'Seis ciclos concluídos. Siga quando quiser.'
             : `4 segundos para dentro, 6 para fora · ciclo ${ciclo} de ${CICLOS}`}
+        </Texto>
+        <Texto style={styles.dicaToque}>
+          {segurando ? 'Sentindo o ritmo na mão…' : 'Se quiser, segure a esfera para sentir cada virada.'}
         </Texto>
       </View>
       <View style={[styles.rodape, { paddingBottom: Math.max(bottom, 12) + 10 }]}>
@@ -118,5 +136,6 @@ const styles = StyleSheet.create({
     color: cores.text,
   },
   ritmo: { marginTop: 6, fontSize: 13.5, lineHeight: 19, color: cores.muted, textAlign: 'center' },
+  dicaToque: { marginTop: 10, fontSize: 12.5, lineHeight: 18, color: cores.faint, textAlign: 'center' },
   rodape: { paddingHorizontal: margemTela, paddingTop: 14 },
 });

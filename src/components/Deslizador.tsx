@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { vibrarSelecao } from '@/lib/haptica';
 import { cores, fontes } from '@/theme';
 import { Texto } from './Texto';
 
@@ -41,7 +42,10 @@ export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessi
     return Math.min(max, Math.max(min, Math.round(bruto)));
   };
   const mudar = (v: number) => {
-    if (v !== valor) onChange(v);
+    if (v !== valor) {
+      vibrarSelecao();
+      onChange(v);
+    }
   };
 
   const passos = max - min;
@@ -81,7 +85,10 @@ export function Deslizador({ valor, onChange, min = 0, max = 10, pontas, accessi
         onResponderRelease={() => {
           const t = toque.current;
           // Toque (sem arrasto nem rolagem): conta como resposta mesmo no valor que já estava (ex.: confirmar 0).
-          if (t.fase === 'pendente') onChange(passoEm(t.x));
+          if (t.fase === 'pendente') {
+            vibrarSelecao();
+            onChange(passoEm(t.x));
+          }
           t.fase = 'cancelado';
         }}
         onResponderTerminate={() => {

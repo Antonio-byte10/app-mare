@@ -16,7 +16,7 @@ import type { AjustesLembretes, Fissura, Habito, Relato } from '../tipos';
 import { calcularAntesDaOnda } from './antesDaOnda';
 import { instanteDoDia, lerHorario } from './horario';
 import { proximoAvisoMarco } from './marcos';
-import { ROTA_FISSURA, ROTA_INICIO, ROTA_MARCOS, ROTA_REFLEXAO, rotaRelato } from './toque';
+import { CATEGORIA_ONDA, ROTA_FISSURA, ROTA_INICIO, ROTA_MARCOS, ROTA_REFLEXAO, rotaRelato } from './toque';
 
 export const DIAS_JANELA = 14;
 
@@ -35,6 +35,8 @@ export type Notificacao = {
   quando: Quando;
   /** Rota aberta ao tocar. */
   rota: string;
+  /** Categoria com botão rápido (ex.: "Abrir um respiro" em Antes da onda). */
+  categoria?: string;
 };
 
 export type EntradaPlano = {
@@ -103,6 +105,7 @@ export function planejarLembretes(e: EntradaPlano): Notificacao[] {
           minuto: onda.avisoMinutos % 60,
         },
         rota: ROTA_FISSURA,
+        categoria: CATEGORIA_ONDA,
       });
     }
   }

@@ -65,8 +65,9 @@ export const RECURSOS: Recurso[] = [
     id: 'ubs',
     grupo: 'Saúde pública (SUS)',
     nome: 'UBS (Unidade Básica de Saúde)',
-    descricao: 'A porta de entrada do SUS, perto de casa. Tem o programa para parar de fumar e encaminha para outros serviços.',
-    nota: 'Procure a unidade do seu bairro ou ligue para o 136.',
+    descricao:
+      'A porta de entrada do SUS, perto de casa. Oferece grupos gratuitos para parar de fumar (com avaliação médica para reposição de nicotina, como adesivo ou goma, quando indicada) e encaminha para outros serviços.',
+    nota: 'Procure a unidade do seu bairro com documento e cartão do SUS, ou ligue grátis para o 136.',
   },
   {
     id: 'caps-ad',

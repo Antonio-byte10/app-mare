@@ -9,6 +9,7 @@ import { Platform } from 'react-native';
 import { cores } from '@/theme';
 import type { Notificacao } from './plano';
 import type { Permissao } from './agendador.tipos';
+import { ACAO_ABRIR_ONDA, CATEGORIA_ONDA, rotaDaResposta } from './toque';
 
 export type { Permissao } from './agendador.tipos';
 
@@ -18,6 +19,20 @@ export const lembretesDisponiveis = true;
 const CANAL = 'lembretes';
 
 let canalPronto: Promise<void> | null = null;
+let categoriaPronta: Promise<void> | null = null;
+
+function garantirCategoria(): Promise<void> {
+  categoriaPronta ??= Notifications.setNotificationCategoryAsync(CATEGORIA_ONDA, [
+    {
+      identifier: ACAO_ABRIR_ONDA,
+      buttonTitle: 'Abrir um respiro',
+      options: { opensAppToForeground: true },
+    },
+  ]).then(() => undefined);
+  return categoriaPronta.catch(() => {
+    categoriaPronta = null;
+  });
+}
 
 function garantirCanal(): Promise<void> {
   if (Platform.OS !== 'android') return Promise.resolve();
@@ -40,7 +55,7 @@ function garantirCanal(): Promise<void> {
 
 let configurado = false;
 
-/** Mostra a notificação mesmo com o app aberto (sem som nem selo) e cria o canal. Pode repetir. */
+/** Mostra a notificação mesmo com o app aberto (sem som nem selo) e cria canal e categorias. Pode repetir. */
 export async function configurarNotificacoes(): Promise<void> {
   if (!configurado) {
     configurado = true;
@@ -53,7 +68,7 @@ export async function configurarNotificacoes(): Promise<void> {
       }),
     });
   }
-  await garantirCanal();
+  await Promise.all([garantirCanal(), garantirCategoria()]);
 }
 
 function paraPermissao(p: Notifications.NotificationPermissionsStatus): Permissao {
@@ -85,13 +100,19 @@ export async function pedirPermissao(): Promise<Permissao> {
 
 /** Cancela tudo do Maré e agenda de novo exatamente o plano recebido. */
 export async function aplicarPlano(plano: Notificacao[]): Promise<void> {
-  await garantirCanal();
+  await Promise.all([garantirCanal(), garantirCategoria()]);
   await Notifications.cancelAllScheduledNotificationsAsync();
   for (const n of plano) {
     try {
       await Notifications.scheduleNotificationAsync({
         identifier: n.id,
-        content: { title: n.titulo, body: n.corpo, data: { rota: n.rota }, sound: false },
+        content: {
+          title: n.titulo,
+          body: n.corpo,
+          data: { rota: n.rota },
+          sound: false,
+          ...(n.categoria ? { categoryIdentifier: n.categoria } : {}),
+        },
         trigger:
           n.quando.tipo === 'data'
             ? { type: Notifications.SchedulableTriggerInputTypes.DATE, date: n.quando.em, channelId: CANAL }
@@ -126,11 +147,16 @@ let ultimoTratado: string | null = null;
 export function escutarToques(aoTocar: (data: unknown) => void): () => void {
   let ativo = true;
   const tratar = (r: Notifications.NotificationResponse) => {
-    if (r.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
-    const chave = r.notification.request.identifier + ':' + r.notification.date;
+    const rota = rotaDaResposta(
+      r.actionIdentifier,
+      Notifications.DEFAULT_ACTION_IDENTIFIER,
+      r.notification.request.content.data,
+    );
+    if (!rota) return;
+    const chave = `${r.notification.request.identifier}:${r.notification.date}:${r.actionIdentifier}`;
     if (chave === ultimoTratado) return;
     ultimoTratado = chave;
-    aoTocar(r.notification.request.content.data);
+    aoTocar({ rota });
   };
   Notifications.getLastNotificationResponseAsync()
     .then((r) => {

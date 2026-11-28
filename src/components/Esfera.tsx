@@ -6,13 +6,15 @@ type Props = {
   /** Escala animada (0,74 a 1): vem do passo "Respire". */
   escala: Animated.Value | number;
   tamanho: number;
+  /** Dedo apoiado na esfera: acende os anéis de leve. */
+  tocada?: boolean;
 };
 
 /**
  * Esfera de respiração (`.orb` do mockup): dois anéis finos e a esfera em degradê.
  * Todo o conjunto cresce e encolhe junto; o texto nunca fica sobre a esfera.
  */
-export function Esfera({ escala, tamanho }: Props) {
+export function Esfera({ escala, tamanho, tocada = false }: Props) {
   const base = `esfera${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const inset = (tamanho * 62) / 260;
   const miolo = tamanho - inset * 2;
@@ -23,8 +25,19 @@ export function Esfera({ escala, tamanho }: Props) {
       accessibilityLabel="Esfera que cresce e diminui, no ritmo da respiração"
       style={{ width: tamanho, height: tamanho, transform: [{ scale: escala }] }}
     >
-      <View style={[styles.anel, { borderColor: 'rgba(111,211,224,.16)' }]} />
-      <View style={[styles.anel, { top: (tamanho * 28) / 260, left: (tamanho * 28) / 260, right: (tamanho * 28) / 260, bottom: (tamanho * 28) / 260, borderColor: 'rgba(169,182,245,.22)' }]} />
+      <View style={[styles.anel, { borderColor: tocada ? 'rgba(111,211,224,.45)' : 'rgba(111,211,224,.16)' }]} />
+      <View
+        style={[
+          styles.anel,
+          {
+            top: (tamanho * 28) / 260,
+            left: (tamanho * 28) / 260,
+            right: (tamanho * 28) / 260,
+            bottom: (tamanho * 28) / 260,
+            borderColor: tocada ? 'rgba(169,182,245,.5)' : 'rgba(169,182,245,.22)',
+          },
+        ]}
+      />
       <Svg width={miolo} height={miolo} style={{ position: 'absolute', top: inset, left: inset }}>
         <Defs>
           <RadialGradient id={`${base}a`} cx="0.38" cy="0.32" r="0.92">

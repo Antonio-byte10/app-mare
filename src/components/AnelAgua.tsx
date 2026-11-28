@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
+import { vibrarSelecao } from '@/lib/haptica';
 import { heroContador } from '@/lib/inicio';
 import { useReduzirMovimento } from '@/lib/useReduzirMovimento';
 import { cores, fontes } from '@/theme';
@@ -15,6 +16,8 @@ type Props = {
   proximo: { dias: number; faltam: number } | null;
   /** Esconde o número e o progresso: só a água e "Um dia de cada vez". */
   oculto?: boolean;
+  /** Ao tocar no anel (ex.: abrir a tela de Marcos). */
+  onPress?: () => void;
 };
 
 // Medidas do `.ring` do mockup v2.
@@ -71,7 +74,7 @@ function Onda({ cor, opacidade = 1, altura, crista, duracao, parada }: OndaProps
 }
 
 /** Anel de água do Início: arco até o próximo marco, ondas deslizando e a sequência no centro. */
-export function AnelAgua({ sequencia, totalLivres = 0, proximo, oculto = false }: Props) {
+export function AnelAgua({ sequencia, totalLivres = 0, proximo, oculto = false, onPress }: Props) {
   const base = `anel${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const idArco = `${base}a`;
   const idAgua = `${base}w`;
@@ -83,8 +86,8 @@ export function AnelAgua({ sequencia, totalLivres = 0, proximo, oculto = false }
     ? 'Um dia de cada vez'
     : `${hero.valor} ${hero.rotulo}${hero.nota ? `. ${hero.nota}` : ''}`;
 
-  return (
-    <View style={styles.anel} accessible accessibilityLabel={rotulo} accessibilityRole="image">
+  const miolo = (
+    <>
       <Svg
         width={TAMANHO}
         height={TAMANHO}
@@ -140,6 +143,28 @@ export function AnelAgua({ sequencia, totalLivres = 0, proximo, oculto = false }
           </>
         )}
       </View>
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={() => {
+          vibrarSelecao();
+          onPress();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${rotulo}. Ver marcos`}
+        style={({ pressed }) => [styles.anel, pressed && { transform: [{ scale: 0.985 }], opacity: 0.95 }]}
+      >
+        {miolo}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={styles.anel} accessible accessibilityLabel={rotulo} accessibilityRole="image">
+      {miolo}
     </View>
   );
 }

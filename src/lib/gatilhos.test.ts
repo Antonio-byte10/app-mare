@@ -180,3 +180,25 @@ describe('contarGatilhos', () => {
     expect(r).toEqual([]);
   });
 });
+
+describe('contarGatilhos por hábito', () => {
+  it('filtra relatos e fissuras pelo hábito e mantém fissuras genéricas sem habitoId', () => {
+    const r = contarGatilhos({
+      fissuras: [
+        { id: 'f1', inicio: em('2026-11-26'), duracaoSeg: 200, venceu: true, habitoId: 'h1', gatilhos: ['tedio'] },
+        { id: 'f2', inicio: em('2026-11-26'), duracaoSeg: 200, venceu: true, habitoId: 'h2', gatilhos: ['raiva'] },
+        { id: 'f3', inicio: em('2026-11-26'), duracaoSeg: 200, venceu: true, gatilhos: ['estresse'] },
+      ],
+      relatos: [
+        { dia: '2026-11-26', habitos: [{ habitoId: 'h1', vontade: 4, usou: false }], gatilhos: ['Tédio'], salvoEm: 0 },
+        { dia: '2026-11-25', habitos: [{ habitoId: 'h2', vontade: 8, usou: true }], gatilhos: ['Raiva', 'Fome'], salvoEm: 0 },
+      ],
+      hoje: HOJE,
+      habitoId: 'h1',
+    });
+    expect(r.map((g) => [g.chave, g.total])).toEqual([
+      ['tedio', 2],
+      ['estresse', 1],
+    ]);
+  });
+});

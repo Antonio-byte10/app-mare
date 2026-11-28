@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { Botao } from '@/components/Botao';
 import { Fundo } from '@/components/Fundo';
 import { IaCampo } from '@/components/IaCampo';
@@ -21,12 +21,14 @@ import {
   type ResumoBackup,
 } from '@/lib/backup';
 import { confirmar } from '@/lib/confirmar';
-import { formatarData } from '@/lib/datas';
+import { dataLocal, formatarData } from '@/lib/datas';
 import type { EstadoPersistido } from '@/lib/estado';
 import { apagarFotosSemDono, empacotarFotos, restaurarFotos } from '@/lib/fotos';
 import { nomesDeFotos, removerFotosAusentes } from '@/lib/fotosPuro';
 import { textoUltimoBackup } from '@/lib/lembreteBackup';
+import { gerarResumoConsulta } from '@/lib/resumoClinico';
 import { useAgora } from '@/lib/useAgora';
+import { semBloquear } from '@/lib/useBloqueio';
 import { useMare } from '@/store';
 import { comAlfa, cores, fontes } from '@/theme';
 
@@ -80,9 +82,21 @@ export default function Dados() {
   const [aberto, setAberto] = useState<{ estado: EstadoPersistido; resumo: ResumoBackup; fotos: FotosBackup } | null>(null);
   const [restaurando, setRestaurando] = useState(false);
   const [statusRestaurar, setStatusRestaurar] = useState<Status>(null);
+  // Resumo para consulta
+  const habitos = useMare((e) => e.habitos);
+  const relatos = useMare((e) => e.relatos);
+  const fissuras = useMare((e) => e.fissuras);
+  const avaliacoes = useMare((e) => e.avaliacoes);
+  const [statusResumo, setStatusResumo] = useState<Status>(null);
   // Apagar
   const [apagando, setApagando] = useState(false);
   const [statusApagar, setStatusApagar] = useState<Status>(null);
+
+  const hoje = dataLocal(agora);
+  const resumoConsulta = useMemo(
+    () => gerarResumoConsulta({ habitos, relatos, fissuras, avaliacoes, hoje }),
+    [habitos, relatos, fissuras, avaliacoes, hoje],
+  );
 
   const ocupado = trabalhandoBackup || abrindo || apagando || restaurando;
 
@@ -208,6 +222,24 @@ export default function Dados() {
       },
       true,
     );
+  };
+
+  const compartilharResumo = async () => {
+    if (!resumoConsulta.temDados || ocupado) return;
+    setStatusResumo(null);
+    try {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(resumoConsulta.texto);
+        setStatusResumo({ tipo: 'ok', texto: 'Resumo copiado para a área de transferência.' });
+        return;
+      }
+      const r = await semBloquear(() => Share.share({ message: resumoConsulta.texto, title: 'Resumo para consulta' }));
+      if (r.action === Share.sharedAction) {
+        setStatusResumo({ tipo: 'ok', texto: 'Resumo pronto para levar à sua consulta.' });
+      }
+    } catch {
+      setStatusResumo({ tipo: 'erro', texto: 'Não consegui compartilhar o resumo agora.' });
+    }
   };
 
   const apagar = () => {
@@ -379,6 +411,24 @@ export default function Dados() {
                 </>
               )}
               <Mensagem status={statusRestaurar} />
+            </Secao>
+
+            <Secao titulo="Resumo para consulta">
+              <Texto tipo="legenda">
+                Gera um texto simples dos últimos 30 dias (dias livres, vontade média, horários de onda e gatilhos da lista) para mostrar ao psicólogo ou médico. Notas pessoais, fotos e conversas nunca entram.
+              </Texto>
+              <Botao
+                variante="secundario"
+                onPress={compartilharResumo}
+                desabilitado={!resumoConsulta.temDados || ocupado}
+                style={styles.botao}
+              >
+                Compartilhar resumo (30 dias)
+              </Botao>
+              {!resumoConsulta.temDados ? (
+                <Texto tipo="legenda">Ainda não há registros nos últimos 30 dias para resumir.</Texto>
+              ) : null}
+              <Mensagem status={statusResumo} />
             </Secao>
 
             <Secao titulo="Apagar tudo">

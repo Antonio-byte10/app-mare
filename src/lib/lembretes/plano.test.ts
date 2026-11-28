@@ -106,6 +106,7 @@ describe('planejarLembretes', () => {
     const onda = l.find((n) => n.tipo === 'antesDaOnda');
     expect(onda?.quando).toEqual({ tipo: 'semanal', diaSemana: 6, hora: 21, minuto: 30 });
     expect(onda?.rota).toBe('/fissura');
+    expect(onda?.categoria).toBe('antes_da_onda');
     expect(onda?.corpo).toBe('Esse costuma ser um horário mais pesado. Se precisar, a onda está a um toque.');
     // Desligado: some.
     const off = planejarLembretes(entrada({ relatos: dados, lembretes: { ...TODOS, antesDaOnda: false } }));
